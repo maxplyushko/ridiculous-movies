@@ -1,0 +1,159 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --page-bg: color-mix(in srgb, #c9a66b 35%, white);
+}
+
+html {
+  background-color: var(--page-bg);
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--page-bg);
+  overflow-x: hidden;
+}
+
+#root {
+  display: flow-root;
+  min-height: 100svh;
+  background-color: var(--page-bg);
+}
+
+h1 {
+  margin-top: 0;
+}
+
+.app-shell {
+  height: 100svh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.bottom-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem;
+  background: #d1c3ac;
+}
+
+.bottom-bar button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0.5rem;
+  cursor: pointer;
+  line-height: 0;
+  color: #595333;
+}
+
+.bottom-bar button:focus-visible {
+  outline: 2px solid #666;
+  outline-offset: 2px;
+}
+
+.movie-list {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.movie-item {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #d1c3ac;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.movie-item-details {
+  overflow: hidden;
+  max-height: 0;
+  padding: 0 1rem;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #f5f5f5;
+}
+
+.movie-item-details.open {
+  max-height: 500px;
+  padding: 0.5rem 1rem 0.75rem;
+}
+
+.movie-item-header {
+  all: unset;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+}
+
+.movie-item-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  padding-right: 0.75rem;
+}
+
+.movie-item-header__right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.movie-item-header__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.movie-item-header__info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.movie-item-header__title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.movie-item-header__desc {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #5f5f5f;
+}
+
+.movie-item-details__ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.movie-item-details__rating-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
