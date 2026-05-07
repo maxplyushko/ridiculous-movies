@@ -24,5 +24,4 @@ public class UserController {
 	public List<UserStatsResponse> list(@RequestParam(defaultValue = "desc") String sort) {
 		return userStatsService.listUsers(sort);
 	}
-
 }

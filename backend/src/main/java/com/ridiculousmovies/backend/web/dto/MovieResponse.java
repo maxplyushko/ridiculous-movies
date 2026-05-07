@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record MovieResponse(
-		Long id,
+		String id,
 		String title,
 		String description,
 		Instant createdAt,

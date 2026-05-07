@@ -1,5 +1,8 @@
 HELP.md
 target/
+
+# Built SPA (see webapp npm run build / frontend-maven-plugin)
+src/main/resources/static/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

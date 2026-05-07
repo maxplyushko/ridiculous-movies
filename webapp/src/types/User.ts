@@ -1,4 +1,4 @@
-export class User {
-  id: number | undefined;
-  name: string | undefined;
-}
+export type User = {
+  id: string;
+  name: string;
+};

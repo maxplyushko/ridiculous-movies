@@ -1,6 +1,7 @@
 package com.ridiculousmovies.backend.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class UserStatsService {
 	}
 
 	private static UserStatsResponse mapRow(Object[] row) {
-		Long id = ((Number) row[0]).longValue();
+		String id = Objects.requireNonNull(row[0]).toString();
 		String name = (String) row[1];
 		Double avg = row[2] == null ? null : ((Number) row[2]).doubleValue();
 		long count = ((Number) row[3]).longValue();

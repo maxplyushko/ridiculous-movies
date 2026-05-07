@@ -1,4 +1,4 @@
 package com.ridiculousmovies.backend.web.dto;
 
-public record UserRefDto(Long id, String name) {
+public record UserRefDto(String id, String name) {
 }

@@ -2,6 +2,7 @@ package com.ridiculousmovies.backend.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.ridiculousmovies.backend.domain.Movie;
 
-public interface MovieRepository extends JpaRepository<Movie, Long> {
+public interface MovieRepository extends JpaRepository<Movie, String> {
 
 	@EntityGraph(attributePaths = { "owner", "ratings", "ratings.user" })
 	@Query("SELECT DISTINCT m FROM Movie m LEFT JOIN FETCH m.owner LEFT JOIN FETCH m.ratings r LEFT JOIN FETCH r.user ORDER BY m.createdAt DESC, m.id ASC")
@@ -22,7 +23,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
 	@EntityGraph(attributePaths = { "owner", "ratings", "ratings.user" })
 	@Query("SELECT DISTINCT m FROM Movie m LEFT JOIN FETCH m.owner LEFT JOIN FETCH m.ratings r LEFT JOIN FETCH r.user WHERE m.id IN :ids ORDER BY m.id")
-	List<Movie> findAllFetchedByIdIn(@Param("ids") Collection<Long> ids);
+	List<Movie> findAllFetchedByIdIn(@Param("ids") Collection<String> ids);
+
+	@Query("SELECT COALESCE(MAX(m.round), 0) FROM Movie m")
+	int findMaxRound();
+
+	@Query("SELECT DISTINCT m.owner.id FROM Movie m WHERE m.round = :round")
+	Set<String> findDistinctOwnerIdsByRound(@Param("round") int round);
 
 	@Query(value = """
 			WITH stats AS (
@@ -41,7 +48,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			)
 			SELECT s.mid FROM stats s JOIN bound b ON s.avg_score = b.v
 			""", nativeQuery = true)
-	List<Long> findIdsWithHighestAverage(
+	List<String> findIdsWithHighestAverage(
 			@Param("minRatings") int minRatings,
 			@Param("requireAllUsers") boolean requireAllUsers
 	);
@@ -63,7 +70,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			)
 			SELECT s.mid FROM stats s JOIN bound b ON s.avg_score = b.v
 			""", nativeQuery = true)
-	List<Long> findIdsWithLowestAverage(
+	List<String> findIdsWithLowestAverage(
 			@Param("minRatings") int minRatings,
 			@Param("requireAllUsers") boolean requireAllUsers
 	);

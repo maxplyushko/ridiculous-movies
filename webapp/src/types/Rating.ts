@@ -1,7 +1,7 @@
 import type {User} from "./User.ts";
 
 export type Rating = {
-  id: number;
+  id: string;
   score: number;
   user: User;
 };
