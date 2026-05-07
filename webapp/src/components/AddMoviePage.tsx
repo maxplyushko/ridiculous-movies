@@ -116,7 +116,7 @@ const AddMoviePage = ({usersLeft, onBack}: {
           <div className="add-movie__item">
             <label htmlFor="add-movie-owner">Owner</label>
             <select id="add-movie-owner" value={ownerId} onChange={o => setOwnerId(o.target.value)}>
-              <option value="" selected disabled>Host</option>
+              <option value="" disabled>Host</option>
               {usersLeft.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
                   <option key={user.id} value={user.id}>{user.name}</option>
               ))}
@@ -124,64 +124,69 @@ const AddMoviePage = ({usersLeft, onBack}: {
           </div>
         </div>
 
-        {ownerId &&
-            <div className="add-movie__ratings">
-              <label htmlFor="add-movie__ratings">Set the ratings</label>
+        {ownerId && (
+            <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
+              <p id="add-movie-ratings-heading" className="add-movie__ratings__title">
+                Set the ratings
+              </p>
               <div className="add-movie__ratings__user__scores">
-                {
-                  ratingForms.map((form) => (
-                      <div key={form.id} className="add-movie__ratings__form">
-                        <select onChange={(o) => updateRatingFormUser(form.id, o.target.value)}>
-                          <option value="" selected disabled>Select user</option>
-                          {users.toSorted((a, b) => a.name.localeCompare(b.name))
-                          .filter(user =>
-                              ownerId !== user.id &&
-                              (
-                                  !selectedUserIds.has(user.id) ||
-                                  user.id === form.userId
-                              )
-                          )
-                          .map(user => (
-                              <option key={user.id} value={user.id}>{user.name}</option>
-                          ))}
-                        </select>
-                        <input
-                            type="number"
-                            inputMode="decimal"
-                            min={0}
-                            max={10}
-                            step={0.01}
-                            value={form.score}
-                            onFocus={(e) => e.currentTarget.select()}
-                            onChange={(e) => {
-                              const v = e.target.valueAsNumber;
-                              updateRatingFormScore(
-                                  form.id,
-                                  Number.isFinite(v) ? v : 0,
-                              );
-                            }}
-                        />
-                      </div>
-              ))
-              }
+                {ratingForms.map((form) => (
+                    <div key={form.id} className="add-movie__ratings__form">
+                      <select
+                          value={form.userId}
+                          onChange={(o) => updateRatingFormUser(form.id, o.target.value)}
+                          aria-label="User"
+                      >
+                        <option value="" disabled>Select user</option>
+                        {users.toSorted((a, b) => a.name.localeCompare(b.name))
+                        .filter(user =>
+                            ownerId !== user.id &&
+                            (
+                                !selectedUserIds.has(user.id) ||
+                                user.id === form.userId
+                            )
+                        )
+                        .map(user => (
+                            <option key={user.id} value={user.id}>{user.name}</option>
+                        ))}
+                      </select>
+                      <input
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          max={10}
+                          step={0.01}
+                          value={form.score}
+                          onFocus={(e) => e.currentTarget.select()}
+                          onChange={(e) => {
+                            const v = e.target.valueAsNumber;
+                            updateRatingFormScore(
+                                form.id,
+                                Number.isFinite(v) ? v : 0,
+                            );
+                          }}
+                          aria-label="Score"
+                      />
+                    </div>
+                ))}
+              </div>
+              <div className="add-button">
+                <button type="button" onClick={addRatingForm} aria-label="Add rating row">
+                  <CirclePlus/>
+                </button>
+              </div>
             </div>
-          <div className="add-button">
-          <button type="button" onClick={addRatingForm}><CirclePlus/></button>
-</div>
+        )}
 
-</div>
-}
-
-  {error && (
-      <span>{error}</span>
-  )}
-  <div className="add-movie__control">
-    <button type="button" onClick={onBack}>Back</button>
-    <button type="button" onClick={handleAdd}>Add</button>
-  </div>
-</section>
-)
-  ;
+        {error && (
+            <span className="add-movie__error">{error}</span>
+        )}
+        <div className="add-movie__control">
+          <button type="button" onClick={onBack}>Back</button>
+          <button type="button" onClick={handleAdd}>Add</button>
+        </div>
+      </section>
+  );
 };
 
 export default AddMoviePage;

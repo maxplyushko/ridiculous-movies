@@ -319,6 +319,104 @@ h1 {
   background: #f7f9ff;
 }
 
+/* Ratings block: same grouped “cell” look as .add-movie__fields (Telegram / iOS settings) */
+.add-movie__ratings {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.add-movie__ratings__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  padding: 0 0.25rem 0.35rem;
+}
+
+.add-movie__ratings__user__scores {
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.add-movie__ratings__form {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 3rem;
+}
+
+.add-movie__ratings__form + .add-movie__ratings__form {
+  border-top: 1px solid var(--separator);
+}
+
+.add-movie__ratings__form select,
+.add-movie__ratings__form input[type="number"] {
+  margin: 0;
+  font-size: 1rem;
+  font-family: inherit;
+  border: none;
+  background: var(--surface);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.add-movie__ratings__form select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  padding-right: 2.5rem;
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  appearance: none;
+}
+
+.add-movie__ratings__form input[type="number"] {
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  max-width: 4.5rem;
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  border-left: 1px solid var(--separator);
+  -moz-appearance: textfield;
+}
+
+.add-movie__ratings__form input[type="number"]::-webkit-outer-spin-button,
+.add-movie__ratings__form input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.add-movie__ratings__form select:focus,
+.add-movie__ratings__form input[type="number"]:focus {
+  background-color: #f7f9ff;
+}
+
+.add-movie__ratings__form select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%233390ec' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.add-movie__ratings .add-button {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.add-movie__error {
+  display: block;
+  margin-top: 0.75rem;
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
+  color: #ff3b30;
+  text-align: center;
+}
+
 .add-movie__control {
   display: flex;
   flex-direction: column;
