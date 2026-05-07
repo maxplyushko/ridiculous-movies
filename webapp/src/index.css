@@ -355,7 +355,7 @@ h1 {
 }
 
 .add-movie__ratings__form select,
-.add-movie__ratings__form input[type="number"] {
+.add-movie__ratings__form input.add-movie__ratings__score {
   margin: 0;
   font-size: 1rem;
   font-family: inherit;
@@ -377,24 +377,17 @@ h1 {
   appearance: none;
 }
 
-.add-movie__ratings__form input[type="number"] {
+.add-movie__ratings__form input.add-movie__ratings__score {
   flex: 0 0 4.5rem;
   width: 4.5rem;
   max-width: 4.5rem;
   padding: 0.85rem 0.5rem;
   text-align: center;
   border-left: 1px solid var(--separator);
-  -moz-appearance: textfield;
-}
-
-.add-movie__ratings__form input[type="number"]::-webkit-outer-spin-button,
-.add-movie__ratings__form input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .add-movie__ratings__form select:focus,
-.add-movie__ratings__form input[type="number"]:focus {
+.add-movie__ratings__form input.add-movie__ratings__score:focus {
   background-color: #f7f9ff;
 }
 

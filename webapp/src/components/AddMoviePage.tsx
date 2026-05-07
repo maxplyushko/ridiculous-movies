@@ -5,10 +5,22 @@ import {CirclePlus} from "lucide-react";
 const MOVIES_URL = "/api/movies";
 const USERS_URL = "/api/users";
 
+const SCORE_MAX = 10.99;
+
 type RatingForm = {
   id: string,
   userId: string,
-  score: number
+  scoreInput: string,
+}
+
+function parseScoreInput(raw: string): number {
+  const t = raw.trim();
+  if (t === "") {
+    return 0;
+  }
+  const normalized = t.replace(",", ".");
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : 0;
 }
 
 async function fetchUsers(): Promise<User[]> {
@@ -72,10 +84,13 @@ const AddMoviePage = ({usersLeft, onBack}: {
         ownerId,
         ratings: ratingForms
         .filter((f) => f.userId !== "")
-        .map((f) => ({
-          userId: f.userId,
-          score: Number.isFinite(f.score) ? Math.min(10, Math.max(0, f.score)) : 0,
-        })),
+        .map((f) => {
+          const n = parseScoreInput(f.scoreInput);
+          return {
+            userId: f.userId,
+            score: Math.min(SCORE_MAX, Math.max(0, n)),
+          };
+        }),
       });
       onBack();
     } catch (e) {
@@ -84,7 +99,7 @@ const AddMoviePage = ({usersLeft, onBack}: {
   };
 
   const addRatingForm = () => {
-    setRatingForms([...ratingForms, {id: crypto.randomUUID(), userId: "", score: 0}]);
+    setRatingForms([...ratingForms, {id: crypto.randomUUID(), userId: "", scoreInput: "0"}]);
   }
 
   const updateRatingFormUser = (formId: string, userId: string) => {
@@ -93,9 +108,9 @@ const AddMoviePage = ({usersLeft, onBack}: {
     );
   };
 
-  const updateRatingFormScore = (formId: string, score: number) => {
+  const updateRatingFormScoreInput = (formId: string, scoreInput: string) => {
     setRatingForms(ratingForms.map(form => form.id === formId
-        ? {...form, score} : form)
+        ? {...form, scoreInput} : form)
     );
   };
 
@@ -151,21 +166,15 @@ const AddMoviePage = ({usersLeft, onBack}: {
                         ))}
                       </select>
                       <input
-                          type="number"
+                          className="add-movie__ratings__score"
+                          type="text"
                           inputMode="decimal"
-                          min={0}
-                          max={10}
-                          step={0.01}
-                          value={form.score}
+                          autoComplete="off"
+                          value={form.scoreInput}
                           onFocus={(e) => e.currentTarget.select()}
-                          onChange={(e) => {
-                            const v = e.target.valueAsNumber;
-                            updateRatingFormScore(
-                                form.id,
-                                Number.isFinite(v) ? v : 0,
-                            );
-                          }}
+                          onChange={(e) => updateRatingFormScoreInput(form.id, e.target.value)}
                           aria-label="Score"
+                          placeholder={`0–${SCORE_MAX}`}
                       />
                     </div>
                 ))}
