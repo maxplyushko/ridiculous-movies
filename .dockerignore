@@ -1,0 +1,8 @@
+**/.git
+**/.cursor
+**/.idea
+**/node_modules
+**/target
+**/dist
+**/*.iml
+**/nbproject
