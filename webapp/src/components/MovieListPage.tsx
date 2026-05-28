@@ -1,14 +1,13 @@
 import {useCallback, useEffect, useState} from "react";
 import type {MovieGroup} from "../types/MovieGroup.ts";
 import type {Movie} from "../types/Movie.ts";
-import type {User} from "../types/User.ts";
 import MovieItem from "./MovieItem.tsx";
 import {CirclePlus} from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import {deleteMovie, fetchMovieGroups} from "../api/movies.ts";
+import {PageLoader} from "./PageLoader.tsx";
 
 const MovieListPage = () => {
-  const [usersLeft, setUsersLeft] = useState<User[]>([]);
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
@@ -24,13 +23,12 @@ const MovieListPage = () => {
     setLoading(true);
     setError(null);
     fetchMovieGroups({sort: "desc"})
-        .then(data => {
-          setMovieGroups(data.groups);
-          setUsersLeft(data.usersLeft);
-          setCurrentRound(data.currentRound);
-        })
-        .catch(err => setError(err))
-        .finally(() => setLoading(false));
+    .then(data => {
+      setMovieGroups(data.groups);
+      setCurrentRound(data.currentRound);
+    })
+    .catch(err => setError(err))
+    .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -74,7 +72,9 @@ const MovieListPage = () => {
     setDeleteError(null);
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (!isLoading) {
+    return <PageLoader/>;
+  }
   if (error) {
     console.error(error);
     return <p>Error: {error.message}</p>;
@@ -125,7 +125,7 @@ const MovieListPage = () => {
         {showMovieForm && (
             <div className="movie-list__add__movie">
               <AddMoviePage
-                  usersLeft={usersLeft}
+                  currentRound={currentRound}
                   movie={editingMovie}
                   onBack={closeMovieForm}
               />

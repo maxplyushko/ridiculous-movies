@@ -27,15 +27,4 @@ public interface AppUserRepository extends JpaRepository<AppUser, String> {
 			""", nativeQuery = true)
 	List<Object[]> findAllUserStatsByAverageAsc();
 
-	@Query(value = """
-			WITH cur AS (SELECT COALESCE(MAX(round), 0) AS r FROM movie)
-			SELECT c.r AS current_round, u.id, u.name
-			FROM app_user u CROSS JOIN cur c
-			WHERE u.id NOT IN (
-				SELECT DISTINCT m.owner_id FROM movie m WHERE m.round = c.r
-			)
-			ORDER BY u.name
-			""", nativeQuery = true)
-	List<Object[]> findUsersLeftInCurrentRound();
-
 }

@@ -24,22 +24,22 @@ function parseScoreInput(raw: string): number {
 }
 
 const AddMoviePage = ({
-  usersLeft,
+  currentRound,
   movie,
   onBack,
 }: {
-  usersLeft: User[];
+  currentRound: number;
   movie?: Movie;
   onBack: () => void;
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ownerId, setOwnerId] = useState("");
+  const [round, setRound] = useState(currentRound);
   const [ratingForms, setRatingForms] = useState<RatingForm[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const isEditMode = movie !== undefined;
-  const ownerOptions = isEditMode ? users : usersLeft;
 
   const selectedUserIds = useMemo(() => {
     return new Set(
@@ -54,6 +54,12 @@ const AddMoviePage = ({
     .then(setUsers)
     .catch((err) => console.error(err));
   }, []);
+
+  useEffect(() => {
+    if (!movie) {
+      setRound(currentRound);
+    }
+  }, [currentRound, movie]);
 
   useEffect(() => {
     if (!movie) {
@@ -75,6 +81,7 @@ const AddMoviePage = ({
     title,
     description,
     ownerId,
+    ...(isEditMode ? {} : {round}),
     ratings: ratingForms
     .filter((f) => f.userId !== "")
     .map((f) => {
@@ -134,11 +141,24 @@ const AddMoviePage = ({
             <label htmlFor="add-movie-owner">Owner</label>
             <select id="add-movie-owner" value={ownerId} onChange={o => setOwnerId(o.target.value)}>
               <option value="" disabled>Host</option>
-              {ownerOptions.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
+              {users.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
                   <option key={user.id} value={user.id}>{user.name}</option>
               ))}
             </select>
           </div>
+          {!isEditMode && (
+              <div className="add-movie__item">
+                <label htmlFor="add-movie-round">Round</label>
+                <select
+                    id="add-movie-round"
+                    value={round}
+                    onChange={(e) => setRound(Number(e.target.value))}
+                >
+                  <option value={currentRound}>Round {currentRound}</option>
+                  <option value={currentRound + 1}>Round {currentRound + 1}</option>
+                </select>
+              </div>
+          )}
         </div>
 
         {ownerId && (

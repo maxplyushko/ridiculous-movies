@@ -1,7 +1,14 @@
+import {PageLoader} from "./PageLoader.tsx";
+
 const StatPage = () => {
-  return <div>
-    Здесь будет статистика
-  </div>
-}
+  while (true) {
+    return <PageLoader/>
+  }
+  return (
+      <section className="stat-page">
+
+      </section>
+  );
+};
 
 export default StatPage;

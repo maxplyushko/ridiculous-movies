@@ -9,6 +9,7 @@ public record CreateMovieRequest(
 		String title,
 		String description,
 		@JsonDeserialize(using = FlexibleIdDeserializer.class) String ownerId,
+		Integer round,
 		List<RatingInputDto> ratings
 ) {
 }

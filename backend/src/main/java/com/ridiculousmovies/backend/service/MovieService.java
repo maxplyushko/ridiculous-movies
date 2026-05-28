@@ -7,9 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +25,10 @@ import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
 import com.ridiculousmovies.backend.web.dto.MovieResponse;
 import com.ridiculousmovies.backend.web.dto.RatingInputDto;
 import com.ridiculousmovies.backend.web.dto.UpdateMovieRequest;
-import com.ridiculousmovies.backend.web.dto.UserRefDto;
-
 @Service
 public class MovieService {
 
-	private static final int USERS_PER_ROUND = 4;
+	private static final BigDecimal MAX_SCORE = BigDecimal.TEN;
 
 	private final MovieRepository movieRepository;
 	private final AppUserRepository appUserRepository;
@@ -83,19 +79,14 @@ public class MovieService {
 			byRound.computeIfAbsent(round, k -> new ArrayList<>())
 					.add(movieMapper.toResponse(m));
 		}
+		int currentRound = movieRepository.findLatestRound();
+		byRound.putIfAbsent(currentRound, new ArrayList<>());
+
 		List<MovieGroupResponse> groups = byRound.entrySet().stream()
 				.map(e -> new MovieGroupResponse(e.getKey(), e.getValue()))
 				.toList();
 
-		List<Object[]> rows = appUserRepository.findUsersLeftInCurrentRound();
-		int currentRound = rows.isEmpty()
-				? movieRepository.findMaxRound()
-				: ((Number) rows.get(0)[0]).intValue();
-		List<UserRefDto> usersLeft = rows.stream()
-				.map(r -> new UserRefDto(Objects.requireNonNull(r[1]).toString(), (String) r[2]))
-				.toList();
-
-		return new MovieGroupsResponse(currentRound, usersLeft, groups);
+		return new MovieGroupsResponse(currentRound, movieRepository.findMaxRound(), groups);
 	}
 
 	@Transactional
@@ -107,7 +98,7 @@ public class MovieService {
 		movie.setTitle(req.title().trim());
 		movie.setDescription(normalizeDescription(req.description()));
 		movie.setOwner(owner);
-		movie.setRound(resolveRound(owner.getId()));
+		movie.setRound(resolveCreateRound(req.round()));
 		movieRepository.save(movie);
 		replaceRatings(movie, req.ratings());
 
@@ -180,9 +171,9 @@ public class MovieService {
 			}
 			BigDecimal score = entry.score();
 			if (score == null || score.compareTo(BigDecimal.ZERO) < 0
-					|| score.compareTo(new BigDecimal("10.99")) > 0) {
+					|| score.compareTo(MAX_SCORE) > 0) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-						"score must be between 0 and 10.99");
+						"score must be between 0 and 10");
 			}
 			desiredUserIds.add(entry.userId());
 			Rating rating = existingByUserId.get(entry.userId());
@@ -217,16 +208,14 @@ public class MovieService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
-	private int resolveRound(String ownerId) {
-		int currentRound = movieRepository.findMaxRound();
-		if (currentRound == 0) {
-			return 1;
+	private int resolveCreateRound(Integer requestedRound) {
+		int latestRound = movieRepository.findLatestRound();
+		int round = requestedRound != null ? requestedRound : latestRound;
+		if (round < latestRound || round > latestRound + 1) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+					"round must be " + latestRound + " or " + (latestRound + 1));
 		}
-		Set<String> owners = movieRepository.findDistinctOwnerIdsByRound(currentRound);
-		if (owners.size() >= USERS_PER_ROUND && !owners.contains(ownerId)) {
-			return currentRound + 1;
-		}
-		return currentRound;
+		return round;
 	}
 
 	private List<MovieResponse> rankedMovies(List<String> ids) {

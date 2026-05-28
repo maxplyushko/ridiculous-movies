@@ -2,7 +2,7 @@ package com.ridiculousmovies.backend.repository;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,8 +28,13 @@ public interface MovieRepository extends JpaRepository<Movie, String> {
 	@Query("SELECT COALESCE(MAX(m.round), 0) FROM Movie m")
 	int findMaxRound();
 
-	@Query("SELECT DISTINCT m.owner.id FROM Movie m WHERE m.round = :round")
-	Set<String> findDistinctOwnerIdsByRound(@Param("round") int round);
+	Optional<Movie> findFirstByOrderByCreatedAtDescIdAsc();
+
+	default int findLatestRound() {
+		return findFirstByOrderByCreatedAtDescIdAsc()
+				.map(m -> m.getRound() != null ? m.getRound() : 0)
+				.orElse(0);
+	}
 
 	@Query(value = """
 			WITH stats AS (

@@ -1,5 +1,4 @@
 import type { Movie } from "./Movie.ts";
-import type {User} from "./User.ts";
 
 export type MovieGroup = {
   groupId: number;
@@ -8,6 +7,6 @@ export type MovieGroup = {
 
 export type MovieGroupsResponse = {
   currentRound: number;
-  usersLeft: User[];
+  lastRound: number;
   groups: MovieGroup[];
 };

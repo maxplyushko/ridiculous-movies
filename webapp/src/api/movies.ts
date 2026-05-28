@@ -8,6 +8,7 @@ export type MovieFormPayload = {
   title: string;
   description: string;
   ownerId: string;
+  round?: number;
   ratings: { userId: string; score: number }[];
 };
 

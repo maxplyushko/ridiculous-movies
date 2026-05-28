@@ -12,9 +12,9 @@ function App() {
   return (
       <div className="app-shell">
         <main className="app-main">
-          {currentPage === "stat" && (<StatPage/>)}
-          {currentPage === "list" && (<MovieListPage/>)}
-          {currentPage === "misc" && (<MiscPage/>)}
+          <div hidden={currentPage !== "stat"}><StatPage /></div>
+          <div hidden={currentPage !== "list"}><MovieListPage /></div>
+          <div hidden={currentPage !== "misc"}><MiscPage /></div>
         </main>
 
         <nav className="bottom-bar">
