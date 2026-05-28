@@ -139,8 +139,8 @@ public class MovieService {
 	}
 
 	private void assertAuthorized(String userId) {
-//		appUserRepository.findById(userId)
-//				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access denied"));
+		appUserRepository.findById(userId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access denied"));
 	}
 
 	private AppUser resolveOwner(String title, String ownerId) {
