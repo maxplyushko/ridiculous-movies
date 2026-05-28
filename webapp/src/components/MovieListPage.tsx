@@ -3,7 +3,7 @@ import type {MovieGroup} from "../types/MovieGroup.ts";
 import type {Movie} from "../types/Movie.ts";
 import type {User} from "../types/User.ts";
 import MovieItem from "./MovieItem.tsx";
-import {CirclePlus} from "lucide-react";
+import {CirclePlus, Loader} from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import {deleteMovie, fetchMovieGroups} from "../api/movies.ts";
 
@@ -74,7 +74,7 @@ const MovieListPage = () => {
     setDeleteError(null);
   };
 
-  if (isLoading) return <p>Loading...</p>;
+  if (isLoading) return <div className="movie-list__loader"><Loader/></div>;
   if (error) {
     console.error(error);
     return <p>Error: {error.message}</p>;

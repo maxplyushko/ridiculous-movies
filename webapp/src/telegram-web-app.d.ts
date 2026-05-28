@@ -18,7 +18,8 @@ declare global {
   interface TelegramWebApp {
     HapticFeedback?: TelegramWebAppHapticFeedback;
     initDataUnsafe?: TelegramWebAppInitDataUnsafe;
-    [key: string]: unknown;
+    ready(): void;
+    expand(): void;
   }
 
   interface Window {
