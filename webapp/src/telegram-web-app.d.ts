@@ -1,10 +1,29 @@
 export {}
 
-/** Minimal shape; extend when you integrate the Telegram Web App API. */
 declare global {
+  interface TelegramWebAppUser {
+    id?: number | string;
+  }
+
+  interface TelegramWebAppInitDataUnsafe {
+    user?: TelegramWebAppUser;
+  }
+
+  interface TelegramWebAppHapticFeedback {
+    impactOccurred(style: "light" | "medium" | "heavy" | "rigid" | "soft"): void;
+    notificationOccurred(type: "error" | "success" | "warning"): void;
+    selectionChanged(): void;
+  }
+
+  interface TelegramWebApp {
+    HapticFeedback?: TelegramWebAppHapticFeedback;
+    initDataUnsafe?: TelegramWebAppInitDataUnsafe;
+    [key: string]: unknown;
+  }
+
   interface Window {
     Telegram?: {
-      WebApp: Record<string, unknown>
-    }
+      WebApp: TelegramWebApp;
+    };
   }
 }

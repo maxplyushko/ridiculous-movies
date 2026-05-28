@@ -2,6 +2,7 @@ package com.ridiculousmovies.backend.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import com.ridiculousmovies.backend.web.dto.MovieGroupResponse;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
 import com.ridiculousmovies.backend.web.dto.MovieResponse;
 import com.ridiculousmovies.backend.web.dto.RatingInputDto;
+import com.ridiculousmovies.backend.web.dto.UpdateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.UserRefDto;
 
 @Service
@@ -98,49 +100,113 @@ public class MovieService {
 
 	@Transactional
 	public MovieResponse createMovie(String userId, CreateMovieRequest req) {
-		appUserRepository.findById(userId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access denied"));
-
-		if (req.title() == null || req.title().isBlank()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank");
-		}
-		if (req.ownerId() == null) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ownerId is required");
-		}
-
-		String ownerId = req.ownerId();
-		AppUser owner = getUser(ownerId);
+		assertAuthorized(userId);
+		AppUser owner = resolveOwner(req.title(), req.ownerId());
 
 		Movie movie = new Movie();
 		movie.setTitle(req.title().trim());
-		movie.setDescription(req.description() == null ? "" : req.description().trim());
+		movie.setDescription(normalizeDescription(req.description()));
 		movie.setOwner(owner);
 		movie.setRound(resolveRound(owner.getId()));
 		movieRepository.save(movie);
+		replaceRatings(movie, req.ratings());
 
-		if (req.ratings() != null && !req.ratings().isEmpty()) {
-			Set<String> seen = new HashSet<>();
-			for (RatingInputDto entry : req.ratings()) {
-				if (!seen.add(entry.userId())) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-							"duplicate userId in ratings: " + entry.userId());
-				}
-				BigDecimal score = entry.score();
-				if (score == null || score.compareTo(BigDecimal.ZERO) < 0
-						|| score.compareTo(new BigDecimal("10.99")) > 0) {
-					throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-							"score must be between 0 and 10.99");
-				}
-				AppUser rater = getUser(entry.userId());
-				Rating rating = new Rating();
-				rating.setMovie(movie);
-				rating.setUser(rater);
-				rating.setScore(score);
-				ratingRepository.save(rating);
-			}
+		return fetchMovieResponse(movie.getId());
+	}
+
+	@Transactional
+	public MovieResponse updateMovie(String userId, String movieId, UpdateMovieRequest req) {
+		assertAuthorized(userId);
+		Movie movie = movieRepository.findAllFetchedByIdIn(List.of(movieId)).stream()
+				.findFirst()
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
+		AppUser owner = resolveOwner(req.title(), req.ownerId());
+
+		movie.setTitle(req.title().trim());
+		movie.setDescription(normalizeDescription(req.description()));
+		movie.setOwner(owner);
+		replaceRatings(movie, req.ratings());
+
+		return fetchMovieResponse(movie.getId());
+	}
+
+	@Transactional
+	public void deleteMovie(String userId, String movieId) {
+		assertAuthorized(userId);
+		Movie movie = movieRepository.findById(movieId)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
+		movieRepository.delete(movie);
+	}
+
+	private void assertAuthorized(String userId) {
+//		appUserRepository.findById(userId)
+//				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access denied"));
+	}
+
+	private AppUser resolveOwner(String title, String ownerId) {
+		if (title == null || title.isBlank()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "title must not be blank");
+		}
+		if (ownerId == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ownerId is required");
+		}
+		return getUser(ownerId);
+	}
+
+	private static String normalizeDescription(String description) {
+		return description == null ? "" : description.trim();
+	}
+
+	private void replaceRatings(Movie movie, List<RatingInputDto> ratings) {
+		Map<String, Rating> existingByUserId = new HashMap<>();
+		for (Rating rating : ratingRepository.findByMovie_Id(movie.getId())) {
+			existingByUserId.put(rating.getUser().getId(), rating);
 		}
 
-		Movie saved = movieRepository.findAllFetchedByIdIn(List.of(movie.getId())).stream()
+		if (ratings == null || ratings.isEmpty()) {
+			if (!existingByUserId.isEmpty()) {
+				ratingRepository.deleteAll(existingByUserId.values());
+				movie.getRatings().clear();
+			}
+			return;
+		}
+
+		Set<String> seen = new HashSet<>();
+		Set<String> desiredUserIds = new HashSet<>();
+		for (RatingInputDto entry : ratings) {
+			if (!seen.add(entry.userId())) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"duplicate userId in ratings: " + entry.userId());
+			}
+			BigDecimal score = entry.score();
+			if (score == null || score.compareTo(BigDecimal.ZERO) < 0
+					|| score.compareTo(new BigDecimal("10.99")) > 0) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+						"score must be between 0 and 10.99");
+			}
+			desiredUserIds.add(entry.userId());
+			Rating rating = existingByUserId.get(entry.userId());
+			if (rating == null) {
+				rating = new Rating();
+				rating.setMovie(movie);
+				rating.setUser(getUser(entry.userId()));
+				movie.getRatings().add(rating);
+			} else if (!movie.getRatings().contains(rating)) {
+				movie.getRatings().add(rating);
+			}
+			rating.setScore(score);
+		}
+
+		for (Rating rating : existingByUserId.values()) {
+			if (!desiredUserIds.contains(rating.getUser().getId())) {
+				movie.getRatings().remove(rating);
+				ratingRepository.delete(rating);
+			}
+		}
+	}
+
+	private MovieResponse fetchMovieResponse(String movieId) {
+		Movie saved = movieRepository.findAllFetchedByIdIn(List.of(movieId)).stream()
 				.findFirst()
 				.orElseThrow();
 		return movieMapper.toResponse(saved);

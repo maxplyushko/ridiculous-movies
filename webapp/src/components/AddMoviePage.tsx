@@ -1,17 +1,17 @@
 import type {User} from "../types/User.ts";
 import {useEffect, useMemo, useState} from "react";
 import {CirclePlus} from "lucide-react";
+import type {Movie} from "../types/Movie.ts";
+import {addMovie, editMovie, type MovieFormPayload} from "../api/movies.ts";
+import {fetchUsers} from "../api/users.ts";
 
-const MOVIES_URL = "/api/movies";
-const USERS_URL = "/api/users";
-
-const SCORE_MAX = 10.99;
+const SCORE_MAX = 10;
 
 type RatingForm = {
-  id: string,
-  userId: string,
-  scoreInput: string,
-}
+  id: string;
+  userId: string;
+  scoreInput: string;
+};
 
 function parseScoreInput(raw: string): number {
   const t = raw.trim();
@@ -23,46 +23,24 @@ function parseScoreInput(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-async function fetchUsers(): Promise<User[]> {
-  const response = await fetch(USERS_URL);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `HTTP ${response.status}`);
-  }
-  return await response.json() as Promise<User[]>;
-}
-
-async function addMovie(data: {
-  title: string;
-  description: string;
-  ownerId: string;
-  ratings: { userId: string; score: number }[];
-}) {
-  const tg = window.Telegram?.WebApp as {
-    initDataUnsafe?: { user?: { id?: number | string } }
-  } | undefined;
-  const tgUser = tg?.initDataUnsafe?.user?.id;
-  const userHeader = tgUser !== undefined ? String(tgUser) : "";
-  const response = await fetch(MOVIES_URL, {
-    method: "POST",
-    headers: {"Content-Type": "application/json", "User-Id": userHeader},
-    body: JSON.stringify(data),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add movie. " + response.statusText);
-  }
-}
-
-const AddMoviePage = ({usersLeft, onBack}: {
+const AddMoviePage = ({
+  usersLeft,
+  movie,
+  onBack,
+}: {
   usersLeft: User[];
-  onBack: () => void
+  movie?: Movie;
+  onBack: () => void;
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [ownerId, setOwnerId] = useState("");
-  const [ratingForms, setRatingForms] = useState<RatingForm[]>([])
-  const [users, setUsers] = useState<User[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [ratingForms, setRatingForms] = useState<RatingForm[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const isEditMode = movie !== undefined;
+  const ownerOptions = isEditMode ? users : usersLeft;
+
   const selectedUserIds = useMemo(() => {
     return new Set(
         ratingForms
@@ -72,26 +50,50 @@ const AddMoviePage = ({usersLeft, onBack}: {
   }, [ratingForms]);
 
   useEffect(() => {
-    fetchUsers().then((u) => setUsers(u))
+    fetchUsers()
+    .then(setUsers)
     .catch((err) => console.error(err));
   }, []);
 
-  const handleAdd = async () => {
+  useEffect(() => {
+    if (!movie) {
+      return;
+    }
+    setTitle(movie.title);
+    setDescription(movie.description);
+    setOwnerId(movie.owner.id);
+    setRatingForms(
+        movie.ratings.map((rating) => ({
+          id: crypto.randomUUID(),
+          userId: rating.user.id,
+          scoreInput: String(rating.score),
+        }))
+    );
+  }, [movie]);
+
+  const buildPayload = (): MovieFormPayload => ({
+    title,
+    description,
+    ownerId,
+    ratings: ratingForms
+    .filter((f) => f.userId !== "")
+    .map((f) => {
+      const n = parseScoreInput(f.scoreInput);
+      return {
+        userId: f.userId,
+        score: Math.min(SCORE_MAX, Math.max(0, n)),
+      };
+    }),
+  });
+
+  const handleSubmit = async () => {
     try {
-      await addMovie({
-        title,
-        description,
-        ownerId,
-        ratings: ratingForms
-        .filter((f) => f.userId !== "")
-        .map((f) => {
-          const n = parseScoreInput(f.scoreInput);
-          return {
-            userId: f.userId,
-            score: Math.min(SCORE_MAX, Math.max(0, n)),
-          };
-        }),
-      });
+      const payload = buildPayload();
+      if (movie) {
+        await editMovie(movie.id, payload);
+      } else {
+        await addMovie(payload);
+      }
       onBack();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -100,7 +102,7 @@ const AddMoviePage = ({usersLeft, onBack}: {
 
   const addRatingForm = () => {
     setRatingForms([...ratingForms, {id: crypto.randomUUID(), userId: "", scoreInput: "0"}]);
-  }
+  };
 
   const updateRatingFormUser = (formId: string, userId: string) => {
     setRatingForms(ratingForms.map(form => form.id === formId
@@ -116,23 +118,23 @@ const AddMoviePage = ({usersLeft, onBack}: {
 
   return (
       <section className="add-movie">
-        <h1>Add Movie</h1>
+        <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
         <div className="add-movie__fields">
           <div className="add-movie__item">
             <label htmlFor="add-movie-title">Title</label>
-            <input id="add-movie-title" type="text" onChange={t => setTitle(t.target.value)}
+            <input id="add-movie-title" type="text" value={title} onChange={t => setTitle(t.target.value)}
                    placeholder="Title"/>
           </div>
           <div className="add-movie__item">
             <label htmlFor="add-movie-desc">Description</label>
-            <input id="add-movie-desc" type="text" onChange={d => setDescription(d.target.value)}
+            <input id="add-movie-desc" type="text" value={description} onChange={d => setDescription(d.target.value)}
                    placeholder="Description"/>
           </div>
           <div className="add-movie__item">
             <label htmlFor="add-movie-owner">Owner</label>
             <select id="add-movie-owner" value={ownerId} onChange={o => setOwnerId(o.target.value)}>
               <option value="" disabled>Host</option>
-              {usersLeft.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
+              {ownerOptions.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
                   <option key={user.id} value={user.id}>{user.name}</option>
               ))}
             </select>
@@ -192,7 +194,7 @@ const AddMoviePage = ({usersLeft, onBack}: {
         )}
         <div className="add-movie__control">
           <button type="button" onClick={onBack}>Back</button>
-          <button type="button" onClick={handleAdd}>Add</button>
+          <button type="button" onClick={handleSubmit}>{isEditMode ? "Save" : "Add"}</button>
         </div>
       </section>
   );

@@ -1,27 +1,11 @@
 import {useCallback, useEffect, useState} from "react";
-import type {MovieGroup, MovieGroupsResponse} from "../types/MovieGroup.ts";
+import type {MovieGroup} from "../types/MovieGroup.ts";
+import type {Movie} from "../types/Movie.ts";
+import type {User} from "../types/User.ts";
 import MovieItem from "./MovieItem.tsx";
 import {CirclePlus} from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
-import type {User} from "../types/User.ts";
-
-const MOVIE_GROUPS_URL = "/api/movies/groups";
-
-type ListParams = {
-  filter?: "top_rating" | "lowest_rating";
-  sort?: "asc" | "desc";
-};
-
-async function fetchMovieGroups(params: ListParams = {}): Promise<MovieGroupsResponse> {
-  const query = new URLSearchParams(params as Record<string, string>).toString();
-  const url = query ? `${MOVIE_GROUPS_URL}?${query}` : MOVIE_GROUPS_URL;
-  const response = await fetch(url);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(text || `HTTP ${response.status}`);
-  }
-  return await response.json() as Promise<MovieGroupsResponse>;
-}
+import {deleteMovie, fetchMovieGroups} from "../api/movies.ts";
 
 const MovieListPage = () => {
   const [usersLeft, setUsersLeft] = useState<User[]>([]);
@@ -30,7 +14,11 @@ const MovieListPage = () => {
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [showAddMovieForm, setShowAddMovieForm] = useState(false);
+  const [showMovieForm, setShowMovieForm] = useState(false);
+  const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
+  const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const loadMovieGroups = useCallback(() => {
     setLoading(true);
@@ -51,6 +39,41 @@ const MovieListPage = () => {
     });
   }, [loadMovieGroups]);
 
+  const closeMovieForm = () => {
+    setShowMovieForm(false);
+    setEditingMovie(undefined);
+    loadMovieGroups();
+  };
+
+  const handleEdit = (movie: Movie) => {
+    setOpenSwipeId(null);
+    setEditingMovie(movie);
+    setShowMovieForm(true);
+  };
+
+  const handleDelete = (movie: Movie) => {
+    setDeleteError(null);
+    setMovieToDelete(movie);
+  };
+
+  const executeDelete = async () => {
+    if (!movieToDelete) return;
+
+    try {
+      await deleteMovie(movieToDelete.id);
+      setMovieToDelete(null);
+      setDeleteError(null);
+      loadMovieGroups();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete movie");
+    }
+  };
+
+  const cancelDelete = () => {
+    setMovieToDelete(null);
+    setDeleteError(null);
+  };
+
   if (isLoading) return <p>Loading...</p>;
   if (error) {
     console.error(error);
@@ -68,26 +91,62 @@ const MovieListPage = () => {
                   </div>
                   <div className="add-button">
                     {movieGroup.groupId === currentRound &&
-                        <button onClick={() => setShowAddMovieForm(true)}><CirclePlus size={30}/>
+                        <button onClick={() => {
+                          setEditingMovie(undefined);
+                          setShowMovieForm(true);
+                        }}><CirclePlus size={30}/>
                         </button>}
                   </div>
                 </div>
                 {movieGroup.movies.map(movie => (
-                    <MovieItem key={movie.id} movie={movie} isExpanded={expandedId === movie.id}
-                               onToggle={() => setExpandedId(expandedId === movie.id ? null : movie.id)}/>
+                    <MovieItem
+                        key={movie.id}
+                        movie={movie}
+                        isExpanded={expandedId === movie.id}
+                        isSwipeOpen={openSwipeId === movie.id}
+                        onToggle={() => {
+                          setOpenSwipeId(null);
+                          setExpandedId(expandedId === movie.id ? null : movie.id);
+                        }}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onSwipeOpen={() => setOpenSwipeId(movie.id)}
+                        onSwipeClose={() => setOpenSwipeId(current => current === movie.id ? null : current)}
+                        onSwipeBegin={() => {
+                          if (openSwipeId !== null && openSwipeId !== movie.id) {
+                            setOpenSwipeId(null);
+                          }
+                        }}
+                    />
                 ))}
               </div>
           ))}
         </div>
-        {showAddMovieForm && (<div className="movie-list__add__movie">
-          <AddMoviePage usersLeft={usersLeft}
-                        onBack={() => {
-                          setShowAddMovieForm(false);
-                          loadMovieGroups();
-                        }} />
-        </div>)}
+        {showMovieForm && (
+            <div className="movie-list__add__movie">
+              <AddMoviePage
+                  usersLeft={usersLeft}
+                  movie={editingMovie}
+                  onBack={closeMovieForm}
+              />
+            </div>
+        )}
+        {movieToDelete && (
+            <div className="confirm-dialog-overlay">
+              <div className="confirm-dialog">
+                <p>Delete "{movieToDelete.title}"?</p>
+                {deleteError && (
+                    <span className="confirm-dialog__error">{deleteError}</span>
+                )}
+                <div className="confirm-dialog__actions">
+                  <button type="button" onClick={cancelDelete}>Cancel</button>
+                  <button type="button" onClick={executeDelete}>Delete</button>
+                </div>
+              </div>
+            </div>
+        )}
       </div>
-  )
+  );
 };
 
 export default MovieListPage;
