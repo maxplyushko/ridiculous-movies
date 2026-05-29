@@ -4,7 +4,8 @@ public record MovieHighlightDto(
     String id,
     String title,
     String host,
-    Double averageRating
+    Double averageRating,
+    int place
 ) {
 
 }

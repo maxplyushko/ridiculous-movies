@@ -3,8 +3,8 @@ package com.ridiculousmovies.backend.web.dto;
 import java.util.List;
 
 public record StatsResponse(
-    MovieHighlightDto bestMovie,
-    MovieHighlightDto worstMovie,
+    List<MovieHighlightDto> bestMovies,
+    List<MovieHighlightDto> worstMovies,
     List<UserStatsResponse> usersByRating
 ) {
 

@@ -49,7 +49,7 @@ export function UsersRatingChart({users, active}: Props) {
 
   return (
       <div className="stat-chart">
-        <h2 className="stat-chart__title">Users by avg rating</h2>
+        <h2 className="stat-chart__title">Users by average rating</h2>
         <ul className="stat-bars" aria-label="Users by average rating">
           {users.map((user, index) => {
             const score = user.averageRatingGiven ?? 0;

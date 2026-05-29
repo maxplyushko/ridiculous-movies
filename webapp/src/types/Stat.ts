@@ -3,6 +3,7 @@ export type MovieHighlight = {
   title: string;
   host: string;
   averageRating: number;
+  place: number;
 };
 
 export type UserStats = {
@@ -13,7 +14,7 @@ export type UserStats = {
 };
 
 export type Stats = {
-  bestMovie: MovieHighlight;
-  worstMovie: MovieHighlight;
+  bestMovies: MovieHighlight[];
+  worstMovies: MovieHighlight[];
   usersByRating: UserStats[];
 };

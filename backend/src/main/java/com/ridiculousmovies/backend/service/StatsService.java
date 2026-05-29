@@ -3,6 +3,7 @@ package com.ridiculousmovies.backend.service;
 import com.ridiculousmovies.backend.repository.MovieRepository;
 import com.ridiculousmovies.backend.web.dto.MovieHighlightDto;
 import com.ridiculousmovies.backend.web.dto.StatsResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
@@ -24,22 +25,27 @@ public class StatsService {
   @Transactional(readOnly = true)
   public StatsResponse getStats(String sort) {
     return new StatsResponse(
-        mapMovieHighlight(movieRepository.findBestRatedHighlight(), "best"),
-        mapMovieHighlight(movieRepository.findWorstRatedHighlight(), "worst"),
+        mapMovieHighlights(movieRepository.findTop3BestRated(), "best"),
+        mapMovieHighlights(movieRepository.findTop3WorstRated(), "worst"),
         userStatsService.listUsers(sort)
     );
   }
 
-  private static MovieHighlightDto mapMovieHighlight(List<Object[]> rows, String which) {
+  private static List<MovieHighlightDto> mapMovieHighlights(List<Object[]> rows, String which) {
     if (rows.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no_rated_movies_for_" + which);
     }
-    Object[] row = rows.get(0);
-    String id = Objects.requireNonNull(row[0]).toString();
-    String title = (String) row[1];
-    String host = (String) row[2];
-    Double avg = ((Number) row[3]).doubleValue();
-    return new MovieHighlightDto(id, title, host, avg);
+    List<MovieHighlightDto> result = new ArrayList<>(rows.size());
+    int place = 1;
+    for (Object[] row : rows) {
+      String id = Objects.requireNonNull(row[0]).toString();
+      String title = (String) row[1];
+      String host = (String) row[2];
+      Double avg = ((Number) row[3]).doubleValue();
+      result.add(new MovieHighlightDto(id, title, host, avg, place));
+      place++;
+    }
+    return result;
   }
 
 }

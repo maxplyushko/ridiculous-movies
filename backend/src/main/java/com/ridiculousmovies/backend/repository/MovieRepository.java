@@ -83,21 +83,21 @@ public interface MovieRepository extends JpaRepository<Movie, String> {
       FROM movie m
       INNER JOIN app_user u ON u.id = m.owner_id
       INNER JOIN rating r ON r.movie_id = m.id
-      GROUP BY m.id, m.title, u.name
-      ORDER BY avg_score DESC, m.title ASC
-      LIMIT 1
+      GROUP BY m.id, m.title, u.name, m.created_at
+      ORDER BY avg_score DESC, m.created_at DESC
+      LIMIT 3
       """, nativeQuery = true)
-  List<Object[]> findBestRatedHighlight();
+  List<Object[]> findTop3BestRated();
 
   @Query(value = """
       SELECT m.id, m.title, u.name, AVG(r.score) AS avg_score
       FROM movie m
       INNER JOIN app_user u ON u.id = m.owner_id
       INNER JOIN rating r ON r.movie_id = m.id
-      GROUP BY m.id, m.title, u.name
-      ORDER BY avg_score ASC, m.title ASC
-      LIMIT 1
+      GROUP BY m.id, m.title, u.name, m.created_at
+      ORDER BY avg_score ASC, m.created_at DESC
+      LIMIT 3
       """, nativeQuery = true)
-  List<Object[]> findWorstRatedHighlight();
+  List<Object[]> findTop3WorstRated();
 
 }
