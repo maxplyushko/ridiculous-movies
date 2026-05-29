@@ -72,7 +72,7 @@ const MovieListPage = () => {
     setDeleteError(null);
   };
 
-  if (!isLoading) {
+  if (isLoading) {
     return <PageLoader/>;
   }
   if (error) {
