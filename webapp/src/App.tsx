@@ -4,11 +4,17 @@ import MovieListPage from "./components/MovieListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
 import MiscPage from "./components/MiscPage.tsx";
 import {ChartLine, Film, MoreHorizontal} from "lucide-react";
+import {hapticTabTap} from "./haptics.ts";
 
 type Tab = "stat" | "list" | "misc";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Tab>("list")
+
+  function selectTab(tab: Tab) {
+    hapticTabTap();
+    setCurrentPage(tab);
+  }
   return (
       <div className="app-shell">
         <main className="app-main">
@@ -18,16 +24,25 @@ function App() {
         </main>
 
         <nav className="bottom-bar">
-          <button className="bottom-bar-button" aria-label="Statistics"
-                  onClick={() => setCurrentPage("stat")}>
+          <button
+              className={`bottom-bar-button${currentPage === "stat" ? " active" : ""}`}
+              aria-label="Statistics"
+              aria-current={currentPage === "stat" ? "page" : undefined}
+              onClick={() => selectTab("stat")}>
             <ChartLine size={45}/>
           </button>
-          <button className="bottom-bar-button" aria-label="Movie List"
-                  onClick={() => setCurrentPage("list")}>
+          <button
+              className={`bottom-bar-button${currentPage === "list" ? " active" : ""}`}
+              aria-label="Movie List"
+              aria-current={currentPage === "list" ? "page" : undefined}
+              onClick={() => selectTab("list")}>
             <Film size={45}/>
           </button>
-          <button className="bottom-bar-button" aria-label="Misc"
-                  onClick={() => setCurrentPage("misc")}>
+          <button
+              className={`bottom-bar-button${currentPage === "misc" ? " active" : ""}`}
+              aria-label="Misc"
+              aria-current={currentPage === "misc" ? "page" : undefined}
+              onClick={() => selectTab("misc")}>
             <MoreHorizontal size={45}/>
           </button>
         </nav>

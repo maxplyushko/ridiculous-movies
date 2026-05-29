@@ -75,7 +75,12 @@ h1 {
   transition: color 0.15s ease;
 }
 
-.bottom-bar button:active {
+.bottom-bar button.active,
+.bottom-bar button[aria-current="page"] {
+  color: var(--accent);
+}
+
+.bottom-bar button:not(.active):active {
   color: var(--accent);
 }
 
