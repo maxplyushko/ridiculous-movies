@@ -24,10 +24,10 @@ function parseScoreInput(raw: string): number {
 }
 
 const AddMoviePage = ({
-  currentRound,
-  movie,
-  onBack,
-}: {
+                        currentRound,
+                        movie,
+                        onBack,
+                      }: {
   currentRound: number;
   movie?: Movie;
   onBack: () => void;
@@ -129,12 +129,14 @@ const AddMoviePage = ({
         <div className="add-movie__fields">
           <div className="add-movie__item">
             <label htmlFor="add-movie-title">Title</label>
-            <input id="add-movie-title" type="text" value={title} onChange={t => setTitle(t.target.value)}
+            <input id="add-movie-title" type="text" value={title}
+                   onChange={t => setTitle(t.target.value)}
                    placeholder="Title"/>
           </div>
           <div className="add-movie__item">
             <label htmlFor="add-movie-desc">Description</label>
-            <input id="add-movie-desc" type="text" value={description} onChange={d => setDescription(d.target.value)}
+            <input id="add-movie-desc" type="text" value={description}
+                   onChange={d => setDescription(d.target.value)}
                    placeholder="Description"/>
           </div>
           <div className="add-movie__item">

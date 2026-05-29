@@ -1,4 +1,4 @@
-import type { Movie } from "./Movie.ts";
+import type {Movie} from "./Movie.ts";
 
 export type MovieGroup = {
   groupId: number;

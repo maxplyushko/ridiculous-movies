@@ -10,7 +10,7 @@ services:
     volumes:
       - ridiculous_pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ridiculous -d ridiculous"]
+      test: [ "CMD-SHELL", "pg_isready -U ridiculous -d ridiculous" ]
       interval: 5s
       timeout: 5s
       retries: 5

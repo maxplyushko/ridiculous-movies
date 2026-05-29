@@ -15,12 +15,19 @@ function App() {
     hapticTabTap();
     setCurrentPage(tab);
   }
+
   return (
       <div className="app-shell">
         <main className="app-main">
-          <div hidden={currentPage !== "stat"}><StatPage /></div>
-          <div hidden={currentPage !== "list"}><MovieListPage /></div>
-          <div hidden={currentPage !== "misc"}><MiscPage /></div>
+          <div hidden={currentPage !== "stat"}>
+            <StatPage active={currentPage === "stat"}/>
+          </div>
+          <div hidden={currentPage !== "list"}>
+            <MovieListPage/>
+          </div>
+          <div hidden={currentPage !== "misc"}>
+            <MiscPage/>
+          </div>
         </main>
 
         <nav className="bottom-bar">

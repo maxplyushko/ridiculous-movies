@@ -32,18 +32,40 @@ function fireConfettiFromElement(element: HTMLElement) {
     disableForReducedMotion: true,
   };
 
-  confetti({...defaults, particleCount: count * 0.3, spread: 360, startVelocity: 38, ticks: 80, scalar: 0.9});
-  confetti({...defaults, particleCount: count * 0.2, spread: 360, startVelocity: 28, ticks: 70, scalar: 0.7});
-  confetti({...defaults, particleCount: count * 0.15, spread: 360, startVelocity: 48, ticks: 90, scalar: 1.1});
+  confetti({
+    ...defaults,
+    particleCount: count * 0.3,
+    spread: 360,
+    startVelocity: 38,
+    ticks: 80,
+    scalar: 0.9
+  });
+  confetti({
+    ...defaults,
+    particleCount: count * 0.2,
+    spread: 360,
+    startVelocity: 28,
+    ticks: 70,
+    scalar: 0.7
+  });
+  confetti({
+    ...defaults,
+    particleCount: count * 0.15,
+    spread: 360,
+    startVelocity: 48,
+    ticks: 90,
+    scalar: 1.1
+  });
 }
 
 function FireworkSparks() {
   return (
-    <div className="misc-page__fireworks" aria-hidden="true">
-      {Array.from({length: 16}, (_, i) => (
-        <span key={i} className="misc-page__firework-spark" style={{"--i": i} as React.CSSProperties}/>
-      ))}
-    </div>
+      <div className="misc-page__fireworks" aria-hidden="true">
+        {Array.from({length: 16}, (_, i) => (
+            <span key={i} className="misc-page__firework-spark"
+                  style={{"--i": i} as React.CSSProperties}/>
+        ))}
+      </div>
   );
 }
 
@@ -129,30 +151,30 @@ const MiscPage = () => {
       </div>
       <div className="misc-page__ticks" aria-hidden="true">
         {Array.from({length: MAX_HOSTS}, (_, i) => i + 1).map((n) => (
-          <span key={n}>{n}</span>
+            <span key={n}>{n}</span>
         ))}
       </div>
 
     </div>
     <button
-      type="button"
-      className="misc-page__generate"
-      disabled={isSpinning}
-      onClick={generateRandomNumber}
+        type="button"
+        className="misc-page__generate"
+        disabled={isSpinning}
+        onClick={generateRandomNumber}
     >
       {isSpinning ? "Picking..." : "Generate"}
     </button>
     {showRandomNumber && <div
-      ref={resultRef}
-      className={`misc-page__result${isSpinning ? " misc-page__result--spinning" : ""}`}
+        ref={resultRef}
+        className={`misc-page__result${isSpinning ? " misc-page__result--spinning" : ""}`}
     >
       {!isSpinning && <FireworkSparks key={resultKey}/>}
       <span className="misc-page__result-label">
         {isSpinning ? "PICKING HOST..." : "TODAY'S HOST"}
       </span>
       <span
-        key={isSpinning ? `spin-${displayNumber}` : `result-${resultKey}`}
-        className={`misc-page__result-number${isSpinning ? " misc-page__result-number--spinning" : ""}`}
+          key={isSpinning ? `spin-${displayNumber}` : `result-${resultKey}`}
+          className={`misc-page__result-number${isSpinning ? " misc-page__result-number--spinning" : ""}`}
       >
         {displayNumber}
       </span>

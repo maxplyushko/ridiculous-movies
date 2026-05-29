@@ -1,4 +1,4 @@
-import type { User } from "./User";
+import type {User} from "./User";
 import type {Rating} from "./Rating.ts";
 
 export type Movie = {
@@ -9,5 +9,5 @@ export type Movie = {
   updateAt: string;
   owner: User;
   averageRating: number;
-  ratings: [ Rating ]
+  ratings: [Rating]
 };

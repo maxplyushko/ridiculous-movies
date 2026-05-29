@@ -48,6 +48,17 @@ export function hapticSpinTick() {
   }
 }
 
+export function hapticBarGrowTick() {
+  if (isTelegramMiniApp()) {
+    telegramSelectionChanged();
+    return;
+  }
+
+  if (canUseVibrationApi()) {
+    navigator.vibrate(12);
+  }
+}
+
 export function hapticTabTap() {
   if (isTelegramMiniApp()) {
     telegramImpact("light");

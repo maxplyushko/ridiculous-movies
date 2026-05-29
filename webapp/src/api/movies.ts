@@ -1,6 +1,6 @@
-import type { Movie } from "../types/Movie";
-import type { MovieGroupsResponse } from "../types/MovieGroup";
-import { apiFetch } from "./client";
+import type {Movie} from "../types/Movie";
+import type {MovieGroupsResponse} from "../types/MovieGroup";
+import {apiFetch} from "./client";
 
 const BASE = "/api/movies";
 
@@ -33,13 +33,13 @@ export async function fetchMovieGroups(
 }
 
 export async function addMovie(data: MovieFormPayload): Promise<Movie> {
-  return apiFetch<Movie>(BASE, { method: "POST", body: data });
+  return apiFetch<Movie>(BASE, {method: "POST", body: data});
 }
 
 export async function editMovie(movieId: string, data: MovieFormPayload): Promise<Movie> {
-  return apiFetch<Movie>(`${BASE}/${movieId}`, { method: "PUT", body: data });
+  return apiFetch<Movie>(`${BASE}/${movieId}`, {method: "PUT", body: data});
 }
 
 export async function deleteMovie(movieId: string): Promise<void> {
-  return apiFetch<void>(`${BASE}/${movieId}`, { method: "DELETE" });
+  return apiFetch<void>(`${BASE}/${movieId}`, {method: "DELETE"});
 }
