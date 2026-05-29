@@ -3,12 +3,13 @@ import {useState} from "react";
 import MovieListPage from "./components/MovieListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
 import MiscPage from "./components/MiscPage.tsx";
+import {AuthGate} from "./components/AuthGate.tsx";
 import {ChartLine, Film, MoreHorizontal} from "lucide-react";
 import {hapticTabTap} from "./haptics.ts";
 
 type Tab = "stat" | "list" | "misc";
 
-function App() {
+function AppShell() {
   const [currentPage, setCurrentPage] = useState<Tab>("list")
 
   function selectTab(tab: Tab) {
@@ -55,6 +56,14 @@ function App() {
         </nav>
       </div>
   )
+}
+
+function App() {
+  return (
+      <AuthGate>
+        {() => <AppShell/>}
+      </AuthGate>
+  );
 }
 
 export default App

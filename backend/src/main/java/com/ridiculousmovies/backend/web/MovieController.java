@@ -29,25 +29,29 @@ public class MovieController {
 
   @GetMapping
   public List<MovieResponse> list(
+      @RequestHeader("User-Id") String userId,
       @RequestParam(required = false) String filter,
       @RequestParam(defaultValue = "desc") String sort,
       @RequestParam(defaultValue = "1") int minRatings,
       @RequestParam(defaultValue = "false") boolean requireAllUsers
   ) {
-    return movieService.listMovies(filter, sort, minRatings, requireAllUsers);
+    return movieService.listMovies(userId, filter, sort, minRatings, requireAllUsers);
   }
 
   @GetMapping("/groups")
   public MovieGroupsResponse listGrouped(
+      @RequestHeader("User-Id") String userId,
       @RequestParam(defaultValue = "desc") String sort
   ) {
-    return movieService.listGroupedMovies(sort);
+    return movieService.listGroupedMovies(userId, sort);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public MovieResponse create(@RequestHeader("User-Id") String userId,
-      @RequestBody CreateMovieRequest req) {
+  public MovieResponse create(
+      @RequestHeader("User-Id") String userId,
+      @RequestBody CreateMovieRequest req
+  ) {
     return movieService.createMovie(userId, req);
   }
 

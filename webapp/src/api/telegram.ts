@@ -10,6 +10,10 @@ export function isTelegramMiniApp(): boolean {
 }
 
 export function getTelegramUserId(): string {
+  const devId = import.meta.env.VITE_DEV_USER_ID;
+  if (devId) {
+    return String(devId);
+  }
   const id = getTelegramWebApp()?.initDataUnsafe?.user?.id;
   return id === undefined ? "" : String(id);
 }

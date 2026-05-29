@@ -68,17 +68,18 @@ function PodiumSlot({
         </span>
         <p className="stat-podium__title">{movie.title}</p>
         <p className="stat-podium__host">{movie.host}</p>
-        <p className={`stat-podium__rating stat-podium__rating--${variant}`}>
-          {movie.averageRating.toFixed(2)}
-        </p>
       </div>
       <div
         className={`stat-podium__step ${stepClass}${grow ? " stat-podium__step--grow" : ""}`}
         style={
           { "--podium-delay": `${staggerIndex * PODIUM_STAGGER_MS}ms` } as CSSProperties
         }
-        aria-hidden="true"
-      />
+        aria-label={`Rating ${movie.averageRating.toFixed(2)}`}
+      >
+        <span className="stat-podium__step-score">
+          {movie.averageRating.toFixed(2)}
+        </span>
+      </div>
     </article>
   );
 }

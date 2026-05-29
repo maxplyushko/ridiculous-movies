@@ -14,12 +14,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class MovieMapper {
 
-  public MovieResponse toResponse(Movie m) {
-    List<RatingEntryDto> ratings = m.getRatings().stream()
+  public MovieResponse toResponse(Movie m, String groupId) {
+    List<Rating> groupRatings = m.getRatings().stream()
+        .filter(r -> r.getUser().getUserGroup().getId().equals(groupId))
         .sorted(Comparator.comparing(r -> r.getUser().getId()))
+        .toList();
+    List<RatingEntryDto> ratings = groupRatings.stream()
         .map(this::toRatingEntry)
         .toList();
-    Double avg = averageRating(m);
+    Double avg = averageRating(groupRatings);
     UserRefDto owner = new UserRefDto(m.getOwner().getId(), m.getOwner().getName());
     return new MovieResponse(
         m.getId(),
@@ -38,14 +41,14 @@ public class MovieMapper {
     return new RatingEntryDto(r.getId(), u, r.getScore().setScale(2, RoundingMode.HALF_UP));
   }
 
-  private Double averageRating(Movie m) {
-    if (m.getRatings().isEmpty()) {
+  private Double averageRating(List<Rating> ratings) {
+    if (ratings.isEmpty()) {
       return null;
     }
-    BigDecimal sum = m.getRatings().stream()
+    BigDecimal sum = ratings.stream()
         .map(Rating::getScore)
         .reduce(BigDecimal.ZERO, BigDecimal::add);
-    return sum.divide(BigDecimal.valueOf(m.getRatings().size()), 4, RoundingMode.HALF_UP)
+    return sum.divide(BigDecimal.valueOf(ratings.size()), 4, RoundingMode.HALF_UP)
         .doubleValue();
   }
 

@@ -1,9 +1,31 @@
 import {getTelegramUserId} from "./telegram.ts";
+import {PRIVATE_USE_MESSAGE} from "./messages.ts";
 
 type RequestOptions = {
   method?: string;
   body?: unknown;
 };
+
+function parseErrorMessage(text: string, status: number): string {
+  if (!text) {
+    return status === 403 ? PRIVATE_USE_MESSAGE : `HTTP ${status}`;
+  }
+  try {
+    const json = JSON.parse(text) as { message?: string; error?: string };
+    if (json.message) {
+      return json.message;
+    }
+    if (status === 403) {
+      return PRIVATE_USE_MESSAGE;
+    }
+    if (json.error) {
+      return json.error;
+    }
+  } catch {
+    // plain text response
+  }
+  return text;
+}
 
 export async function apiFetch<T>(path: string, {method, body}: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
@@ -20,7 +42,7 @@ export async function apiFetch<T>(path: string, {method, body}: RequestOptions =
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `HTTP ${response.status}`);
+    throw new Error(parseErrorMessage(text, response.status));
   }
 
   if (response.status === 204) {

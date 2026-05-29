@@ -1,5 +1,6 @@
 package com.ridiculousmovies.backend.service;
 
+import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.repository.AppUserRepository;
 import com.ridiculousmovies.backend.web.dto.UserStatsResponse;
 import java.util.List;
@@ -13,17 +14,21 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserStatsService {
 
   private final AppUserRepository appUserRepository;
+  private final AuthService authService;
 
-  public UserStatsService(AppUserRepository appUserRepository) {
+  public UserStatsService(AppUserRepository appUserRepository, AuthService authService) {
     this.appUserRepository = appUserRepository;
+    this.authService = authService;
   }
 
   @Transactional(readOnly = true)
-  public List<UserStatsResponse> listUsers(String sort) {
+  public List<UserStatsResponse> listUsers(String userId, String sort) {
+    AppUser user = authService.requireUser(userId);
+    String groupId = user.getUserGroup().getId();
     String s = sort == null || sort.isBlank() ? "desc" : sort.trim().toLowerCase();
     List<Object[]> rows = switch (s) {
-      case "desc" -> appUserRepository.findAllUserStatsByAverageDesc();
-      case "asc" -> appUserRepository.findAllUserStatsByAverageAsc();
+      case "desc" -> appUserRepository.findUserStatsByGroupOrderByAverageDesc(groupId);
+      case "asc" -> appUserRepository.findUserStatsByGroupOrderByAverageAsc(groupId);
       default ->
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be asc or desc");
     };

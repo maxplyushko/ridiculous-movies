@@ -4,6 +4,7 @@ import com.ridiculousmovies.backend.service.UserStatsService;
 import com.ridiculousmovies.backend.web.dto.UserStatsResponse;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,7 +20,10 @@ public class UserController {
   }
 
   @GetMapping
-  public List<UserStatsResponse> list(@RequestParam(defaultValue = "desc") String sort) {
-    return userStatsService.listUsers(sort);
+  public List<UserStatsResponse> list(
+      @RequestHeader("User-Id") String userId,
+      @RequestParam(defaultValue = "desc") String sort
+  ) {
+    return userStatsService.listUsers(userId, sort);
   }
 }

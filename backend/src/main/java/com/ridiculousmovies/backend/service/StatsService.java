@@ -1,5 +1,6 @@
 package com.ridiculousmovies.backend.service;
 
+import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.repository.MovieRepository;
 import com.ridiculousmovies.backend.web.dto.MovieHighlightDto;
 import com.ridiculousmovies.backend.web.dto.StatsResponse;
@@ -16,18 +17,26 @@ public class StatsService {
 
   private final MovieRepository movieRepository;
   private final UserStatsService userStatsService;
+  private final AuthService authService;
 
-  public StatsService(MovieRepository movieRepository, UserStatsService userStatsService) {
+  public StatsService(
+      MovieRepository movieRepository,
+      UserStatsService userStatsService,
+      AuthService authService
+  ) {
     this.movieRepository = movieRepository;
     this.userStatsService = userStatsService;
+    this.authService = authService;
   }
 
   @Transactional(readOnly = true)
-  public StatsResponse getStats(String sort) {
+  public StatsResponse getStats(String userId, String sort) {
+    AppUser user = authService.requireUser(userId);
+    String groupId = user.getUserGroup().getId();
     return new StatsResponse(
-        mapMovieHighlights(movieRepository.findTop3BestRated(), "best"),
-        mapMovieHighlights(movieRepository.findTop3WorstRated(), "worst"),
-        userStatsService.listUsers(sort)
+        mapMovieHighlights(movieRepository.findTop3BestRatedForGroup(groupId), "best"),
+        mapMovieHighlights(movieRepository.findTop3WorstRatedForGroup(groupId), "worst"),
+        userStatsService.listUsers(userId, sort)
     );
   }
 
