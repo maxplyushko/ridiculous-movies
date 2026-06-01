@@ -1,0 +1,13 @@
+name: Ping Render (Thursday evening CRON)
+
+on:
+  schedule:
+    - cron: '*/5 15-20 * * 4'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Render health endpoint
+        run: curl -fsS https://ridiculous-movies.onrender.com
