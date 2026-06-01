@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {checkAccess, PRIVATE_USE_MESSAGE, type AuthResponse} from "../api/auth.ts";
 import {PageLoader} from "./PageLoader.tsx";
+import { getTelegramId } from "../api/telegram.ts";
 
 type AuthGateProps = {
   children: (session: AuthResponse) => React.ReactNode;
@@ -21,7 +22,7 @@ export function AuthGate({children}: AuthGateProps) {
     .catch((err: unknown) => {
       if (!cancelled) {
         setDeniedMessage(
-            err instanceof Error ? err.message : PRIVATE_USE_MESSAGE
+            (err instanceof Error ? err.message : PRIVATE_USE_MESSAGE)
         );
       }
     });
@@ -33,7 +34,7 @@ export function AuthGate({children}: AuthGateProps) {
   if (deniedMessage) {
     return (
         <div className="access-denied">
-          <p>{deniedMessage}</p>
+          <p>{deniedMessage} User ID: {getTelegramId()}</p>
         </div>
     );
   }

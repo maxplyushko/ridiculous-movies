@@ -7,7 +7,7 @@ import AddMoviePage from "./AddMoviePage.tsx";
 import {deleteMovie, fetchMovieGroups} from "../api/movies.ts";
 import {PageLoader} from "./PageLoader.tsx";
 
-const MovieListPage = () => {
+const MovieListPage = ({isAdmin}: { isAdmin: boolean }) => {
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
@@ -110,6 +110,7 @@ const MovieListPage = () => {
                         }}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        canDelete={isAdmin}
                         onSwipeOpen={() => setOpenSwipeId(movie.id)}
                         onSwipeClose={() => setOpenSwipeId(current => current === movie.id ? null : current)}
                         onSwipeBegin={() => {

@@ -41,6 +41,12 @@ public class AuthService {
     return appUserRepository.countByUserGroup_Id(groupId);
   }
 
+  public void requireAdmin(AppUser user) {
+    if (!"admin".equals(user.getRole().getName())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
+    }
+  }
+
   private ResponseStatusException denied() {
     return new ResponseStatusException(HttpStatus.FORBIDDEN, PRIVATE_USE_MESSAGE);
   }

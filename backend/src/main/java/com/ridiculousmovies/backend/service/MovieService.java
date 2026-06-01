@@ -153,6 +153,7 @@ public class MovieService {
   @Transactional
   public void deleteMovie(String userId, String movieId) {
     AppUser actor = authService.requireUser(userId);
+    authService.requireAdmin(actor);
     String groupId = actor.getUserGroup().getId();
     if (!movieRepository.existsByIdAndOwnerGroupId(movieId, groupId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");

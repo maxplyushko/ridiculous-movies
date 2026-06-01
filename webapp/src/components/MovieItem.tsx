@@ -6,6 +6,7 @@ type MovieItemProps = {
   movie: Movie;
   isExpanded: boolean;
   isSwipeOpen: boolean;
+  canDelete: boolean;
   onToggle: () => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
@@ -28,6 +29,7 @@ const MovieItem = ({
                      movie,
                      isExpanded,
                      isSwipeOpen,
+                     canDelete,
                      onToggle,
                      onEdit,
                      onDelete,
@@ -128,7 +130,11 @@ const MovieItem = ({
           <button type="button" className="movie-item-management__edit" onClick={handleEdit}>
             <Pencil size={16}/>
           </button>
-          <button type="button" className="movie-item-management__delete" onClick={handleDelete}>
+          <button
+              type="button"
+              className="movie-item-management__delete"
+              disabled={!canDelete}
+              onClick={handleDelete}>
             <Trash2 size={16}/>
           </button>
         </div>

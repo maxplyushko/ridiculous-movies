@@ -9,7 +9,7 @@ export function isTelegramMiniApp(): boolean {
   return getTelegramWebApp() != null;
 }
 
-export function getTelegramUserId(): string {
+export function getTelegramId(): string {
   const devId = import.meta.env.VITE_DEV_USER_ID;
   if (devId) {
     return String(devId);

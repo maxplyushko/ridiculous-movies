@@ -4,13 +4,15 @@ import MovieListPage from "./components/MovieListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
 import MiscPage from "./components/MiscPage.tsx";
 import {AuthGate} from "./components/AuthGate.tsx";
+import type {AuthResponse} from "./api/auth.ts";
 import {ChartLine, Film, MoreHorizontal} from "lucide-react";
 import {hapticTabTap} from "./haptics.ts";
 
 type Tab = "stat" | "list" | "misc";
 
-function AppShell() {
+function AppShell({session}: { session: AuthResponse }) {
   const [currentPage, setCurrentPage] = useState<Tab>("list")
+  const isAdmin = session.role === "admin";
 
   function selectTab(tab: Tab) {
     hapticTabTap();
@@ -24,7 +26,7 @@ function AppShell() {
             <StatPage active={currentPage === "stat"}/>
           </div>
           <div hidden={currentPage !== "list"}>
-            <MovieListPage/>
+            <MovieListPage isAdmin={isAdmin}/>
           </div>
           <div hidden={currentPage !== "misc"}>
             <MiscPage/>
@@ -37,21 +39,21 @@ function AppShell() {
               aria-label="Statistics"
               aria-current={currentPage === "stat" ? "page" : undefined}
               onClick={() => selectTab("stat")}>
-            <ChartLine size={45}/>
+            <ChartLine size={30}/>
           </button>
           <button
               className={`bottom-bar-button${currentPage === "list" ? " active" : ""}`}
               aria-label="Movie List"
               aria-current={currentPage === "list" ? "page" : undefined}
               onClick={() => selectTab("list")}>
-            <Film size={45}/>
+            <Film size={30}/>
           </button>
           <button
               className={`bottom-bar-button${currentPage === "misc" ? " active" : ""}`}
               aria-label="Misc"
               aria-current={currentPage === "misc" ? "page" : undefined}
               onClick={() => selectTab("misc")}>
-            <MoreHorizontal size={45}/>
+            <MoreHorizontal size={30}/>
           </button>
         </nav>
       </div>
@@ -61,7 +63,7 @@ function AppShell() {
 function App() {
   return (
       <AuthGate>
-        {() => <AppShell/>}
+        {(session) => <AppShell session={session}/>}
       </AuthGate>
   );
 }

@@ -1,5 +1,5 @@
-import {getTelegramUserId} from "./telegram.ts";
 import {PRIVATE_USE_MESSAGE} from "./messages.ts";
+import { getTelegramId } from "./telegram.ts";
 
 type RequestOptions = {
   method?: string;
@@ -33,7 +33,7 @@ export async function apiFetch<T>(path: string, {method, body}: RequestOptions =
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
-  headers["User-Id"] = getTelegramUserId();
+  headers["User-Id"] = getTelegramId();
   const response = await fetch(path, {
     method,
     headers,
