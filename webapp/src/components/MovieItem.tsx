@@ -1,6 +1,7 @@
 import type {Movie} from "../types/Movie";
 import {Calendar, Pencil, Star, Trash2, User} from "lucide-react";
 import {useEffect, useRef, useState} from "react";
+import {hapticTabTap} from "../haptics.ts";
 
 type MovieItemProps = {
   movie: Movie;
@@ -98,6 +99,7 @@ const MovieItem = ({
       closeSwipe();
       return;
     }
+    hapticTabTap();
     onToggle();
   };
 

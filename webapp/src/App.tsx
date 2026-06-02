@@ -10,7 +10,7 @@ import {hapticTabTap} from "./haptics.ts";
 
 type Tab = "stat" | "list" | "misc";
 
-function AppShell({session}: { session: AuthResponse }) {
+function AppShell({session}: Readonly<{ session: AuthResponse }>) {
   const [currentPage, setCurrentPage] = useState<Tab>("list")
   const isAdmin = session.role === "admin";
 
