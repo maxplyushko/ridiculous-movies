@@ -3,9 +3,7 @@ package com.ridiculousmovies.backend.service;
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.Movie;
 import com.ridiculousmovies.backend.domain.Rating;
-import com.ridiculousmovies.backend.repository.AppUserRepository;
-import com.ridiculousmovies.backend.repository.MovieRepository;
-import com.ridiculousmovies.backend.repository.RatingRepository;
+import com.ridiculousmovies.backend.store.DataStore;
 import com.ridiculousmovies.backend.web.dto.CreateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.MovieGroupResponse;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
@@ -20,9 +18,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -30,34 +28,18 @@ public class MovieService {
 
   private static final BigDecimal MAX_SCORE = BigDecimal.TEN;
 
-  private final MovieRepository movieRepository;
-  private final AppUserRepository appUserRepository;
-  private final RatingRepository ratingRepository;
+  private final DataStore dataStore;
   private final MovieMapper movieMapper;
   private final AuthService authService;
 
-  public MovieService(
-      MovieRepository movieRepository,
-      AppUserRepository appUserRepository,
-      RatingRepository ratingRepository,
-      MovieMapper movieMapper,
-      AuthService authService
-  ) {
-    this.movieRepository = movieRepository;
-    this.appUserRepository = appUserRepository;
-    this.ratingRepository = ratingRepository;
+  public MovieService(DataStore dataStore, MovieMapper movieMapper, AuthService authService) {
+    this.dataStore = dataStore;
     this.movieMapper = movieMapper;
     this.authService = authService;
   }
 
-  @Transactional(readOnly = true)
   public List<MovieResponse> listMovies(
-      String userId,
-      String filter,
-      String sort,
-      int minRatings,
-      boolean requireAllUsers
-  ) {
+      String userId, String filter, String sort, int minRatings, boolean requireAllUsers) {
     AppUser user = authService.requireUser(userId);
     String groupId = user.getUserGroup().getId();
     if (minRatings < 0) {
@@ -67,56 +49,37 @@ public class MovieService {
     String sortDir = normalizeSort(sort);
     return switch (normalizeFilter(filter)) {
       case "all" -> {
-        var movies = "asc".equals(sortDir)
-            ? movieRepository.findAllFetchedSortedByCreatedAtAscForGroup(groupId)
-            : movieRepository.findAllFetchedSortedByCreatedAtDescForGroup(groupId);
+        List<Movie> movies = dataStore.findMoviesForGroup(groupId, "asc".equals(sortDir));
         yield movies.stream().map(m -> movieMapper.toResponse(m, groupId)).toList();
       }
-      case "top_rating" -> rankedMovies(groupId,
-          movieRepository.findIdsWithHighestAverageForGroup(
-              groupId, minRatings, requireAllUsers, groupMemberCount
-          )
-      );
-      case "lowest_rating" -> rankedMovies(groupId,
-          movieRepository.findIdsWithLowestAverageForGroup(
-              groupId, minRatings, requireAllUsers, groupMemberCount
-          )
-      );
-      default ->
-          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown filter: " + filter);
+      case "top_rating" -> rankedMovies(groupId, dataStore.findIdsWithExtremumAvgForGroup(
+          groupId, minRatings, requireAllUsers, groupMemberCount, true));
+      case "lowest_rating" -> rankedMovies(groupId, dataStore.findIdsWithExtremumAvgForGroup(
+          groupId, minRatings, requireAllUsers, groupMemberCount, false));
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown filter: " + filter);
     };
   }
 
-  @Transactional(readOnly = true)
   public MovieGroupsResponse listGroupedMovies(String userId, String sort) {
     AppUser user = authService.requireUser(userId);
     String groupId = user.getUserGroup().getId();
-    String sortDir = normalizeSort(sort);
-    List<Movie> movies = "asc".equals(sortDir)
-        ? movieRepository.findAllFetchedSortedByCreatedAtAscForGroup(groupId)
-        : movieRepository.findAllFetchedSortedByCreatedAtDescForGroup(groupId);
+    List<Movie> movies = dataStore.findMoviesForGroup(groupId, "asc".equals(normalizeSort(sort)));
 
     Map<Integer, List<MovieResponse>> byRound = new LinkedHashMap<>();
     for (Movie m : movies) {
       int round = m.getRound() != null ? m.getRound() : 0;
-      byRound.computeIfAbsent(round, k -> new ArrayList<>())
-          .add(movieMapper.toResponse(m, groupId));
+      byRound.computeIfAbsent(round, k -> new ArrayList<>()).add(movieMapper.toResponse(m, groupId));
     }
-    int currentRound = movieRepository.findLatestRoundForGroup(groupId);
+    int currentRound = dataStore.findLatestRoundForGroup(groupId);
     byRound.putIfAbsent(currentRound, new ArrayList<>());
 
     List<MovieGroupResponse> groups = byRound.entrySet().stream()
         .map(e -> new MovieGroupResponse(e.getKey(), e.getValue()))
         .toList();
 
-    return new MovieGroupsResponse(
-        currentRound,
-        movieRepository.findMaxRoundForGroup(groupId),
-        groups
-    );
+    return new MovieGroupsResponse(currentRound, dataStore.findMaxRoundForGroup(groupId), groups);
   }
 
-  @Transactional
   public MovieResponse createMovie(String userId, CreateMovieRequest req) {
     AppUser actor = authService.requireUser(userId);
     String groupId = actor.getUserGroup().getId();
@@ -127,17 +90,17 @@ public class MovieService {
     movie.setDescription(normalizeDescription(req.description()));
     movie.setOwner(owner);
     movie.setRound(resolveCreateRound(groupId, req.round()));
-    movieRepository.save(movie);
+    movie.setRatings(new ArrayList<>());
     replaceRatings(groupId, movie, req.ratings());
 
-    return fetchMovieResponse(groupId, movie.getId());
+    dataStore.saveMovie(movie);
+    return movieMapper.toResponse(movie, groupId);
   }
 
-  @Transactional
   public MovieResponse updateMovie(String userId, String movieId, UpdateMovieRequest req) {
     AppUser actor = authService.requireUser(userId);
     String groupId = actor.getUserGroup().getId();
-    Movie movie = movieRepository.findAllFetchedByIdInForGroup(List.of(movieId), groupId).stream()
+    Movie movie = dataStore.findMoviesByIdsAndGroup(List.of(movieId), groupId).stream()
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
     AppUser owner = resolveOwner(groupId, req.title(), req.ownerId());
@@ -147,18 +110,18 @@ public class MovieService {
     movie.setOwner(owner);
     replaceRatings(groupId, movie, req.ratings());
 
-    return fetchMovieResponse(groupId, movie.getId());
+    dataStore.saveMovie(movie);
+    return movieMapper.toResponse(movie, groupId);
   }
 
-  @Transactional
   public void deleteMovie(String userId, String movieId) {
     AppUser actor = authService.requireUser(userId);
     authService.requireAdmin(actor);
     String groupId = actor.getUserGroup().getId();
-    if (!movieRepository.existsByIdAndOwnerGroupId(movieId, groupId)) {
+    if (!dataStore.existsByIdAndGroup(movieId, groupId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
     }
-    movieRepository.deleteById(movieId);
+    dataStore.deleteMovieById(movieId);
   }
 
   private AppUser resolveOwner(String groupId, String title, String ownerId) {
@@ -169,7 +132,8 @@ public class MovieService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ownerId is required");
     }
     authService.assertUserInGroup(ownerId, groupId);
-    return getUser(ownerId);
+    return dataStore.findUserById(ownerId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
   }
 
   private static String normalizeDescription(String description) {
@@ -178,20 +142,17 @@ public class MovieService {
 
   private void replaceRatings(String groupId, Movie movie, List<RatingInputDto> ratings) {
     Map<String, Rating> existingByUserId = new HashMap<>();
-    for (Rating rating : ratingRepository.findByMovie_Id(movie.getId())) {
-      existingByUserId.put(rating.getUser().getId(), rating);
+    for (Rating r : movie.getRatings()) {
+      existingByUserId.put(r.getUser().getId(), r);
     }
 
     if (ratings == null || ratings.isEmpty()) {
-      if (!existingByUserId.isEmpty()) {
-        ratingRepository.deleteAll(existingByUserId.values());
-        movie.getRatings().clear();
-      }
+      movie.getRatings().clear();
       return;
     }
 
     Set<String> seen = new HashSet<>();
-    Set<String> desiredUserIds = new HashSet<>();
+    List<Rating> desired = new ArrayList<>();
     for (RatingInputDto entry : ratings) {
       if (!seen.add(entry.userId())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -199,46 +160,25 @@ public class MovieService {
       }
       authService.assertUserInGroup(entry.userId(), groupId);
       BigDecimal score = entry.score();
-      if (score == null || score.compareTo(BigDecimal.ZERO) < 0
-          || score.compareTo(MAX_SCORE) > 0) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-            "score must be between 0 and 10");
+      if (score == null || score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(MAX_SCORE) > 0) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "score must be between 0 and 10");
       }
-      desiredUserIds.add(entry.userId());
       Rating rating = existingByUserId.get(entry.userId());
       if (rating == null) {
         rating = new Rating();
+        rating.setId(UUID.randomUUID().toString());
         rating.setMovie(movie);
-        rating.setUser(getUser(entry.userId()));
-        movie.getRatings().add(rating);
-      } else if (!movie.getRatings().contains(rating)) {
-        movie.getRatings().add(rating);
+        rating.setUser(dataStore.findUserById(entry.userId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")));
       }
       rating.setScore(score);
+      desired.add(rating);
     }
-
-    for (Rating rating : existingByUserId.values()) {
-      if (!desiredUserIds.contains(rating.getUser().getId())) {
-        movie.getRatings().remove(rating);
-        ratingRepository.delete(rating);
-      }
-    }
-  }
-
-  private MovieResponse fetchMovieResponse(String groupId, String movieId) {
-    Movie saved = movieRepository.findAllFetchedByIdInForGroup(List.of(movieId), groupId).stream()
-        .findFirst()
-        .orElseThrow();
-    return movieMapper.toResponse(saved, groupId);
-  }
-
-  private AppUser getUser(String id) {
-    return appUserRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    movie.setRatings(desired);
   }
 
   private int resolveCreateRound(String groupId, Integer requestedRound) {
-    int latestRound = movieRepository.findLatestRoundForGroup(groupId);
+    int latestRound = dataStore.findLatestRoundForGroup(groupId);
     int round = requestedRound != null ? requestedRound : latestRound;
     if (round < latestRound || round > latestRound + 1) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -251,27 +191,22 @@ public class MovieService {
     if (ids.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no_movie_matches_filters");
     }
-    return movieRepository.findAllFetchedByIdInForGroup(ids, groupId).stream()
+    return dataStore.findMoviesByIdsAndGroup(ids, groupId).stream()
         .map(m -> movieMapper.toResponse(m, groupId))
         .toList();
   }
 
   private static String normalizeFilter(String filter) {
-    if (filter == null || filter.isBlank()) {
-      return "all";
-    }
+    if (filter == null || filter.isBlank()) return "all";
     return filter.trim().toLowerCase();
   }
 
   private static String normalizeSort(String sort) {
-    if (sort == null || sort.isBlank()) {
-      return "desc";
-    }
+    if (sort == null || sort.isBlank()) return "desc";
     String s = sort.trim().toLowerCase();
     if (!"asc".equals(s) && !"desc".equals(s)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be asc or desc");
     }
     return s;
   }
-
 }

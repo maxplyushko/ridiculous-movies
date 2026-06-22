@@ -1,4 +1,4 @@
--- Generated from external Postgres on 2026-05-29 14:32:07 UTC
+-- Generated from external Postgres on 2026-06-22 13:35:24 UTC
 
 --
 --
@@ -6,26 +6,6 @@
 
 
 
-
-
---
--- Name: user_group; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE user_group (
-                            id   character varying(64) NOT NULL,
-                            name character varying(100) NOT NULL
-);
-
-
---
--- Name: user_role; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE user_role (
-                           id   character varying(64) NOT NULL,
-                           name character varying(50) NOT NULL
-);
 
 
 --
@@ -33,10 +13,10 @@ CREATE TABLE user_role (
 --
 
 CREATE TABLE app_user (
-                          id            character varying(64) NOT NULL,
-                          name          character varying(100) NOT NULL,
-                          user_group_id character varying(64) NOT NULL,
-                          role_id       character varying(64) NOT NULL
+    id character varying(64) NOT NULL,
+    name character varying(100) NOT NULL,
+    user_group_id character varying(64) NOT NULL,
+    role_id character varying(64) NOT NULL
 );
 
 
@@ -45,13 +25,13 @@ CREATE TABLE app_user (
 --
 
 CREATE TABLE movie (
-                       id character varying(64) NOT NULL,
-                       title text NOT NULL,
-                       description text DEFAULT ''::text NOT NULL,
-                       owner_id character varying(64) NOT NULL,
-                       round integer,
-                       created_at timestamp with time zone DEFAULT now() NOT NULL,
-                       updated_at timestamp with time zone DEFAULT now() NOT NULL
+    id character varying(64) NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    owner_id character varying(64) NOT NULL,
+    round integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -60,43 +40,31 @@ CREATE TABLE movie (
 --
 
 CREATE TABLE rating (
-                        id character varying(64) NOT NULL,
-                        movie_id character varying(64) NOT NULL,
-                        user_id character varying(64) NOT NULL,
-                        score numeric(5,2) NOT NULL
+    id character varying(64) NOT NULL,
+    movie_id character varying(64) NOT NULL,
+    user_id character varying(64) NOT NULL,
+    score numeric(5,2) NOT NULL
 );
 
 
 --
--- Name: user_group user_group_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: user_group; Type: TABLE; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY user_group
-    ADD CONSTRAINT user_group_name_key UNIQUE (name);
-
-
---
--- Name: user_group user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY user_group
-    ADD CONSTRAINT user_group_pkey PRIMARY KEY (id);
+CREATE TABLE user_group (
+    id character varying(64) NOT NULL,
+    name character varying(100) NOT NULL
+);
 
 
 --
--- Name: user_role user_role_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: user_role; Type: TABLE; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY user_role
-    ADD CONSTRAINT user_role_name_key UNIQUE (name);
-
-
---
--- Name: user_role user_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY user_role
-    ADD CONSTRAINT user_role_pkey PRIMARY KEY (id);
+CREATE TABLE user_role (
+    id character varying(64) NOT NULL,
+    name character varying(50) NOT NULL
+);
 
 
 --
@@ -137,6 +105,38 @@ ALTER TABLE ONLY rating
 
 ALTER TABLE ONLY rating
     ADD CONSTRAINT rating_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_group user_group_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY user_group
+    ADD CONSTRAINT user_group_name_key UNIQUE (name);
+
+
+--
+-- Name: user_group user_group_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY user_group
+    ADD CONSTRAINT user_group_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_role user_role_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY user_role
+    ADD CONSTRAINT user_role_name_key UNIQUE (name);
+
+
+--
+-- Name: user_role user_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY user_role
+    ADD CONSTRAINT user_role_pkey PRIMARY KEY (id);
 
 
 --
@@ -209,4 +209,5 @@ ALTER TABLE ONLY rating
 
 --
 --
+
 
