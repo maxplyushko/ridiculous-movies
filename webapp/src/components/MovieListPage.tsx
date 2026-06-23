@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
 import MovieItem from "./MovieItem.tsx";
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, Search, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups } from "../api/movies.ts";
 import { PageLoader } from "./PageLoader.tsx";
@@ -14,6 +14,7 @@ type RoundSectionProps = {
   openSwipeId: string | null;
   isAdmin: boolean;
   onAddMovie: () => void;
+  onSearch: () => void;
   onToggle: (id: string) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
@@ -29,6 +30,7 @@ function RoundSection({
   openSwipeId,
   isAdmin,
   onAddMovie,
+  onSearch,
   onToggle,
   onEdit,
   onDelete,
@@ -42,9 +44,16 @@ function RoundSection({
         <div className="movie-group__header__round">
           <h3>Round {movieGroup.groupId}</h3>
         </div>
-        <div className="add-button">
+        <div className="movie-group__header__actions">
           {movieGroup.groupId === currentRound && (
-            <button onClick={onAddMovie}><CirclePlus size={30} /></button>
+            <>
+              <button className="icon-button" onClick={onSearch} aria-label="Search movies">
+                <Search size={30} />
+              </button>
+              <button className="icon-button" onClick={onAddMovie} aria-label="Add movie">
+                <CirclePlus size={30} />
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -100,6 +109,9 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const loadMovieGroups = useCallback(() => {
     setLoading(true);
@@ -116,6 +128,19 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     queueMicrotask(loadMovieGroups);
   }, [loadMovieGroups]);
+
+  useEffect(() => {
+    if (searchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [searchOpen]);
+
+  const openSearch = () => setSearchOpen(true);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
 
   const closeMovieForm = () => {
     setShowMovieForm(false);
@@ -151,6 +176,20 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
     }
   };
 
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  const visibleGroups = normalizedQuery
+    ? movieGroups
+        .map((g) => ({
+          ...g,
+          movies: g.movies.filter(
+            (m) =>
+              m.title.toLowerCase().includes(normalizedQuery) ||
+              m.description.toLowerCase().includes(normalizedQuery),
+          ),
+        }))
+        .filter((g) => g.movies.length > 0)
+    : movieGroups;
+
   if (isLoading) return <PageLoader />;
   if (error) {
     console.error(error);
@@ -160,7 +199,26 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   return (
     <div>
       <div className="movie-list">
-        {movieGroups.map((group) => (
+        {searchOpen && (
+          <div className="movie-list__search">
+            <Search size={18} className="movie-list__search__icon" />
+            <input
+              ref={searchInputRef}
+              type="search"
+              inputMode="search"
+              placeholder="Search by title or description…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button className="movie-list__search__clear" onClick={closeSearch} aria-label="Clear search">
+              <X size={18} />
+            </button>
+          </div>
+        )}
+        {normalizedQuery && visibleGroups.length === 0 && (
+          <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
+        )}
+        {visibleGroups.map((group) => (
           <RoundSection
             key={group.groupId}
             movieGroup={group}
@@ -169,6 +227,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
             onAddMovie={() => { setEditingMovie(undefined); setShowMovieForm(true); }}
+            onSearch={openSearch}
             onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
             onEdit={handleEdit}
             onDelete={handleDelete}
