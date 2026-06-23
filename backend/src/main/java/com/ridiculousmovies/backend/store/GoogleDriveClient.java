@@ -13,10 +13,12 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GoogleDriveClient {
+@Profile("prod")
+public class GoogleDriveClient implements StorageClient {
 
   private final Drive drive;
 
@@ -30,7 +32,7 @@ public class GoogleDriveClient {
       } else {
         credentials = GoogleCredentials.getApplicationDefault();
       }
-      credentials = (GoogleCredentials) credentials.createScoped(List.of(DriveScopes.DRIVE));
+      credentials = credentials.createScoped(List.of(DriveScopes.DRIVE));
       this.drive = new Drive.Builder(
           GoogleNetHttpTransport.newTrustedTransport(),
           GsonFactory.getDefaultInstance(),

@@ -44,14 +44,14 @@ function PodiumSlot({
   variant,
   grow,
   staggerIndex,
-}: {
+}: Readonly<{
   movie: MovieHighlight | null;
   podiumPlace: 1 | 2 | 3;
   stepClass: string;
   variant: Variant;
   grow: boolean;
   staggerIndex: number;
-}) {
+}>) {
   if (!movie) {
     return (
       <div className="stat-podium__slot stat-podium__slot--empty" aria-hidden="true">
@@ -84,20 +84,18 @@ function PodiumSlot({
   );
 }
 
-export function MoviePodium({ title, movies, variant, active }: Props) {
+export function MoviePodium({ title, movies, variant, active }: Readonly<Props>) {
   const slots = podiumSlots(movies);
   const filledCount = slots.filter((m) => m !== null).length;
-  const [grow, setGrow] = useState(false);
+  const [triggered, setTriggered] = useState(false);
+  const grow = active && triggered;
 
   useEffect(() => {
-    if (!active) {
-      setGrow(false);
-      return;
-    }
+    if (!active) return;
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     const frame = requestAnimationFrame(() => {
-      setGrow(true);
+      setTriggered(true);
 
       if (!prefersReducedMotion()) {
         for (let i = 0; i < filledCount; i++) {
@@ -111,7 +109,7 @@ export function MoviePodium({ title, movies, variant, active }: Props) {
     return () => {
       cancelAnimationFrame(frame);
       timeouts.forEach(clearTimeout);
-      setGrow(false);
+      setTriggered(false);
     };
   }, [active, filledCount]);
 

@@ -22,16 +22,16 @@ function parseHexColor(hex: string): { r: number; g: number; b: number } | null 
   const normalized = hex.trim().replace(/^#/, "");
   if (normalized.length === 3) {
     return {
-      r: parseInt(normalized[0] + normalized[0], 16),
-      g: parseInt(normalized[1] + normalized[1], 16),
-      b: parseInt(normalized[2] + normalized[2], 16),
+      r: Number.parseInt(normalized[0] + normalized[0], 16),
+      g: Number.parseInt(normalized[1] + normalized[1], 16),
+      b: Number.parseInt(normalized[2] + normalized[2], 16),
     };
   }
   if (normalized.length === 6) {
     return {
-      r: parseInt(normalized.slice(0, 2), 16),
-      g: parseInt(normalized.slice(2, 4), 16),
-      b: parseInt(normalized.slice(4, 6), 16),
+      r: Number.parseInt(normalized.slice(0, 2), 16),
+      g: Number.parseInt(normalized.slice(2, 4), 16),
+      b: Number.parseInt(normalized.slice(4, 6), 16),
     };
   }
   return null;
@@ -140,9 +140,20 @@ export function applyTelegramTheme(): void {
   syncTelegramChrome();
 }
 
+function applyOsColorScheme(): void {
+  const forced = import.meta.env.VITE_COLOR_SCHEME;
+  const dark = forced ? forced === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const root = document.documentElement;
+  root.dataset.colorScheme = dark ? "dark" : "light";
+  root.style.colorScheme = dark ? "dark" : "light";
+}
+
 export function initTelegramWebApp(): void {
   const webApp = getTelegramWebApp();
   if (!webApp || !hasTelegramThemeContext()) {
+    applyOsColorScheme();
+    window.matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", applyOsColorScheme);
     return;
   }
 

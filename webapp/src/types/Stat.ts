@@ -13,8 +13,19 @@ export type UserStats = {
   ratingCount: number;
 };
 
+export type UserHostPreference = {
+  userId: string;
+  userName: string;
+  overallAverage: number | null;
+  mostFavHostName: string | null;
+  mostFavHostAvg: number | null;
+  leastFavHostName: string | null;
+  leastFavHostAvg: number | null;
+};
+
 export type Stats = {
   bestMovies: MovieHighlight[];
   worstMovies: MovieHighlight[];
   usersByRating: UserStats[];
+  userHostPreferences: UserHostPreference[];
 };

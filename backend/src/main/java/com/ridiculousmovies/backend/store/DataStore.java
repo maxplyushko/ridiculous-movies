@@ -1,5 +1,6 @@
 package com.ridiculousmovies.backend.store;
 
+import com.ridiculousmovies.backend.exception.DataStoreException;
 import tools.jackson.databind.ObjectMapper;
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.Movie;
@@ -28,7 +29,7 @@ import org.springframework.stereotype.Component;
 public class DataStore {
 
   private final ObjectMapper objectMapper;
-  private final GoogleDriveClient driveClient;
+  private final StorageClient driveClient;
   private final String fileId;
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -38,8 +39,8 @@ public class DataStore {
 
   public DataStore(
       ObjectMapper objectMapper,
-      GoogleDriveClient driveClient,
-      @Value("${google.drive.file-id}") String fileId
+      StorageClient driveClient,
+      @Value("${google.drive.file-id:}") String fileId
   ) {
     this.objectMapper = objectMapper;
     this.driveClient = driveClient;
@@ -107,8 +108,6 @@ public class DataStore {
       moviesById.put(m.getId(), m);
     }
   }
-
-  // ---- Read methods ----
 
   public Optional<AppUser> findUserById(String id) {
     lock.readLock().lock();
@@ -190,15 +189,6 @@ public class DataStore {
     }
   }
 
-  public Optional<Movie> findMovieById(String id) {
-    lock.readLock().lock();
-    try {
-      return Optional.ofNullable(moviesById.get(id));
-    } finally {
-      lock.readLock().unlock();
-    }
-  }
-
   public boolean existsByIdAndGroup(String movieId, String groupId) {
     lock.readLock().lock();
     try {
@@ -214,10 +204,9 @@ public class DataStore {
     try {
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
-          .sorted(Comparator.comparing(Movie::getCreatedAt,
-              Comparator.nullsLast(Comparator.reverseOrder()))
+          .min(Comparator.comparing(Movie::getCreatedAt,
+                  Comparator.nullsLast(Comparator.reverseOrder()))
               .thenComparing(Movie::getId))
-          .findFirst()
           .map(m -> m.getRound() != null ? m.getRound() : 0)
           .orElse(0);
     } finally {
@@ -278,9 +267,8 @@ public class DataStore {
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
           .filter(m -> !m.getRatings().isEmpty())
-          .sorted(cmp.thenComparing(
-              Comparator.comparing(Movie::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
-          ))
+          .sorted(cmp.thenComparing(Movie::getCreatedAt,
+              Comparator.nullsLast(Comparator.reverseOrder())))
           .limit(3)
           .map(m -> {
             double avg = m.getRatings().stream()
@@ -294,7 +282,53 @@ public class DataStore {
     }
   }
 
-  // ---- Write methods ----
+  public List<Object[]> userHostPreferencesByGroup(String groupId) {
+    lock.readLock().lock();
+    try {
+      List<Movie> groupMovies = moviesById.values().stream()
+          .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
+          .toList();
+
+      return usersById.values().stream()
+          .filter(u -> groupId.equals(u.getUserGroup().getId()))
+          .map(u -> {
+            record HS(String host, double score) {}
+            List<HS> hostScores = groupMovies.stream()
+                .filter(m -> !m.getOwner().getId().equals(u.getId()))
+                .flatMap(m -> m.getRatings().stream()
+                    .filter(r -> r.getUser() != null && u.getId().equals(r.getUser().getId()))
+                    .map(r -> new HS(m.getOwner().getName(), r.getScore().doubleValue()))
+                )
+                .toList();
+
+            if (hostScores.isEmpty()) return null;
+
+            Map<String, Double> avgByHost = hostScores.stream()
+                .collect(Collectors.groupingBy(HS::host, Collectors.averagingDouble(HS::score)));
+
+            java.util.OptionalDouble opt = groupMovies.stream()
+                .flatMap(m -> m.getRatings().stream())
+                .filter(r -> r.getUser() != null && u.getId().equals(r.getUser().getId()))
+                .mapToDouble(r -> r.getScore().doubleValue())
+                .average();
+            Double overall = opt.isPresent() ? opt.getAsDouble() : null;
+
+            String mostFavHost = avgByHost.entrySet().stream()
+                .max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
+            Double mostFavAvg = mostFavHost != null ? avgByHost.get(mostFavHost) : null;
+
+            String leastFavHost = avgByHost.entrySet().stream()
+                .min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
+            Double leastFavAvg = leastFavHost != null ? avgByHost.get(leastFavHost) : null;
+
+            return new Object[]{u.getId(), u.getName(), overall, mostFavHost, mostFavAvg, leastFavHost, leastFavAvg};
+          })
+          .filter(Objects::nonNull)
+          .toList();
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
 
   public void saveMovie(Movie movie) {
     lock.writeLock().lock();
@@ -324,15 +358,13 @@ public class DataStore {
     }
   }
 
-  // ---- Persistence ----
-
   private void persist() {
     try {
       AppData data = buildAppData();
       String json = objectMapper.writeValueAsString(data);
       driveClient.upload(fileId, json);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to persist to Google Drive", e);
+      throw new DataStoreException("Failed to persist to Google Drive", e);
     }
   }
 

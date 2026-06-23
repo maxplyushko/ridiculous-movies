@@ -5,7 +5,6 @@ import java.util.List;
 public record StatsResponse(
     List<MovieHighlightDto> bestMovies,
     List<MovieHighlightDto> worstMovies,
-    List<UserStatsResponse> usersByRating
-) {
-
-}
+    List<UserStatsResponse> usersByRating,
+    List<UserHostPreferenceResponse> userHostPreferences
+) {}

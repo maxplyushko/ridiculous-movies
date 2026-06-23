@@ -1,47 +1,23 @@
-import {useEffect, useState} from "react";
-import {checkAccess, PRIVATE_USE_MESSAGE, type AuthResponse} from "../api/auth.ts";
-import {PageLoader} from "./PageLoader.tsx";
+import { checkAccess, PRIVATE_USE_MESSAGE, type AuthResponse } from "../api/auth.ts";
+import { PageLoader } from "./PageLoader.tsx";
 import { getTelegramId } from "../api/telegram.ts";
+import { useAsync } from "../hooks/useAsync.ts";
+import * as React from "react";
 
 type AuthGateProps = {
   children: (session: AuthResponse) => React.ReactNode;
 };
 
-export function AuthGate({children}: AuthGateProps) {
-  const [session, setSession] = useState<AuthResponse | null>(null);
-  const [deniedMessage, setDeniedMessage] = useState<string | null>(null);
+export function AuthGate({ children }: Readonly<AuthGateProps>) {
+  const state = useAsync(checkAccess, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    checkAccess()
-    .then((data) => {
-      if (!cancelled) {
-        setSession(data);
-      }
-    })
-    .catch((err: unknown) => {
-      if (!cancelled) {
-        setDeniedMessage(
-            (err instanceof Error ? err.message : PRIVATE_USE_MESSAGE)
-        );
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (deniedMessage) {
+  if (state.status === "loading") return <PageLoader />;
+  if (state.status === "error") {
     return (
-        <div className="access-denied">
-          <p>{deniedMessage} User ID: {getTelegramId()}</p>
-        </div>
+      <div className="access-denied">
+        <p>{state.error.message || PRIVATE_USE_MESSAGE}. Current User ID: {getTelegramId()}</p>
+      </div>
     );
   }
-
-  if (!session) {
-    return <PageLoader/>;
-  }
-
-  return <>{children(session)}</>;
+  return <>{children(state.data)}</>;
 }

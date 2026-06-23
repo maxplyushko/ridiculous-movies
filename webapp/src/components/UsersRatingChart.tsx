@@ -18,18 +18,16 @@ function prefersReducedMotion(): boolean {
   );
 }
 
-export function UsersRatingChart({users, active}: Props) {
-  const [grow, setGrow] = useState(false);
+export function UsersRatingChart({users, active}: Readonly<Props>) {
+  const [triggered, setTriggered] = useState(false);
+  const grow = active && triggered;
 
   useEffect(() => {
-    if (!active) {
-      setGrow(false);
-      return;
-    }
+    if (!active) return;
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     const frame = requestAnimationFrame(() => {
-      setGrow(true);
+      setTriggered(true);
 
       if (!prefersReducedMotion()) {
         for (let i = 0; i < users.length; i++) {
@@ -43,14 +41,14 @@ export function UsersRatingChart({users, active}: Props) {
     return () => {
       cancelAnimationFrame(frame);
       timeouts.forEach(clearTimeout);
-      setGrow(false);
+      setTriggered(false);
     };
   }, [active, users]);
 
   return (
       <div className="stat-chart">
-        <h2 className="stat-chart__title">Users by average rating</h2>
-        <ul className="stat-bars" aria-label="Users by average rating">
+        <h2 className="stat-chart__title">Hosts by average rating</h2>
+        <ul className="stat-bars" aria-label="Hosts by average rating">
           {users.map((user, index) => {
             const score = user.averageRatingGiven ?? 0;
             const pct = Math.min(100, (score / MAX_SCORE) * 100);

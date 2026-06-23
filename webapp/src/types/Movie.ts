@@ -9,5 +9,5 @@ export type Movie = {
   updateAt: string;
   owner: User;
   averageRating: number;
-  ratings: [Rating]
+  ratings: Rating[]
 };

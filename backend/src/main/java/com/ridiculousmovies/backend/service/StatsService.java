@@ -16,11 +16,18 @@ public class StatsService {
 
   private final DataStore dataStore;
   private final UserStatsService userStatsService;
+  private final UserHostPreferenceService userHostPreferenceService;
   private final AuthService authService;
 
-  public StatsService(DataStore dataStore, UserStatsService userStatsService, AuthService authService) {
+  public StatsService(
+      DataStore dataStore,
+      UserStatsService userStatsService,
+      UserHostPreferenceService userHostPreferenceService,
+      AuthService authService
+  ) {
     this.dataStore = dataStore;
     this.userStatsService = userStatsService;
+    this.userHostPreferenceService = userHostPreferenceService;
     this.authService = authService;
   }
 
@@ -30,7 +37,8 @@ public class StatsService {
     return new StatsResponse(
         mapMovieHighlights(dataStore.findTop3ForGroup(groupId, true), "best"),
         mapMovieHighlights(dataStore.findTop3ForGroup(groupId, false), "worst"),
-        userStatsService.listUsers(userId, sort)
+        userStatsService.listUsers(userId, sort),
+        userHostPreferenceService.listPreferences(userId)
     );
   }
 

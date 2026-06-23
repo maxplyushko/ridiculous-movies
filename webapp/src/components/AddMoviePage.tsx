@@ -1,101 +1,107 @@
-import type {User} from "../types/User.ts";
-import {useEffect, useMemo, useState} from "react";
-import {CirclePlus} from "lucide-react";
-import type {Movie} from "../types/Movie.ts";
-import {addMovie, editMovie, type MovieFormPayload} from "../api/movies.ts";
-import {fetchUsers} from "../api/users.ts";
+import type { User } from "../types/User.ts";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { CirclePlus, Loader2 } from "lucide-react";
+import type { Movie } from "../types/Movie.ts";
+import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
+import { fetchUsers } from "../api/users.ts";
+import { useRatingForm } from "../hooks/useRatingForm.ts";
 
 const SCORE_MAX = 10;
+const ITEM_H = 44;
 
-type RatingForm = {
-  id: string;
-  userId: string;
-  scoreInput: string;
+type RoundPickerProps = {
+  value: number;
+  maxRound: number;
+  onChange: (r: number) => void;
 };
 
-function parseScoreInput(raw: string): number {
-  const t = raw.trim();
-  if (t === "") {
-    return 0;
-  }
-  const normalized = t.replace(",", ".");
-  const n = Number(normalized);
-  return Number.isFinite(n) ? n : 0;
+function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) {
+  const rounds = useMemo(() => Array.from({ length: maxRound + 1 }, (_, i) => i + 1), [maxRound]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const ignoreScrollRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const target = (value - 1) * ITEM_H;
+    if (Math.abs(el.scrollTop - target) < 1) return;
+    ignoreScrollRef.current = true;
+    el.scrollTo({ top: target, behavior: "instant" });
+    requestAnimationFrame(() => {
+      ignoreScrollRef.current = false;
+    });
+  }, [value]);
+
+  const handleScroll = () => {
+    if (ignoreScrollRef.current) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      const idx = Math.round(el.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(idx, rounds.length - 1));
+      onChange(rounds[clamped]);
+    }, 80);
+  };
+
+  return (
+    <div className="round-picker-wrapper">
+      <div className="round-picker" ref={containerRef} onScroll={handleScroll}>
+        <div className="round-picker__pad" />
+        {rounds.map((r) => (
+          <div
+            key={r}
+            className={`round-picker__item${r === value ? " round-picker__item--active" : ""}`}
+          >
+            Round {r}
+          </div>
+        ))}
+        <div className="round-picker__pad" />
+      </div>
+      <div className="round-picker__selection" aria-hidden="true" />
+    </div>
+  );
 }
 
-const AddMoviePage = ({
-                        currentRound,
-                        movie,
-                        onBack,
-                      }: {
+type AddMoviePageProps = {
   currentRound: number;
   movie?: Movie;
   onBack: () => void;
-}) => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [ownerId, setOwnerId] = useState("");
+};
+
+const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
+  const isEditMode = movie !== undefined;
+  const [title, setTitle] = useState(movie?.title ?? "");
+  const [description, setDescription] = useState(movie?.description ?? "");
+  const [ownerId, setOwnerId] = useState(movie?.owner.id ?? "");
   const [round, setRound] = useState(currentRound);
-  const [ratingForms, setRatingForms] = useState<RatingForm[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const isEditMode = movie !== undefined;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedUserIds = useMemo(() => {
-    return new Set(
-        ratingForms
-        .map(f => f.userId)
-        .filter(Boolean)
-    );
-  }, [ratingForms]);
+  const { forms, selectedUserIds, add, updateUser, updateScore, buildRatings } = useRatingForm(movie);
+  const submitLabel = isEditMode ? "Save" : "Add";
+
+  const sortedUsers = useMemo(
+    () => [...users].sort((a, b) => a.name.localeCompare(b.name)),
+    [users],
+  );
 
   useEffect(() => {
-    fetchUsers()
-    .then(setUsers)
-    .catch((err) => console.error(err));
+    fetchUsers().then(setUsers).catch(console.error);
   }, []);
 
-  useEffect(() => {
-    if (!movie) {
-      setRound(currentRound);
-    }
-  }, [currentRound, movie]);
-
-  useEffect(() => {
-    if (!movie) {
-      return;
-    }
-    setTitle(movie.title);
-    setDescription(movie.description);
-    setOwnerId(movie.owner.id);
-    setRatingForms(
-        movie.ratings.map((rating) => ({
-          id: crypto.randomUUID(),
-          userId: rating.user.id,
-          scoreInput: String(rating.score),
-        }))
-    );
-  }, [movie]);
-
-  const buildPayload = (): MovieFormPayload => ({
-    title,
-    description,
-    ownerId,
-    ...(isEditMode ? {} : {round}),
-    ratings: ratingForms
-    .filter((f) => f.userId !== "")
-    .map((f) => {
-      const n = parseScoreInput(f.scoreInput);
-      return {
-        userId: f.userId,
-        score: Math.min(SCORE_MAX, Math.max(0, n)),
-      };
-    }),
-  });
-
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
-      const payload = buildPayload();
+      const payload: MovieFormPayload = {
+        title,
+        description,
+        ownerId,
+        ...(isEditMode ? {} : { round }),
+        ratings: buildRatings(),
+      };
       if (movie) {
         await editMovie(movie.id, payload);
       } else {
@@ -104,121 +110,105 @@ const AddMoviePage = ({
       onBack();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const addRatingForm = () => {
-    setRatingForms([...ratingForms, {id: crypto.randomUUID(), userId: "", scoreInput: "0"}]);
-  };
-
-  const updateRatingFormUser = (formId: string, userId: string) => {
-    setRatingForms(ratingForms.map(form => form.id === formId
-        ? {...form, userId} : form)
-    );
-  };
-
-  const updateRatingFormScoreInput = (formId: string, scoreInput: string) => {
-    setRatingForms(ratingForms.map(form => form.id === formId
-        ? {...form, scoreInput} : form)
-    );
-  };
-
   return (
-      <section className="add-movie">
-        <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
-        <div className="add-movie__fields">
+    <section className="add-movie">
+      <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
+      <div className="add-movie__fields">
+        <div className="add-movie__item">
+          <label htmlFor="add-movie-title">Title</label>
+          <input
+            id="add-movie-title"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+          />
+        </div>
+        <div className="add-movie__item">
+          <label htmlFor="add-movie-desc">Description</label>
+          <input
+            id="add-movie-desc"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description"
+          />
+        </div>
+        <div className="add-movie__item">
+          <label htmlFor="add-movie-owner">Owner</label>
+          <select id="add-movie-owner" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+            <option value="" disabled>Host</option>
+            {sortedUsers.map((user) => (
+              <option key={user.id} value={user.id}>{user.name}</option>
+            ))}
+          </select>
+        </div>
+        {!isEditMode && (
           <div className="add-movie__item">
-            <label htmlFor="add-movie-title">Title</label>
-            <input id="add-movie-title" type="text" value={title}
-                   onChange={t => setTitle(t.target.value)}
-                   placeholder="Title"/>
+            <RoundPicker value={round} maxRound={currentRound} onChange={setRound} />
           </div>
-          <div className="add-movie__item">
-            <label htmlFor="add-movie-desc">Description</label>
-            <input id="add-movie-desc" type="text" value={description}
-                   onChange={d => setDescription(d.target.value)}
-                   placeholder="Description"/>
-          </div>
-          <div className="add-movie__item">
-            <label htmlFor="add-movie-owner">Owner</label>
-            <select id="add-movie-owner" value={ownerId} onChange={o => setOwnerId(o.target.value)}>
-              <option value="" disabled>Host</option>
-              {users.toSorted((a, b) => a.name.localeCompare(b.name)).map(user => (
-                  <option key={user.id} value={user.id}>{user.name}</option>
-              ))}
-            </select>
-          </div>
-          {!isEditMode && (
-              <div className="add-movie__item">
-                <label htmlFor="add-movie-round">Round</label>
+        )}
+      </div>
+
+      {ownerId && (
+        <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
+          <p id="add-movie-ratings-heading" className="add-movie__ratings__title">
+            Set the ratings
+          </p>
+          <div className="add-movie__ratings__user__scores">
+            {forms.map((form) => (
+              <div key={form.id} className="add-movie__ratings__form">
                 <select
-                    id="add-movie-round"
-                    value={round}
-                    onChange={(e) => setRound(Number(e.target.value))}
+                  value={form.userId}
+                  onChange={(e) => updateUser(form.id, e.target.value)}
+                  aria-label="User"
                 >
-                  <option value={currentRound}>Round {currentRound}</option>
-                  <option value={currentRound + 1}>Round {currentRound + 1}</option>
+                  <option value="" disabled>Select user</option>
+                  {sortedUsers
+                    .filter(
+                      (user) =>
+                        ownerId !== user.id &&
+                        (!selectedUserIds.has(user.id) || user.id === form.userId),
+                    )
+                    .map((user) => (
+                      <option key={user.id} value={user.id}>{user.name}</option>
+                    ))}
                 </select>
+                <input
+                  className="add-movie__ratings__score"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={form.scoreInput}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => updateScore(form.id, e.target.value)}
+                  aria-label="Score"
+                  placeholder={`0–${SCORE_MAX}`}
+                />
               </div>
-          )}
+            ))}
+          </div>
+          <div className="add-button">
+            <button type="button" onClick={add} aria-label="Add rating row">
+              <CirclePlus />
+            </button>
+          </div>
         </div>
+      )}
 
-        {ownerId && (
-            <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
-              <p id="add-movie-ratings-heading" className="add-movie__ratings__title">
-                Set the ratings
-              </p>
-              <div className="add-movie__ratings__user__scores">
-                {ratingForms.map((form) => (
-                    <div key={form.id} className="add-movie__ratings__form">
-                      <select
-                          value={form.userId}
-                          onChange={(o) => updateRatingFormUser(form.id, o.target.value)}
-                          aria-label="User"
-                      >
-                        <option value="" disabled>Select user</option>
-                        {users.toSorted((a, b) => a.name.localeCompare(b.name))
-                        .filter(user =>
-                            ownerId !== user.id &&
-                            (
-                                !selectedUserIds.has(user.id) ||
-                                user.id === form.userId
-                            )
-                        )
-                        .map(user => (
-                            <option key={user.id} value={user.id}>{user.name}</option>
-                        ))}
-                      </select>
-                      <input
-                          className="add-movie__ratings__score"
-                          type="text"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          value={form.scoreInput}
-                          onFocus={(e) => e.currentTarget.select()}
-                          onChange={(e) => updateRatingFormScoreInput(form.id, e.target.value)}
-                          aria-label="Score"
-                          placeholder={`0–${SCORE_MAX}`}
-                      />
-                    </div>
-                ))}
-              </div>
-              <div className="add-button">
-                <button type="button" onClick={addRatingForm} aria-label="Add rating row">
-                  <CirclePlus/>
-                </button>
-              </div>
-            </div>
-        )}
-
-        {error && (
-            <span className="add-movie__error">{error}</span>
-        )}
-        <div className="add-movie__control">
-          <button type="button" onClick={onBack}>Back</button>
-          <button type="button" onClick={handleSubmit}>{isEditMode ? "Save" : "Add"}</button>
-        </div>
-      </section>
+      {error && <span className="add-movie__error">{error}</span>}
+      <div className="add-movie__control">
+        <button type="button" onClick={onBack}>Back</button>
+        <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
+        </button>
+      </div>
+    </section>
   );
 };
 

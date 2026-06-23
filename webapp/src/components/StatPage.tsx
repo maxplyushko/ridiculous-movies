@@ -1,69 +1,33 @@
 import { PageLoader } from "./PageLoader.tsx";
-import { useEffect, useState } from "react";
 import { fetchStats } from "../api/stats.ts";
-import type { Stats } from "../types/Stat.ts";
 import { MoviePodium } from "./MoviePodium.tsx";
 import { UsersRatingChart } from "./UsersRatingChart.tsx";
+import { UserHostPreferenceChart } from "./UserHostPreferenceChart.tsx";
+import { useAsync } from "../hooks/useAsync.ts";
 
 type StatPageProps = {
   active: boolean;
 };
 
 const StatPage = ({ active }: StatPageProps) => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [stats, setStats] = useState<Stats>();
+  const state = useAsync(() => fetchStats("desc"), []);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchStats("desc")
-      .then((data) => {
-        if (!cancelled) setStats(data);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-        }
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading) return <PageLoader />;
-  if (error) {
+  if (state.status === "loading") return <PageLoader />;
+  if (state.status === "error") {
     return (
       <section className="stat-page">
-        <p className="stat-page__error">Error: {error.message}</p>
-      </section>
-    );
-  }
-  if (!stats) {
-    return (
-      <section className="stat-page">
-        <p className="stat-page__error">No stats available.</p>
+        <p className="stat-page__error">Error: {state.error.message}</p>
       </section>
     );
   }
 
+  const { bestMovies, worstMovies, usersByRating, userHostPreferences } = state.data;
   return (
     <section className="stat-page">
-      <MoviePodium
-        title="Top 3 best"
-        movies={stats.bestMovies}
-        variant="best"
-        active={active}
-      />
-      <MoviePodium
-        title="Top 3 worst"
-        movies={stats.worstMovies}
-        variant="worst"
-        active={active}
-      />
-      <UsersRatingChart users={stats.usersByRating} active={active} />
+      <MoviePodium title="Top 3 best" movies={bestMovies} variant="best" active={active} />
+      <MoviePodium title="Top 3 worst" movies={worstMovies} variant="worst" active={active} />
+      <UsersRatingChart users={usersByRating} active={active} />
+      <UserHostPreferenceChart preferences={userHostPreferences} />
     </section>
   );
 };
