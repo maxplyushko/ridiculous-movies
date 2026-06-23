@@ -606,6 +606,9 @@ h1 {
   transition: background 0.15s ease, opacity 0.15s ease;
   background: var(--surface);
   color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .add-movie__control button:last-child {
