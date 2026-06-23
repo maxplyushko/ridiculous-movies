@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import confetti from "canvas-confetti";
 import {hapticSpinReveal, hapticSpinStart, hapticSpinTick, stopHaptics} from "../haptics.ts";
+import {applyColorScheme} from "../telegramTheme.ts";
 
 const MIN_HOSTS = 1;
 const MAX_HOSTS = 5;
@@ -70,6 +71,7 @@ function FireworkSparks() {
 }
 
 const MiscPage = () => {
+  const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
   const [hostsAmount, setHostsAmount] = useState<number>(MAX_HOSTS);
   const [randomNumber, setRandomNumber] = useState<number>(MIN_HOSTS);
   const [displayNumber, setDisplayNumber] = useState<number>(MIN_HOSTS);
@@ -134,51 +136,71 @@ const MiscPage = () => {
   };
 
   return <section className="misc-page">
-    <div className="misc-page__card">
-      <label className="misc-page__label" htmlFor="hosts-slider">
-        Number of Hosts
-      </label>
-      <p className="misc-page__value">{hostsAmount}</p>
-      <div className="misc-page__slider-wrap">
-        <input type="range" id="hosts-slider" className="misc-page__slider"
-               min={MIN_HOSTS} max={MAX_HOSTS}
-               step={1} value={hostsAmount} onChange={o => {
-          const number = Number(o.target.value);
-          setHostsAmount(number);
-          resetResult();
-        }}
-        />
+    <div className="misc-page__section">
+      <h3 className="misc-page__section-title">Random Host Picker</h3>
+      <div className="misc-page__card misc-page__picker">
+        <div className="misc-page__picker-top">
+          <label className="misc-page__label" htmlFor="hosts-slider">
+            People in the draw
+          </label>
+          <p className="misc-page__value">{hostsAmount}</p>
+          <div className="misc-page__slider-wrap">
+            <input type="range" id="hosts-slider" className="misc-page__slider"
+                   min={MIN_HOSTS} max={MAX_HOSTS}
+                   step={1} value={hostsAmount} onChange={o => {
+              const number = Number(o.target.value);
+              setHostsAmount(number);
+              resetResult();
+            }}
+            />
+          </div>
+          <div className="misc-page__ticks" aria-hidden="true">
+            {Array.from({length: MAX_HOSTS}, (_, i) => i + 1).map((n) => (
+                <span key={n}>{n}</span>
+            ))}
+          </div>
+        </div>
+        {showRandomNumber && <div
+            ref={resultRef}
+            className={`misc-page__result misc-page__result--inline${isSpinning ? " misc-page__result--spinning" : ""}`}
+        >
+          {!isSpinning && <FireworkSparks key={resultKey}/>}
+          <span className="misc-page__result-label">TODAY'S HOST</span>
+          <span
+              key={isSpinning ? `spin-${displayNumber}` : `result-${resultKey}`}
+              className={`misc-page__result-number${isSpinning ? " misc-page__result-number--spinning" : ""}`}
+          >
+            {displayNumber}
+          </span>
+        </div>}
+        <button
+            type="button"
+            className="misc-page__generate"
+            disabled={isSpinning}
+            onClick={generateRandomNumber}
+        >
+          {isSpinning ? "Picking..." : "Pick the host"}
+        </button>
       </div>
-      <div className="misc-page__ticks" aria-hidden="true">
-        {Array.from({length: MAX_HOSTS}, (_, i) => i + 1).map((n) => (
-            <span key={n}>{n}</span>
-        ))}
-      </div>
-
     </div>
-    <button
-        type="button"
-        className="misc-page__generate"
-        disabled={isSpinning}
-        onClick={generateRandomNumber}
-    >
-      {isSpinning ? "Picking..." : "Generate"}
-    </button>
-    {showRandomNumber && <div
-        ref={resultRef}
-        className={`misc-page__result${isSpinning ? " misc-page__result--spinning" : ""}`}
-    >
-      {!isSpinning && <FireworkSparks key={resultKey}/>}
-      <span className="misc-page__result-label">
-        {isSpinning ? "PICKING HOST..." : "TODAY'S HOST"}
-      </span>
-      <span
-          key={isSpinning ? `spin-${displayNumber}` : `result-${resultKey}`}
-          className={`misc-page__result-number${isSpinning ? " misc-page__result-number--spinning" : ""}`}
-      >
-        {displayNumber}
-      </span>
-    </div>}
+    <div className="misc-page__section">
+      <h3 className="misc-page__section-title">Appearance</h3>
+      <div className="misc-page__card misc-page__theme-row">
+        <span className="misc-page__label" style={{margin: 0}}>Dark Mode</span>
+        <label className="theme-toggle" aria-label="Toggle dark mode">
+          <input
+            type="checkbox"
+            checked={isDark}
+            onChange={(e) => {
+              const dark = e.target.checked;
+              setIsDark(dark);
+              applyColorScheme(dark);
+            }}
+          />
+          <span className="theme-toggle__track" />
+        </label>
+      </div>
+    </div>
   </section>
 }
 

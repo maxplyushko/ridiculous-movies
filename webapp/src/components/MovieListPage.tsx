@@ -14,7 +14,6 @@ type RoundSectionProps = {
   openSwipeId: string | null;
   isAdmin: boolean;
   onAddMovie: () => void;
-  onSearch: () => void;
   onToggle: (id: string) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
@@ -30,7 +29,6 @@ function RoundSection({
   openSwipeId,
   isAdmin,
   onAddMovie,
-  onSearch,
   onToggle,
   onEdit,
   onDelete,
@@ -46,14 +44,9 @@ function RoundSection({
         </div>
         <div className="movie-group__header__actions">
           {movieGroup.groupId === currentRound && (
-            <>
-              <button className="icon-button" onClick={onSearch} aria-label="Search movies">
-                <Search size={30} />
-              </button>
-              <button className="icon-button" onClick={onAddMovie} aria-label="Add movie">
-                <CirclePlus size={30} />
-              </button>
-            </>
+            <button className="icon-button" onClick={onAddMovie} aria-label="Add movie">
+              <CirclePlus size={30} />
+            </button>
           )}
         </div>
       </div>
@@ -109,7 +102,6 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,19 +120,6 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   useEffect(() => {
     queueMicrotask(loadMovieGroups);
   }, [loadMovieGroups]);
-
-  useEffect(() => {
-    if (searchOpen) {
-      searchInputRef.current?.focus();
-    }
-  }, [searchOpen]);
-
-  const openSearch = () => setSearchOpen(true);
-
-  const closeSearch = () => {
-    setSearchOpen(false);
-    setSearchQuery("");
-  };
 
   const closeMovieForm = () => {
     setShowMovieForm(false);
@@ -198,23 +177,25 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
 
   return (
     <div>
-      <div className="movie-list">
-        {searchOpen && (
-          <div className="movie-list__search">
-            <Search size={18} className="movie-list__search__icon" />
-            <input
-              ref={searchInputRef}
-              type="search"
-              inputMode="search"
-              placeholder="Search by title or description…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button className="movie-list__search__clear" onClick={closeSearch} aria-label="Clear search">
+      <div className="movie-list__search-bar">
+        <div className="movie-list__search">
+          <Search size={18} className="movie-list__search__icon" />
+          <input
+            ref={searchInputRef}
+            type="search"
+            inputMode="search"
+            placeholder="Search by title or description…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="movie-list__search__clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
               <X size={18} />
             </button>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
+      <div className="movie-list">
         {normalizedQuery && visibleGroups.length === 0 && (
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
         )}
@@ -227,7 +208,6 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
             onAddMovie={() => { setEditingMovie(undefined); setShowMovieForm(true); }}
-            onSearch={openSearch}
             onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
             onEdit={handleEdit}
             onDelete={handleDelete}

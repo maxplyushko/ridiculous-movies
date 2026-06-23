@@ -61,6 +61,18 @@ function elevatedSurface(pageBg: string, colorScheme: "light" | "dark"): string 
   return mixHex(pageBg, "#ffffff", colorScheme === "dark" ? 0.11 : 0.88) ?? pageBg;
 }
 
+const THEME_CSS_VARS = [
+  "--page-bg", "--surface", "--accent", "--text-primary", "--text-secondary",
+  "--separator", "--tab-bar-bg", "--tab-inactive", "--danger", "--button-text",
+];
+
+export function applyColorScheme(dark: boolean): void {
+  const root = document.documentElement;
+  THEME_CSS_VARS.forEach((v) => root.style.removeProperty(v));
+  root.dataset.colorScheme = dark ? "dark" : "light";
+  root.style.colorScheme = dark ? "dark" : "light";
+}
+
 /** True when launched inside Telegram with signed init data (not local browser preview). */
 export function hasTelegramThemeContext(): boolean {
   const webApp = getTelegramWebApp();
@@ -73,10 +85,10 @@ function pickColor(...candidates: Array<string | undefined>): string | undefined
 
 function applyThemeParams(params: TelegramThemeParams, colorScheme: "light" | "dark"): void {
   const root = document.documentElement;
-  const pageBg = params.bg_color;
+  const pageBg = pickColor(params.secondary_bg_color, params.bg_color);
   const surface = pickColor(
       params.section_bg_color,
-      params.secondary_bg_color,
+      params.bg_color,
       pageBg ? elevatedSurface(pageBg, colorScheme) : undefined,
   );
   const accent = pickColor(params.button_color, params.link_color, params.accent_text_color);
@@ -124,7 +136,7 @@ function syncTelegramChrome(): void {
     return;
   }
 
-  webApp.setBackgroundColor?.("bg_color");
+  webApp.setBackgroundColor?.("secondary_bg_color");
   webApp.setHeaderColor?.("secondary_bg_color");
   webApp.setBottomBarColor?.("bg_color");
 }
