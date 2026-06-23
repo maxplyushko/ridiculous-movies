@@ -33,8 +33,6 @@ public class DataStore {
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-  private Map<String, UserGroup> groupsById;
-  private Map<String, UserRole> rolesById;
   private Map<String, AppUser> usersById;
   private Map<String, Movie> moviesById;
 
@@ -48,7 +46,7 @@ public class DataStore {
     this.fileId = fileId;
   }
 
-  public void initialize(String json) throws Exception {
+  public void initialize(String json) {
     AppData data = objectMapper.readValue(json, AppData.class);
     lock.writeLock().lock();
     try {
@@ -59,29 +57,28 @@ public class DataStore {
   }
 
   private void rebuildFrom(AppData data) {
-    groupsById = new LinkedHashMap<>();
-    for (AppData.UserGroupRecord r : data.getUserGroups()) {
-      UserGroup g = new UserGroup();
-      g.setId(r.id());
-      g.setName(r.name());
-      groupsById.put(g.getId(), g);
-    }
-
-    rolesById = new LinkedHashMap<>();
-    for (AppData.UserRoleRecord r : data.getUserRoles()) {
-      UserRole role = new UserRole();
-      role.setId(r.id());
-      role.setName(r.name());
-      rolesById.put(role.getId(), role);
-    }
+    Map<String, UserGroup> groupsByName = new LinkedHashMap<>();
+    Map<String, UserRole> rolesByName = new LinkedHashMap<>();
 
     usersById = new LinkedHashMap<>();
     for (AppData.UserRecord r : data.getUsers()) {
+      UserGroup g = groupsByName.computeIfAbsent(r.group(), name -> {
+        UserGroup ug = new UserGroup();
+        ug.setId(name);
+        ug.setName(name);
+        return ug;
+      });
+      UserRole role = rolesByName.computeIfAbsent(r.role(), name -> {
+        UserRole ur = new UserRole();
+        ur.setId(name);
+        ur.setName(name);
+        return ur;
+      });
       AppUser u = new AppUser();
       u.setId(r.id());
       u.setName(r.name());
-      u.setUserGroup(groupsById.get(r.userGroupId()));
-      u.setRole(rolesById.get(r.roleId()));
+      u.setUserGroup(g);
+      u.setRole(role);
       usersById.put(u.getId(), u);
     }
 
@@ -95,19 +92,19 @@ public class DataStore {
       m.setRound(r.round());
       m.setCreatedAt(r.createdAt());
       m.setUpdatedAt(r.updatedAt());
-      m.setRatings(new ArrayList<>());
+      List<Rating> ratings = new ArrayList<>();
+      if (r.ratings() != null) {
+        for (AppData.RatingRecord rr : r.ratings()) {
+          Rating rating = new Rating();
+          rating.setId(rr.id());
+          rating.setMovie(m);
+          rating.setUser(usersById.get(rr.userId()));
+          rating.setScore(rr.score());
+          ratings.add(rating);
+        }
+      }
+      m.setRatings(ratings);
       moviesById.put(m.getId(), m);
-    }
-
-    for (AppData.RatingRecord r : data.getRatings()) {
-      Movie m = moviesById.get(r.movieId());
-      if (m == null) continue;
-      Rating rating = new Rating();
-      rating.setId(r.id());
-      rating.setMovie(m);
-      rating.setUser(usersById.get(r.userId()));
-      rating.setScore(r.score());
-      m.getRatings().add(rating);
     }
   }
 
@@ -341,28 +338,17 @@ public class DataStore {
 
   private AppData buildAppData() {
     AppData data = new AppData();
-    data.setUserGroups(groupsById.values().stream()
-        .map(g -> new AppData.UserGroupRecord(g.getId(), g.getName()))
-        .toList());
-    data.setUserRoles(rolesById.values().stream()
-        .map(r -> new AppData.UserRoleRecord(r.getId(), r.getName()))
-        .toList());
     data.setUsers(usersById.values().stream()
         .map(u -> new AppData.UserRecord(u.getId(), u.getName(),
-            u.getUserGroup().getId(), u.getRole().getId()))
+            u.getUserGroup().getName(), u.getRole().getName()))
         .toList());
     data.setMovies(moviesById.values().stream()
         .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(),
-            m.getOwner().getId(), m.getRound(), m.getCreatedAt(), m.getUpdatedAt()))
+            m.getOwner().getId(), m.getRound(), m.getCreatedAt(), m.getUpdatedAt(),
+            m.getRatings().stream()
+                .map(r -> new AppData.RatingRecord(r.getId(), r.getUser().getId(), r.getScore()))
+                .toList()))
         .toList());
-    List<AppData.RatingRecord> ratingRecords = new ArrayList<>();
-    for (Movie m : moviesById.values()) {
-      for (Rating r : m.getRatings()) {
-        ratingRecords.add(new AppData.RatingRecord(
-            r.getId(), m.getId(), r.getUser().getId(), r.getScore()));
-      }
-    }
-    data.setRatings(ratingRecords);
     return data;
   }
 }

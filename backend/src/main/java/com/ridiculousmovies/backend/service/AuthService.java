@@ -9,7 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class AuthService {
 
-  public static final String PRIVATE_USE_MESSAGE = "Sorry for now this app is for private use only";
+  public static final String GUEST_USER_ID = "guest";
 
   private final DataStore dataStore;
 
@@ -19,9 +19,9 @@ public class AuthService {
 
   public AppUser requireUser(String userId) {
     if (userId == null || userId.isBlank()) {
-      throw denied();
+      return requireGuest();
     }
-    return dataStore.findUserById(userId.trim()).orElseThrow(this::denied);
+    return dataStore.findUserById(userId.trim()).orElseGet(this::requireGuest);
   }
 
   public void assertUserInGroup(String userId, String groupId) {
@@ -42,7 +42,9 @@ public class AuthService {
     }
   }
 
-  private ResponseStatusException denied() {
-    return new ResponseStatusException(HttpStatus.FORBIDDEN, PRIVATE_USE_MESSAGE);
+  private AppUser requireGuest() {
+    return dataStore.findUserById(GUEST_USER_ID)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+            "Guest user not configured"));
   }
 }
