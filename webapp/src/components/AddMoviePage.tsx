@@ -54,7 +54,7 @@ type RoundPickerProps = {
 };
 
 function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) {
-  const rounds = useMemo(() => Array.from({ length: maxRound + 1 }, (_, i) => i + 1), [maxRound]);
+  const rounds = useMemo(() => Array.from({ length: maxRound }, (_, i) => i + 1), [maxRound]);
   const containerRef = useRef<HTMLDivElement>(null);
   const ignoreScrollRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

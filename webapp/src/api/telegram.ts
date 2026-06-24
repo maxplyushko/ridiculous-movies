@@ -6,7 +6,8 @@ export function getTelegramWebApp() {
 }
 
 export function isTelegramMiniApp(): boolean {
-  return getTelegramWebApp() != null;
+  const tg = getTelegramWebApp();
+  return tg != null && tg.initData !== "";
 }
 
 export function getTelegramId(): string {
