@@ -6,6 +6,7 @@ public record UpdateMovieRequest(
     String title,
     String description,
     String ownerId,
+    Integer round,
     List<RatingInputDto> ratings
 ) {
 

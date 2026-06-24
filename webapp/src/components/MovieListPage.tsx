@@ -126,7 +126,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
       .then((data) => {
         setMovieGroups(data.groups);
         setCurrentRound(data.currentRound);
-        setMaxRound(data.maxRound);
+        setMaxRound(data.lastRound);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));

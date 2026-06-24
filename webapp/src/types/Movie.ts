@@ -8,6 +8,7 @@ export type Movie = {
   createdAt: string;
   updateAt: string;
   owner: User;
+  round: number;
   averageRating: number;
   ratings: Rating[]
 };

@@ -108,6 +108,9 @@ public class MovieService {
     movie.setTitle(req.title().trim());
     movie.setDescription(normalizeDescription(req.description()));
     movie.setOwner(owner);
+    if (req.round() != null) {
+      movie.setRound(Math.max(1, req.round()));
+    }
     replaceRatings(groupId, movie, req.ratings());
 
     dataStore.saveMovie(movie);

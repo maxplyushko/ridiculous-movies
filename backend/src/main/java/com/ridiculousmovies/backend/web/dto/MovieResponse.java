@@ -10,6 +10,7 @@ public record MovieResponse(
     Instant createdAt,
     Instant updatedAt,
     UserRefDto owner,
+    Integer round,
     Double averageRating,
     List<RatingEntryDto> ratings
 ) {

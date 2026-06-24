@@ -102,21 +102,19 @@ type RatingCardProps = {
   userId: string;
   scoreInput: string;
   users: User[];
-  usedUserIds: Set<string>;
   onUpdateUser: (id: string, userId: string) => void;
   onUpdateScore: (id: string, score: string) => void;
 };
 
-function RatingCard({ formId, userId, scoreInput, users, usedUserIds, onUpdateUser, onUpdateScore }: Readonly<RatingCardProps>) {
+function RatingCard({ formId, userId, scoreInput, users, onUpdateUser, onUpdateScore }: Readonly<RatingCardProps>) {
   const numericScore = parseFloat(scoreInput) || SCORE_MIN;
   const clamped = Math.min(SCORE_MAX, Math.max(SCORE_MIN, numericScore));
-  const availableUsers = users.filter((u) => u.id === userId || !usedUserIds.has(u.id));
 
   return (
     <div className="rating-card">
       <div className="rating-card__header">
         <UserChipSelector
-          users={availableUsers}
+          users={users}
           selectedId={userId}
           onChange={(id) => onUpdateUser(formId, id)}
         />
@@ -155,12 +153,12 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
   const [ownerId, setOwnerId] = useState(movie?.owner.id ?? "");
-  const [round, setRound] = useState(currentRound);
+  const [round, setRound] = useState(movie?.round ?? currentRound);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { forms, selectedUserIds, add, updateUser, updateScore, buildRatings } = useRatingForm(movie);
+  const { forms, add, updateUser, updateScore, buildRatings } = useRatingForm(movie);
   const submitLabel = isEditMode ? "Save" : "Add";
   const isTg = isTelegramMiniApp();
 
@@ -180,7 +178,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
         title,
         description,
         ownerId,
-        ...(isEditMode ? {} : { round }),
+        round,
         ratings: buildRatings(),
       };
       if (movie) {
@@ -214,7 +212,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
             type="text"
             value={title}
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
-            onFocus={() => setShowSuggestions(true)}
+            onFocus={(e) => { setShowSuggestions(true); setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Title"
             autoComplete="off"
@@ -246,14 +244,13 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300)}
             placeholder="Description"
           />
         </div>
-        {!isEditMode && (
-          <div className="add-movie__item">
-            <RoundPicker value={round} maxRound={Math.max(maxRound, currentRound) + 1} onChange={setRound} />
-          </div>
-        )}
+        <div className="add-movie__item">
+          <RoundPicker value={round} maxRound={Math.max(maxRound, currentRound) + 1} onChange={setRound} />
+        </div>
       </div>
 
       <div className="add-movie__ratings" aria-labelledby="add-movie-host-heading">
@@ -277,7 +274,6 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
               userId={form.userId}
               scoreInput={form.scoreInput}
               users={sortedUsers}
-              usedUserIds={selectedUserIds}
               onUpdateUser={updateUser}
               onUpdateScore={updateScore}
             />

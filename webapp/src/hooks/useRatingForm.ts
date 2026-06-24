@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Movie } from "../types/Movie.ts";
 
 export type RatingForm = {
@@ -35,11 +35,6 @@ export function useRatingForm(movie: Movie | undefined) {
     setForms(initialForms(movie));
   }
 
-  const selectedUserIds = useMemo(
-    () => new Set(forms.map((f) => f.userId).filter(Boolean)),
-    [forms],
-  );
-
   const add = () =>
     setForms((prev) => [...prev, { id: crypto.randomUUID(), userId: "", scoreInput: "5" }]);
 
@@ -57,5 +52,5 @@ export function useRatingForm(movie: Movie | undefined) {
         score: Math.min(SCORE_MAX, Math.max(0, parseScoreInput(f.scoreInput))),
       }));
 
-  return { forms, selectedUserIds, add, updateUser, updateScore, buildRatings };
+  return { forms, add, updateUser, updateScore, buildRatings };
 }

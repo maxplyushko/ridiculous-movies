@@ -31,6 +31,7 @@ public class MovieMapper {
         m.getCreatedAt(),
         m.getUpdatedAt(),
         owner,
+        m.getRound(),
         avg,
         ratings
     );
