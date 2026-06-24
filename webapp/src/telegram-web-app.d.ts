@@ -30,11 +30,41 @@ declare global {
 
   interface TelegramWebAppHapticFeedback {
     impactOccurred(style: "light" | "medium" | "heavy" | "rigid" | "soft"): void;
-
     notificationOccurred(type: "error" | "success" | "warning"): void;
-
     selectionChanged(): void;
   }
+
+  interface TelegramBackButton {
+    isVisible: boolean;
+    show(): void;
+    hide(): void;
+    onClick(callback: () => void): void;
+    offClick(callback: () => void): void;
+  }
+
+  interface TelegramMainButton {
+    text: string;
+    color: string;
+    textColor: string;
+    isVisible: boolean;
+    isActive: boolean;
+    isProgressVisible: boolean;
+    setText(text: string): TelegramMainButton;
+    show(): TelegramMainButton;
+    hide(): TelegramMainButton;
+    enable(): TelegramMainButton;
+    disable(): TelegramMainButton;
+    showProgress(leaveActive?: boolean): TelegramMainButton;
+    hideProgress(): TelegramMainButton;
+    onClick(callback: () => void): TelegramMainButton;
+    offClick(callback: () => void): TelegramMainButton;
+  }
+
+  type TelegramWebAppEventType =
+    | "themeChanged"
+    | "viewportChanged"
+    | "backButtonClicked"
+    | "mainButtonClicked";
 
   interface TelegramWebApp {
     initData?: string;
@@ -42,19 +72,17 @@ declare global {
     themeParams?: TelegramThemeParams;
     HapticFeedback?: TelegramWebAppHapticFeedback;
     initDataUnsafe?: TelegramWebAppInitDataUnsafe;
+    BackButton?: TelegramBackButton;
+    MainButton?: TelegramMainButton;
 
     ready(): void;
-
     expand(): void;
 
-    onEvent?(eventType: "themeChanged", eventHandler: () => void): void;
-
-    offEvent?(eventType: "themeChanged", eventHandler: () => void): void;
+    onEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
+    offEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
 
     setHeaderColor?(color: string): void;
-
     setBackgroundColor?(color: string): void;
-
     setBottomBarColor?(color: string): void;
   }
 

@@ -1,13 +1,50 @@
 import type { User } from "../types/User.ts";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { CirclePlus, Loader2 } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { useRatingForm } from "../hooks/useRatingForm.ts";
+import { useTelegramBackButton, useTelegramMainButton } from "../hooks/useTelegramButtons.ts";
+import { isTelegramMiniApp } from "../api/telegram.ts";
 
+const SCORE_MIN = 1;
 const SCORE_MAX = 10;
+const SCORE_STEP = 0.25;
 const ITEM_H = 44;
+
+const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
+
+function initials(name: string): string {
+  return name.split(" ").map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
+}
+
+type UserChipSelectorProps = {
+  users: User[];
+  selectedId: string;
+  onChange: (id: string) => void;
+};
+
+function UserChipSelector({ users, selectedId, onChange }: Readonly<UserChipSelectorProps>) {
+  return (
+    <div className="user-chip-row">
+      {users.map((u) => {
+        const selected = u.id === selectedId;
+        return (
+          <button
+            key={u.id}
+            type="button"
+            className={`user-chip${selected ? " user-chip--selected" : ""}`}
+            onClick={() => onChange(u.id)}
+          >
+            <span className="user-chip__avatar">{initials(u.name)}</span>
+            <span className="user-chip__name">{u.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 type RoundPickerProps = {
   value: number;
@@ -28,9 +65,7 @@ function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) 
     if (Math.abs(el.scrollTop - target) < 1) return;
     ignoreScrollRef.current = true;
     el.scrollTo({ top: target, behavior: "instant" });
-    requestAnimationFrame(() => {
-      ignoreScrollRef.current = false;
-    });
+    requestAnimationFrame(() => { ignoreScrollRef.current = false; });
   }, [value]);
 
   const handleScroll = () => {
@@ -50,16 +85,59 @@ function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) 
       <div className="round-picker" ref={containerRef} onScroll={handleScroll}>
         <div className="round-picker__pad" />
         {rounds.map((r) => (
-          <div
-            key={r}
-            className={`round-picker__item${r === value ? " round-picker__item--active" : ""}`}
-          >
+          <div key={r} className={`round-picker__item${r === value ? " round-picker__item--active" : ""}`}>
             Round {r}
           </div>
         ))}
         <div className="round-picker__pad" />
       </div>
       <div className="round-picker__selection" aria-hidden="true" />
+    </div>
+  );
+}
+
+type RatingCardProps = {
+  formId: string;
+  userId: string;
+  scoreInput: string;
+  users: User[];
+  usedUserIds: Set<string>;
+  onUpdateUser: (id: string, userId: string) => void;
+  onUpdateScore: (id: string, score: string) => void;
+};
+
+function RatingCard({ formId, userId, scoreInput, users, usedUserIds, onUpdateUser, onUpdateScore }: Readonly<RatingCardProps>) {
+  const numericScore = parseFloat(scoreInput) || SCORE_MIN;
+  const clamped = Math.min(SCORE_MAX, Math.max(SCORE_MIN, numericScore));
+  const availableUsers = users.filter((u) => u.id === userId || !usedUserIds.has(u.id));
+
+  return (
+    <div className="rating-card">
+      <div className="rating-card__header">
+        <UserChipSelector
+          users={availableUsers}
+          selectedId={userId}
+          onChange={(id) => onUpdateUser(formId, id)}
+        />
+      </div>
+      <div className="rating-card__slider-area">
+        <p className="rating-card__value">{clamped.toFixed(2)}</p>
+        <input
+          type="range"
+          className="rating-card__slider"
+          min={SCORE_MIN}
+          max={SCORE_MAX}
+          step={SCORE_STEP}
+          value={clamped}
+          onChange={(e) => onUpdateScore(formId, e.target.value)}
+          aria-label="Score"
+        />
+        <div className="rating-card__ticks">
+          {TICK_LABELS.map((t) => (
+            <span key={t}>{t}</span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -82,6 +160,7 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
 
   const { forms, selectedUserIds, add, updateUser, updateScore, buildRatings } = useRatingForm(movie);
   const submitLabel = isEditMode ? "Save" : "Add";
+  const isTg = isTelegramMiniApp();
 
   const sortedUsers = useMemo(
     () => [...users].sort((a, b) => a.name.localeCompare(b.name)),
@@ -115,6 +194,10 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
     }
   };
 
+  const isSubmitDisabled = isSubmitting || !title.trim();
+  useTelegramBackButton(onBack);
+  useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
+
   return (
     <section className="add-movie">
       <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
@@ -139,15 +222,6 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
             placeholder="Description"
           />
         </div>
-        <div className="add-movie__item">
-          <label htmlFor="add-movie-owner">Owner</label>
-          <select id="add-movie-owner" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
-            <option value="" disabled>Host</option>
-            {sortedUsers.map((user) => (
-              <option key={user.id} value={user.id}>{user.name}</option>
-            ))}
-          </select>
-        </div>
         {!isEditMode && (
           <div className="add-movie__item">
             <RoundPicker value={round} maxRound={currentRound} onChange={setRound} />
@@ -155,59 +229,48 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
         )}
       </div>
 
-      {ownerId && (
-        <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
-          <p id="add-movie-ratings-heading" className="add-movie__ratings__title">
-            Set the ratings
-          </p>
-          <div className="add-movie__ratings__user__scores">
-            {forms.map((form) => (
-              <div key={form.id} className="add-movie__ratings__form">
-                <select
-                  value={form.userId}
-                  onChange={(e) => updateUser(form.id, e.target.value)}
-                  aria-label="User"
-                >
-                  <option value="" disabled>Select user</option>
-                  {sortedUsers
-                    .filter(
-                      (user) =>
-                        ownerId !== user.id &&
-                        (!selectedUserIds.has(user.id) || user.id === form.userId),
-                    )
-                    .map((user) => (
-                      <option key={user.id} value={user.id}>{user.name}</option>
-                    ))}
-                </select>
-                <input
-                  className="add-movie__ratings__score"
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  value={form.scoreInput}
-                  onFocus={(e) => e.currentTarget.select()}
-                  onChange={(e) => updateScore(form.id, e.target.value)}
-                  aria-label="Score"
-                  placeholder={`0–${SCORE_MAX}`}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="add-button">
-            <button type="button" onClick={add} aria-label="Add rating row">
-              <CirclePlus />
-            </button>
-          </div>
+      <div className="add-movie__ratings" aria-labelledby="add-movie-host-heading">
+        <p id="add-movie-host-heading" className="add-movie__ratings__title">Host</p>
+        <div className="add-movie__host-chips">
+          <UserChipSelector
+            users={sortedUsers}
+            selectedId={ownerId}
+            onChange={setOwnerId}
+          />
         </div>
-      )}
+      </div>
 
-      {error && <span className="add-movie__error">{error}</span>}
-      <div className="add-movie__control">
-        <button type="button" onClick={onBack}>Back</button>
-        <button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
+      <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
+        <p id="add-movie-ratings-heading" className="add-movie__ratings__title">Ratings</p>
+        <div className="add-movie__ratings__cards">
+          {forms.map((form) => (
+            <RatingCard
+              key={form.id}
+              formId={form.id}
+              userId={form.userId}
+              scoreInput={form.scoreInput}
+              users={sortedUsers}
+              usedUserIds={selectedUserIds}
+              onUpdateUser={updateUser}
+              onUpdateScore={updateScore}
+            />
+          ))}
+        </div>
+        <button type="button" className="add-rater-btn" onClick={add}>
+          <UserPlus size={16} />
+          Add rater
         </button>
       </div>
+
+      {error && <span className="add-movie__error">{error}</span>}
+      {!isTg && (
+        <div className="add-movie__control">
+          <button type="button" onClick={onBack}>Back</button>
+          <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
+            {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
+          </button>
+        </div>
+      )}
     </section>
   );
 };

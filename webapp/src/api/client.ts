@@ -4,6 +4,7 @@ import { getTelegramId } from "./telegram.ts";
 type RequestOptions = {
   method?: string;
   body?: unknown;
+  signal?: AbortSignal;
 };
 
 function parseErrorMessage(text: string, status: number): string {
@@ -27,7 +28,7 @@ function parseErrorMessage(text: string, status: number): string {
   return text;
 }
 
-export async function apiFetch<T>(path: string, {method, body}: RequestOptions = {}): Promise<T> {
+export async function apiFetch<T>(path: string, {method, body, signal}: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = {};
 
   if (body !== undefined) {
@@ -38,6 +39,7 @@ export async function apiFetch<T>(path: string, {method, body}: RequestOptions =
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
   });
 
   if (!response.ok) {

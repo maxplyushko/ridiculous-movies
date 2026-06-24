@@ -1,4 +1,4 @@
-import { PageLoader } from "./PageLoader.tsx";
+import { StatPageSkeleton } from "./StatPageSkeleton.tsx";
 import { fetchStats } from "../api/stats.ts";
 import { MoviePodium } from "./MoviePodium.tsx";
 import { UsersRatingChart } from "./UsersRatingChart.tsx";
@@ -12,7 +12,7 @@ type StatPageProps = {
 const StatPage = ({ active }: StatPageProps) => {
   const state = useAsync(() => fetchStats("desc"), []);
 
-  if (state.status === "loading") return <PageLoader />;
+  if (state.status === "loading") return <StatPageSkeleton />;
   if (state.status === "error") {
     return (
       <section className="stat-page">

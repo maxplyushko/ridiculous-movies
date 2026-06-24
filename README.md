@@ -7,5 +7,5 @@ A Telegram Mini App for a private movie club. Members add films by round, rate e
 - [ ] Add notification `Time to rate the movie` at certain time
 - [ ] Add i18n
 - [x] Cleanup the FE code
-- [ ] Fix light bg accents
+- [x] Fix light bg accents
 - [ ] Migrate BE to Kotlin + GraalVM for fast start and cleanup the BE code

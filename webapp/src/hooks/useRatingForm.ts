@@ -41,7 +41,7 @@ export function useRatingForm(movie: Movie | undefined) {
   );
 
   const add = () =>
-    setForms((prev) => [...prev, { id: crypto.randomUUID(), userId: "", scoreInput: "0" }]);
+    setForms((prev) => [...prev, { id: crypto.randomUUID(), userId: "", scoreInput: "5" }]);
 
   const updateUser = (id: string, userId: string) =>
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, userId } : f)));

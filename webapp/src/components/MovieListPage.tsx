@@ -1,19 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
 import MovieItem from "./MovieItem.tsx";
-import { CirclePlus, Search, X } from "lucide-react";
+import TmdbMovieItem from "./TmdbMovieItem.tsx";
+import { Clapperboard, Loader, Plus, Search, Trophy, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups } from "../api/movies.ts";
-import { PageLoader } from "./PageLoader.tsx";
+import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
+import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
+import { hapticTabTap } from "../haptics.ts";
+import { useSwipeBack } from "../hooks/useSwipeBack.ts";
 
 type RoundSectionProps = {
   movieGroup: MovieGroup;
-  currentRound: number;
   expandedId: string | null;
   openSwipeId: string | null;
   isAdmin: boolean;
-  onAddMovie: () => void;
   onToggle: (id: string) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
@@ -24,11 +26,9 @@ type RoundSectionProps = {
 
 function RoundSection({
   movieGroup,
-  currentRound,
   expandedId,
   openSwipeId,
   isAdmin,
-  onAddMovie,
   onToggle,
   onEdit,
   onDelete,
@@ -41,13 +41,6 @@ function RoundSection({
       <div className="movie-group__header">
         <div className="movie-group__header__round">
           <h3>Round {movieGroup.groupId}</h3>
-        </div>
-        <div className="movie-group__header__actions">
-          {movieGroup.groupId === currentRound && (
-            <button className="icon-button" onClick={onAddMovie} aria-label="Add movie">
-              <CirclePlus size={30} />
-            </button>
-          )}
         </div>
       </div>
       {movieGroup.movies.map((movie) => (
@@ -76,6 +69,16 @@ type ConfirmDeleteDialogProps = {
   onCancel: () => void;
 };
 
+function FireworkSparks() {
+  return (
+    <div className="misc-page__fireworks" aria-hidden="true">
+      {Array.from({ length: 16 }, (_, i) => (
+        <span key={i} className="misc-page__firework-spark" style={{ "--i": i } as React.CSSProperties} />
+      ))}
+    </div>
+  );
+}
+
 function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
   return (
     <div className="confirm-dialog-overlay">
@@ -103,7 +106,17 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [expandedTmdbId, setExpandedTmdbId] = useState<number | null>(null);
+  const [roundBurst, setRoundBurst] = useState<number | null>(null);
+  const [watchedBurst, setWatchedBurst] = useState<number | null>(null);
+  const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
+
+  const fireBurst = (set: (v: number | null) => void) => {
+    hapticTabTap();
+    const id = Date.now();
+    set(id);
+    setTimeout(() => set(null), 800);
+  };
 
   const loadMovieGroups = useCallback(() => {
     setLoading(true);
@@ -125,6 +138,14 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
     setShowMovieForm(false);
     setEditingMovie(undefined);
     loadMovieGroups();
+  };
+
+  useSwipeBack(closeMovieForm, addMovieEl);
+
+  const openAddMovie = () => {
+    hapticTabTap();
+    setEditingMovie(undefined);
+    setShowMovieForm(true);
   };
 
   const handleEdit = (movie: Movie) => {
@@ -169,45 +190,82 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
         .filter((g) => g.movies.length > 0)
     : movieGroups;
 
-  if (isLoading) return <PageLoader />;
+  const showTmdb = normalizedQuery.length >= 3;
+  const { results: tmdbResults, loading: tmdbLoading } = useTmdbSearch(searchQuery);
+
+  const totalMovies = movieGroups.reduce((sum, g) => sum + g.movies.length, 0);
+
+  if (isLoading) return <MovieListSkeleton />;
   if (error) {
     console.error(error);
     return <p>Error: {error.message}</p>;
   }
 
   return (
-    <div>
-      <div className="movie-list__search-bar">
-        <div className="movie-list__search">
-          <Search size={18} className="movie-list__search__icon" />
+    <div className="mlp">
+      <div className="mlp__hero">
+        <div className="mlp__cards">
+          <button
+            type="button"
+            className="mlp__card"
+            onClick={() => fireBurst(setRoundBurst)}
+          >
+            {roundBurst !== null && <FireworkSparks key={roundBurst} />}
+            <Trophy size={20} className="mlp__card-icon" />
+            <span className="mlp__card-value">{currentRound}</span>
+            <span className="mlp__card-label">Round</span>
+          </button>
+          <button
+            type="button"
+            className="mlp__card"
+            onClick={() => fireBurst(setWatchedBurst)}
+          >
+            {watchedBurst !== null && <FireworkSparks key={watchedBurst} />}
+            <Clapperboard size={20} className="mlp__card-icon" />
+            <span className="mlp__card-value">{totalMovies}</span>
+            <span className="mlp__card-label">Watched</span>
+          </button>
+          <button type="button" className="mlp__card mlp__card--action" onClick={openAddMovie}>
+            <Plus size={26} className="mlp__card-icon" />
+            <span className="mlp__card-label">Add movie</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="mlp__search-bar">
+        <div className="mlp__search">
+          <Search size={18} className="mlp__search-icon" />
           <input
-            ref={searchInputRef}
             type="search"
             inputMode="search"
-            placeholder="Search by title or description…"
+            placeholder="Search movies…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="movie-list__search__clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
+            <button className="mlp__search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
               <X size={18} />
             </button>
           )}
         </div>
       </div>
+
       <div className="movie-list">
-        {normalizedQuery && visibleGroups.length === 0 && (
+        {normalizedQuery && visibleGroups.length === 0 && !showTmdb && (
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
+        )}
+        {showTmdb && visibleGroups.length > 0 && (
+          <div className="movie-group__header">
+            <h3>In your club</h3>
+          </div>
         )}
         {visibleGroups.map((group) => (
           <RoundSection
             key={group.groupId}
             movieGroup={group}
-            currentRound={currentRound}
             expandedId={expandedId}
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
-            onAddMovie={() => { setEditingMovie(undefined); setShowMovieForm(true); }}
             onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
             onEdit={handleEdit}
             onDelete={handleDelete}
@@ -216,9 +274,28 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
           />
         ))}
+        {showTmdb && (
+          <div className="tmdb-section">
+            <div className="movie-group__header">
+              <h3>On TMDB</h3>
+              {tmdbLoading && <Loader size={14} className="tmdb-section__spinner" />}
+            </div>
+            {!tmdbLoading && tmdbResults.length === 0 && (
+              <p className="movie-list__no-results">No TMDB results</p>
+            )}
+            {tmdbResults.map((m) => (
+              <TmdbMovieItem
+                key={m.id}
+                movie={m}
+                isExpanded={expandedTmdbId === m.id}
+                onToggle={() => setExpandedTmdbId(expandedTmdbId === m.id ? null : m.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
       {showMovieForm && (
-        <div className="movie-list__add__movie">
+        <div className="movie-list__add__movie" ref={setAddMovieEl}>
           <AddMoviePage
             key={editingMovie?.id ?? "new"}
             currentRound={currentRound}
