@@ -4,6 +4,7 @@ A Telegram Mini App for a private movie club. Members add films by round, rate e
 
 ## TODO
 - [x] Add search through movie list functionality
+- [x] Integrate TMDB API for movie info
 - [ ] Add notification `Time to rate the movie` at certain time
 - [ ] Add i18n
 - [x] Cleanup the FE code

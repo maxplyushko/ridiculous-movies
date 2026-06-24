@@ -710,6 +710,62 @@ h1 {
   margin-bottom: 0;
 }
 
+.add-movie__item--autocomplete {
+  position: relative;
+}
+
+.title-suggestions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  overflow: hidden;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.title-suggestions li + li {
+  border-top: 1px solid var(--separator);
+}
+
+.title-suggestions button {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+}
+
+.title-suggestions button:active {
+  background: var(--active-highlight);
+}
+
+.title-suggestions__title {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title-suggestions__year {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 .add-movie__item + .add-movie__item {
   border-top: 1px solid var(--separator);
 }

@@ -7,6 +7,7 @@ import { fetchUsers } from "../api/users.ts";
 import { useRatingForm } from "../hooks/useRatingForm.ts";
 import { useTelegramBackButton, useTelegramMainButton } from "../hooks/useTelegramButtons.ts";
 import { isTelegramMiniApp } from "../api/telegram.ts";
+import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 
 const SCORE_MIN = 1;
 const SCORE_MAX = 10;
@@ -194,6 +195,9 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
     }
   };
 
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200 });
+
   const isSubmitDisabled = isSubmitting || !title.trim();
   useTelegramBackButton(onBack);
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
@@ -202,15 +206,37 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
     <section className="add-movie">
       <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
       <div className="add-movie__fields">
-        <div className="add-movie__item">
+        <div className="add-movie__item add-movie__item--autocomplete">
           <label htmlFor="add-movie-title">Title</label>
           <input
             id="add-movie-title"
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
             placeholder="Title"
+            autoComplete="off"
           />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="title-suggestions">
+              {suggestions.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setTitle(s.title);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    <span className="title-suggestions__title">{s.title}</span>
+                    {s.releaseYear && <span className="title-suggestions__year">{s.releaseYear}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="add-movie__item">
           <label htmlFor="add-movie-desc">Description</label>

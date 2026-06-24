@@ -20,9 +20,9 @@ public class TmdbController {
 
   @GetMapping("/search")
   public List<TmdbMovieResponse> search(@RequestParam String q) {
-    if (q == null || q.trim().length() < 3) {
+    if (q == null || q.trim().length() < 2) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Query must be at least 3 characters");
+          "Query must be at least 2 characters");
     }
     return tmdbClient.search(q.trim());
   }

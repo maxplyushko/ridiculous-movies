@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import type { TmdbMovie } from "../types/TmdbMovie";
 import { searchTmdb } from "../api/tmdb";
 
-const DEBOUNCE_MS = 500;
-const MIN_LEN = 3;
+const DEFAULT_DEBOUNCE_MS = 500;
+const DEFAULT_MIN_LEN = 3;
 
-export function useTmdbSearch(query: string) {
+export function useTmdbSearch(query: string, { minLen = DEFAULT_MIN_LEN, debounceMs = DEFAULT_DEBOUNCE_MS } = {}) {
   const [results, setResults] = useState<TmdbMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -16,7 +16,7 @@ export function useTmdbSearch(query: string) {
     abortRef.current?.abort();
 
     const trimmed = query.trim();
-    if (trimmed.length < MIN_LEN) {
+    if (trimmed.length < minLen) {
       setResults([]);
       setLoading(false);
       return;
@@ -38,13 +38,13 @@ export function useTmdbSearch(query: string) {
           setResults([]);
           setLoading(false);
         });
-    }, DEBOUNCE_MS);
+    }, debounceMs);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       abortRef.current?.abort();
     };
-  }, [query]);
+  }, [query, minLen, debounceMs]);
 
   return { results, loading };
 }
