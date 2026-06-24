@@ -7,7 +7,8 @@ public record AuthResponse(
     String userName,
     String role,
     String groupId,
-    String groupName
+    String groupName,
+    String theme
 ) {
 
   public static AuthResponse from(AppUser user) {
@@ -16,7 +17,8 @@ public record AuthResponse(
         user.getName(),
         user.getRole().getName(),
         user.getUserGroup().getId(),
-        user.getUserGroup().getName()
+        user.getUserGroup().getName(),
+        user.getTheme()
     );
   }
 }

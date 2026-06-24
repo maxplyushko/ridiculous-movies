@@ -1190,6 +1190,28 @@ h1 {
   justify-content: space-between;
 }
 
+.misc-page__save-btn {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--button-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  transition: opacity 0.15s ease;
+}
+
+.misc-page__save-btn:disabled {
+  opacity: 0.6;
+}
+
 .theme-toggle {
   position: relative;
   width: 51px;

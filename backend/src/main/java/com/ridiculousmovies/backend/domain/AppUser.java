@@ -10,4 +10,5 @@ public class AppUser {
   private String name;
   private UserGroup userGroup;
   private UserRole role;
+  private String theme;
 }

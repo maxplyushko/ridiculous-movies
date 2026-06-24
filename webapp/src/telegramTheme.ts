@@ -154,10 +154,15 @@ export function applyTelegramTheme(): void {
 
 function applyOsColorScheme(): void {
   const forced = import.meta.env.VITE_COLOR_SCHEME;
-  const dark = forced ? forced === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const dark = forced ? forced === "dark" : true;
   const root = document.documentElement;
   root.dataset.colorScheme = dark ? "dark" : "light";
   root.style.colorScheme = dark ? "dark" : "light";
+}
+
+export function applySavedTheme(theme: "dark" | "light" | null | undefined): void {
+  if (!theme) return;
+  applyColorScheme(theme === "dark");
 }
 
 export function initTelegramWebApp(): void {

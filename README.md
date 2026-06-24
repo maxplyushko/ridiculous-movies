@@ -10,3 +10,4 @@ A Telegram Mini App for a private movie club. Members add films by round, rate e
 - [x] Cleanup the FE code
 - [x] Fix light bg accents
 - [ ] Migrate BE to Kotlin + GraalVM for fast start and cleanup the BE code
+- [ ] Add mode for personal movie list (not shared with the club)

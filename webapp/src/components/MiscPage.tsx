@@ -2,6 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import confetti from "canvas-confetti";
 import {hapticSpinReveal, hapticSpinStart, hapticSpinTick, stopHaptics} from "../haptics.ts";
 import {applyColorScheme} from "../telegramTheme.ts";
+import {savePreferences} from "../api/users.ts";
 
 const MIN_HOSTS = 1;
 const MAX_HOSTS = 5;
@@ -70,8 +71,15 @@ function FireworkSparks() {
   );
 }
 
-const MiscPage = () => {
+type MiscPageProps = { savedTheme?: "dark" | "light" | null };
+
+const MiscPage = ({ savedTheme }: MiscPageProps) => {
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
+  const [persistedDark, setPersistedDark] = useState(() =>
+    savedTheme != null ? savedTheme === "dark" : document.documentElement.dataset.colorScheme === "dark"
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const isDirty = isDark !== persistedDark;
   const [hostsAmount, setHostsAmount] = useState<number>(MAX_HOSTS);
   const [randomNumber, setRandomNumber] = useState<number>(MIN_HOSTS);
   const [displayNumber, setDisplayNumber] = useState<number>(MIN_HOSTS);
@@ -200,6 +208,24 @@ const MiscPage = () => {
           <span className="theme-toggle__track" />
         </label>
       </div>
+      {isDirty && (
+        <button
+          type="button"
+          className="misc-page__save-btn"
+          disabled={isSaving}
+          onClick={async () => {
+            setIsSaving(true);
+            try {
+              await savePreferences({ theme: isDark ? "dark" : "light" });
+              setPersistedDark(isDark);
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+        >
+          {isSaving ? "Saving…" : "Save Changes"}
+        </button>
+      )}
     </div>
   </section>
 }

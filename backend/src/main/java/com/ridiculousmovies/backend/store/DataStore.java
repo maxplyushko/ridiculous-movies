@@ -80,6 +80,7 @@ public class DataStore {
       u.setName(r.name());
       u.setUserGroup(g);
       u.setRole(role);
+      u.setTheme(r.theme());
       usersById.put(u.getId(), u);
     }
 
@@ -330,6 +331,18 @@ public class DataStore {
     }
   }
 
+  public void saveUserPreferences(String userId, String theme) {
+    lock.writeLock().lock();
+    try {
+      AppUser u = usersById.get(userId);
+      if (u == null) return;
+      u.setTheme(theme);
+      persist();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
   public void saveMovie(Movie movie) {
     lock.writeLock().lock();
     try {
@@ -372,7 +385,7 @@ public class DataStore {
     AppData data = new AppData();
     data.setUsers(usersById.values().stream()
         .map(u -> new AppData.UserRecord(u.getId(), u.getName(),
-            u.getUserGroup().getName(), u.getRole().getName()))
+            u.getUserGroup().getName(), u.getRole().getName(), u.getTheme()))
         .toList());
     data.setMovies(moviesById.values().stream()
         .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(),

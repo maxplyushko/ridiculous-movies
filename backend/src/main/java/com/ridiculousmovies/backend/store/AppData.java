@@ -16,7 +16,7 @@ public class AppData {
   public List<MovieRecord> getMovies() { return movies; }
   public void setMovies(List<MovieRecord> v) { this.movies = v; }
 
-  public record UserRecord(String id, String name, String group, String role) {}
+  public record UserRecord(String id, String name, String group, String role, String theme) {}
   public record RatingRecord(String id, String userId, BigDecimal score) {}
   public record MovieRecord(String id, String title, String description,
                             String ownerId, Integer round, Instant createdAt, Instant updatedAt,

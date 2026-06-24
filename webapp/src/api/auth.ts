@@ -8,6 +8,7 @@ export type AuthResponse = {
   role: "user" | "admin";
   groupId: string;
   groupName: string;
+  theme: "dark" | "light" | null;
 };
 
 export async function checkAccess(): Promise<AuthResponse> {

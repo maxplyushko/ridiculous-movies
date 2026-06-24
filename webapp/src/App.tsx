@@ -43,7 +43,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
       <main className="app-main">
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} /></div>
         <div hidden={currentPage !== "list"}><MovieListPage isAdmin={isAdmin} /></div>
-        <div hidden={currentPage !== "misc"}><MiscPage /></div>
+        <div hidden={currentPage !== "misc"}><MiscPage savedTheme={session.theme} /></div>
       </main>
       <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         {TABS.map(({ id, label, icon }) => (
