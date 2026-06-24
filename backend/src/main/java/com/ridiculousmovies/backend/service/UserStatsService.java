@@ -1,7 +1,7 @@
 package com.ridiculousmovies.backend.service;
 
 import com.ridiculousmovies.backend.domain.AppUser;
-import com.ridiculousmovies.backend.store.DataStore;
+import com.ridiculousmovies.backend.store.AppRepository;
 import com.ridiculousmovies.backend.web.dto.UserStatsResponse;
 import java.util.List;
 import java.util.Objects;
@@ -12,10 +12,10 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class UserStatsService {
 
-  private final DataStore dataStore;
+  private final AppRepository dataStore;
   private final AuthService authService;
 
-  public UserStatsService(DataStore dataStore, AuthService authService) {
+  public UserStatsService(AppRepository dataStore, AuthService authService) {
     this.dataStore = dataStore;
     this.authService = authService;
   }

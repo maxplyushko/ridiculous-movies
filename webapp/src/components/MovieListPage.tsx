@@ -97,6 +97,7 @@ function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<Con
 const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
+  const [maxRound, setMaxRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -125,6 +126,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
       .then((data) => {
         setMovieGroups(data.groups);
         setCurrentRound(data.currentRound);
+        setMaxRound(data.maxRound);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
@@ -299,6 +301,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
           <AddMoviePage
             key={editingMovie?.id ?? "new"}
             currentRound={currentRound}
+            maxRound={maxRound}
             movie={editingMovie}
             onBack={closeMovieForm}
           />

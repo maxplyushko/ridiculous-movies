@@ -3,7 +3,7 @@ package com.ridiculousmovies.backend.service;
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.Movie;
 import com.ridiculousmovies.backend.domain.Rating;
-import com.ridiculousmovies.backend.store.DataStore;
+import com.ridiculousmovies.backend.store.AppRepository;
 import com.ridiculousmovies.backend.web.dto.CreateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.MovieGroupResponse;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
@@ -28,11 +28,11 @@ public class MovieService {
 
   private static final BigDecimal MAX_SCORE = BigDecimal.TEN;
 
-  private final DataStore dataStore;
+  private final AppRepository dataStore;
   private final MovieMapper movieMapper;
   private final AuthService authService;
 
-  public MovieService(DataStore dataStore, MovieMapper movieMapper, AuthService authService) {
+  public MovieService(AppRepository dataStore, MovieMapper movieMapper, AuthService authService) {
     this.dataStore = dataStore;
     this.movieMapper = movieMapper;
     this.authService = authService;
@@ -179,12 +179,7 @@ public class MovieService {
 
   private int resolveCreateRound(String groupId, Integer requestedRound) {
     int latestRound = dataStore.findLatestRoundForGroup(groupId);
-    int round = requestedRound != null ? requestedRound : latestRound;
-    if (round < latestRound || round > latestRound + 1) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "round must be " + latestRound + " or " + (latestRound + 1));
-    }
-    return round;
+    return requestedRound != null ? Math.max(1, requestedRound) : latestRound;
   }
 
   private List<MovieResponse> rankedMovies(String groupId, List<String> ids) {

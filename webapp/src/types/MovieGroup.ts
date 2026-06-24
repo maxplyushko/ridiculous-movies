@@ -7,6 +7,7 @@ export type MovieGroup = {
 
 export type MovieGroupsResponse = {
   currentRound: number;
+  maxRound: number;
   lastRound: number;
   groups: MovieGroup[];
 };

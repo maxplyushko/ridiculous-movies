@@ -145,11 +145,12 @@ function RatingCard({ formId, userId, scoreInput, users, usedUserIds, onUpdateUs
 
 type AddMoviePageProps = {
   currentRound: number;
+  maxRound: number;
   movie?: Movie;
   onBack: () => void;
 };
 
-const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
+const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
@@ -250,7 +251,7 @@ const AddMoviePage = ({ currentRound, movie, onBack }: AddMoviePageProps) => {
         </div>
         {!isEditMode && (
           <div className="add-movie__item">
-            <RoundPicker value={round} maxRound={currentRound} onChange={setRound} />
+            <RoundPicker value={round} maxRound={Math.max(maxRound, currentRound) + 1} onChange={setRound} />
           </div>
         )}
       </div>

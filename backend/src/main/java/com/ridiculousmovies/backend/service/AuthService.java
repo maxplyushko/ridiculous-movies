@@ -1,7 +1,7 @@
 package com.ridiculousmovies.backend.service;
 
 import com.ridiculousmovies.backend.domain.AppUser;
-import com.ridiculousmovies.backend.store.DataStore;
+import com.ridiculousmovies.backend.store.AppRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,9 +11,9 @@ public class AuthService {
 
   public static final String GUEST_USER_ID = "guest";
 
-  private final DataStore dataStore;
+  private final AppRepository dataStore;
 
-  public AuthService(DataStore dataStore) {
+  public AuthService(AppRepository dataStore) {
     this.dataStore = dataStore;
   }
 

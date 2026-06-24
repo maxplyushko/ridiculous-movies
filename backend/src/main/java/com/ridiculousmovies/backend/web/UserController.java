@@ -1,7 +1,7 @@
 package com.ridiculousmovies.backend.web;
 
 import com.ridiculousmovies.backend.service.UserStatsService;
-import com.ridiculousmovies.backend.store.DataStore;
+import com.ridiculousmovies.backend.store.AppRepository;
 import com.ridiculousmovies.backend.web.dto.UserStatsResponse;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   private final UserStatsService userStatsService;
-  private final DataStore dataStore;
+  private final AppRepository dataStore;
 
-  public UserController(UserStatsService userStatsService, DataStore dataStore) {
+  public UserController(UserStatsService userStatsService, AppRepository dataStore) {
     this.userStatsService = userStatsService;
     this.dataStore = dataStore;
   }
