@@ -5,8 +5,10 @@ import { useSwipeGesture } from "../hooks/useSwipeGesture.ts";
 
 type WatchlistMovieItemProps = {
   movie: WatchlistMovie;
+  isExpanded: boolean;
   isSwipeOpen: boolean;
   isCelebrating?: boolean;
+  onToggle: () => void;
   onEdit: (movie: WatchlistMovie) => void;
   onDelete: (movie: WatchlistMovie) => void;
   onToggleWatched: (movie: WatchlistMovie) => void;
@@ -27,8 +29,10 @@ const formatDate = (utc: string) =>
 
 const WatchlistMovieItem = ({
   movie,
+  isExpanded,
   isSwipeOpen,
   isCelebrating,
+  onToggle,
   onEdit,
   onDelete,
   onToggleWatched,
@@ -68,6 +72,20 @@ const WatchlistMovieItem = ({
     onToggleWatched(movie);
   };
 
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    if (isRevealed) {
+      closeSwipe();
+      return;
+    }
+    hapticTabTap();
+    onToggle();
+  };
+
   return (
     <div
       className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}${movie.watched ? " watchlist-item--watched" : ""}`}
@@ -91,8 +109,11 @@ const WatchlistMovieItem = ({
       </div>
       <article
         tabIndex={-1}
-        className="movie-item"
+        className={`movie-item${isExpanded ? " watchlist-item--expanded" : ""}`}
         aria-label={movie.title}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget) && isExpanded) onToggle();
+        }}
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -100,7 +121,7 @@ const WatchlistMovieItem = ({
         onTransitionEnd={(e) => handleTransitionEnd(e.propertyName)}
         {...touchHandlers}
       >
-        <div className="movie-item-header watchlist-item-header">
+        <div className="movie-item-header watchlist-item-header" onClick={handleHeaderClick}>
           <button
             type="button"
             className={`watchlist-item__checkbox${movie.watched ? " watchlist-item__checkbox--checked" : ""}${isCelebrating ? " watchlist-item__checkbox--pop" : ""}`}
@@ -114,7 +135,7 @@ const WatchlistMovieItem = ({
               {movie.title}
             </span>
             {movie.description && (
-              <span className="movie-item-header__desc">{movie.description}</span>
+              <span className="movie-item-header__desc watchlist-item__desc">{movie.description}</span>
             )}
           </div>
           <div className="movie-item-header__right">

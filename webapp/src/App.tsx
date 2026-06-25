@@ -21,6 +21,7 @@ const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
 function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "watchlist" : "list";
   const [currentPage, setCurrentPage] = useState<Tab>(defaultTab);
+  const [watchlistRefreshKey, setWatchlistRefreshKey] = useState(0);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const isAdmin = session.role === "admin";
 
@@ -45,8 +46,8 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
     <div className="app-shell">
       <main className="app-main">
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} /></div>
-        <div hidden={currentPage !== "list"}><MovieListPage isAdmin={isAdmin} /></div>
-        <div hidden={currentPage !== "watchlist"}><WatchlistPage /></div>
+        <div hidden={currentPage !== "list"}><MovieListPage isAdmin={isAdmin} onWatchlistMutated={() => setWatchlistRefreshKey((k) => k + 1)} /></div>
+        <div hidden={currentPage !== "watchlist"}><WatchlistPage refreshKey={watchlistRefreshKey} /></div>
         <div hidden={currentPage !== "misc"}><MiscPage savedTheme={session.theme} savedDefaultPage={session.defaultPage} /></div>
       </main>
       <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>

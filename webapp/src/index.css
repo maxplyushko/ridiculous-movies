@@ -534,6 +534,25 @@ h1 {
   opacity: 0.85;
 }
 
+.movie-item-management__watchlist {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #34c759;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.movie-item-management__watchlist:active {
+  opacity: 0.85;
+}
+
 .movie-item {
   position: relative;
   z-index: 1;
@@ -600,6 +619,16 @@ h1 {
   margin: 0;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.watchlist-item__desc {
+  overflow: hidden;
+  max-height: 2.7rem;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.watchlist-item--expanded .watchlist-item__desc {
+  max-height: 20rem;
 }
 
 .movie-item-details {
@@ -1830,21 +1859,6 @@ h1 {
   background: var(--active-highlight);
 }
 
-.tmdb-section .tmdb-movie-item:first-of-type {
-  border-radius: 10px 10px 0 0;
-}
-
-.tmdb-section .tmdb-movie-item:last-of-type {
-  border-radius: 0 0 10px 10px;
-}
-
-.tmdb-section .tmdb-movie-item:only-of-type {
-  border-radius: 10px;
-}
-
-.tmdb-movie-item + .tmdb-movie-item {
-  border-top: 1px solid var(--separator);
-}
 
 .tmdb-movie-item__left {
   display: flex;

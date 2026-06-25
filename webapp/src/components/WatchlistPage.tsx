@@ -4,10 +4,11 @@ import type { WatchlistMovie } from "../types/WatchlistMovie.ts";
 import WatchlistMovieItem from "./WatchlistMovieItem.tsx";
 import AddWatchlistMoviePage from "./AddWatchlistMoviePage.tsx";
 import { Bookmark, BookmarkCheck, Plus, Search, Star, X } from "lucide-react";
-import { deleteWatchlistMovie, editWatchlistMovie, fetchWatchlist } from "../api/watchlist.ts";
+import { addWatchlistMovie, deleteWatchlistMovie, editWatchlistMovie, fetchWatchlist } from "../api/watchlist.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticTabTap } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
+import TmdbSearchSection from "./TmdbSearchSection.tsx";
 
 const SCORE_MIN = 1;
 const SCORE_MAX = 10;
@@ -87,10 +88,12 @@ type WatchlistSectionProps = {
   title: string;
   movies: WatchlistMovie[];
   openSwipeId: string | null;
+  expandedId: string | null;
   celebratingId: string | null;
   onEdit: (movie: WatchlistMovie) => void;
   onDelete: (movie: WatchlistMovie) => void;
   onToggleWatched: (movie: WatchlistMovie) => void;
+  onToggle: (id: string) => void;
   onSwipeOpen: (id: string) => void;
   onSwipeClose: (id: string) => void;
   onSwipeBegin: (id: string) => void;
@@ -100,10 +103,12 @@ function WatchlistSection({
   title,
   movies,
   openSwipeId,
+  expandedId,
   celebratingId,
   onEdit,
   onDelete,
   onToggleWatched,
+  onToggle,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
@@ -118,8 +123,10 @@ function WatchlistSection({
         <WatchlistMovieItem
           key={movie.id}
           movie={movie}
+          isExpanded={expandedId === movie.id}
           isSwipeOpen={openSwipeId === movie.id}
           isCelebrating={celebratingId === movie.id}
+          onToggle={() => onToggle(movie.id)}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleWatched={onToggleWatched}
@@ -132,7 +139,7 @@ function WatchlistSection({
   );
 }
 
-const WatchlistPage = () => {
+const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
   const [movies, setMovies] = useState<WatchlistMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -142,6 +149,7 @@ const WatchlistPage = () => {
   const [ratingMovie, setRatingMovie] = useState<WatchlistMovie | null>(null);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
@@ -157,7 +165,7 @@ const WatchlistPage = () => {
 
   useEffect(() => {
     queueMicrotask(loadMovies);
-  }, [loadMovies]);
+  }, [refreshKey, loadMovies]);
 
   const closeForm = () => {
     setShowForm(false);
@@ -224,6 +232,8 @@ const WatchlistPage = () => {
     }
   };
 
+  const showTmdb = searchQuery.trim().length >= 3;
+
   const normalizedQuery = searchQuery.toLowerCase().trim();
   const filtered = normalizedQuery
     ? movies.filter(
@@ -273,7 +283,7 @@ const WatchlistPage = () => {
           <input
             type="search"
             inputMode="search"
-            placeholder="Search watchlist…"
+            placeholder="Search movies…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -286,8 +296,11 @@ const WatchlistPage = () => {
       </div>
 
       <div className="movie-list" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
-        {normalizedQuery && toWatch.length === 0 && watched.length === 0 && (
+        {normalizedQuery && toWatch.length === 0 && watched.length === 0 && !showTmdb && (
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
+        )}
+        {showTmdb && (toWatch.length > 0 || watched.length > 0) && (
+          <div className="movie-group__header"><h3>In your watchlist</h3></div>
         )}
         <WatchlistSection
           title="To Watch"
@@ -297,6 +310,8 @@ const WatchlistPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleWatched={handleToggleWatched}
+          expandedId={expandedId}
+          onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -309,12 +324,20 @@ const WatchlistPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onToggleWatched={handleToggleWatched}
+          expandedId={expandedId}
+          onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
         {movies.length === 0 && !normalizedQuery && (
           <p className="movie-list__no-results">Your watchlist is empty. Add something!</p>
+        )}
+        {showTmdb && (
+          <TmdbSearchSection
+            query={searchQuery}
+            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then(loadMovies)}
+          />
         )}
       </div>
 

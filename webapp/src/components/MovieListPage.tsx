@@ -2,12 +2,12 @@ import { useCallback, useEffect, useState } from "react";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
 import MovieItem from "./MovieItem.tsx";
-import TmdbMovieItem from "./TmdbMovieItem.tsx";
-import { Clapperboard, Loader, Plus, Search, Trophy, X } from "lucide-react";
+import TmdbSearchSection from "./TmdbSearchSection.tsx";
+import { Clapperboard, Plus, Search, Trophy, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups } from "../api/movies.ts";
+import { addWatchlistMovie } from "../api/watchlist.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
-import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 import { hapticTabTap } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
 
@@ -94,7 +94,7 @@ function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<Con
   );
 }
 
-const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
+const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWatchlistMutated: () => void }) => {
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [maxRound, setMaxRound] = useState(0);
@@ -107,7 +107,6 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedTmdbId, setExpandedTmdbId] = useState<number | null>(null);
   const [roundBurst, setRoundBurst] = useState<number | null>(null);
   const [watchedBurst, setWatchedBurst] = useState<number | null>(null);
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
@@ -193,7 +192,6 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
     : movieGroups;
 
   const showTmdb = normalizedQuery.length >= 3;
-  const { results: tmdbResults, loading: tmdbLoading } = useTmdbSearch(searchQuery);
 
   const totalMovies = movieGroups.reduce((sum, g) => sum + g.movies.length, 0);
 
@@ -277,23 +275,10 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
           />
         ))}
         {showTmdb && (
-          <div className="tmdb-section">
-            <div className="movie-group__header">
-              <h3>On TMDB</h3>
-              {tmdbLoading && <Loader size={14} className="tmdb-section__spinner" />}
-            </div>
-            {!tmdbLoading && tmdbResults.length === 0 && (
-              <p className="movie-list__no-results">No TMDB results</p>
-            )}
-            {tmdbResults.map((m) => (
-              <TmdbMovieItem
-                key={m.id}
-                movie={m}
-                isExpanded={expandedTmdbId === m.id}
-                onToggle={() => setExpandedTmdbId(expandedTmdbId === m.id ? null : m.id)}
-              />
-            ))}
-          </div>
+          <TmdbSearchSection
+            query={searchQuery}
+            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then(onWatchlistMutated)}
+          />
         )}
       </div>
       {showMovieForm && (

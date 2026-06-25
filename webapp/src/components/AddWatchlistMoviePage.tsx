@@ -5,6 +5,7 @@ import { addWatchlistMovie, editWatchlistMovie, type WatchlistMoviePayload } fro
 import { useTelegramBackButton, useTelegramMainButton } from "../hooks/useTelegramButtons.ts";
 import { isTelegramMiniApp } from "../api/telegram.ts";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
+import scrollIntoViewAfterKeyboard from "../hooks/useScrollIntoViewOnKeyboard.ts";
 
 const SCORE_MIN = 1;
 const SCORE_MAX = 10;
@@ -68,8 +69,8 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
             type="text"
             value={title}
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
-            onFocus={(e) => { setShowSuggestions(true); setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300); }}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+            onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
             placeholder="Title"
             autoComplete="off"
           />
@@ -97,7 +98,7 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
             type="text"
             value={description}
             onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
-            onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300)}
+            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder="Description"
           />
           {proposedOverview && (
