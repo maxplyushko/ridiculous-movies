@@ -194,7 +194,7 @@ const MiscPage = ({ savedTheme, savedDefaultPage }: MiscPageProps) => {
       </div>
     </div>
     <div className="misc-page__section">
-      <h3 className="misc-page__section-title">Default Main Page</h3>
+      <h3 className="misc-page__section-title">Homepage</h3>
       <div className="misc-page__card misc-page__default-page-row">
         <button
           type="button"

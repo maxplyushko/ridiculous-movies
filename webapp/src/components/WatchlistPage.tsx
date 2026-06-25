@@ -154,17 +154,22 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
 
-  const loadMovies = useCallback(() => {
-    setLoading(true);
+  const loadMovies = useCallback((silent?: boolean) => {
+    if (!silent) setLoading(true);
     setError(null);
     fetchWatchlist()
       .then(setMovies)
-      .catch((err) => setError(err))
+      .catch((err) => { if (!silent) setError(err); })
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     queueMicrotask(loadMovies);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (refreshKey > 0) queueMicrotask(() => loadMovies(true));
   }, [refreshKey, loadMovies]);
 
   const closeForm = () => {
@@ -204,15 +209,18 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
   };
 
   const applyToggle = async (movie: WatchlistMovie, rating?: number) => {
+    const payload = {
+      title: movie.title,
+      description: movie.description,
+      rating: rating !== undefined ? rating : movie.rating,
+      watched: !movie.watched,
+    };
+    setMovies((prev) => prev.map((m) => m.id === movie.id ? { ...movie, ...payload } : m));
     try {
-      const updated = await editWatchlistMovie(movie.id, {
-        title: movie.title,
-        description: movie.description,
-        rating: rating !== undefined ? rating : movie.rating,
-        watched: !movie.watched,
-      });
-      setMovies((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+      const updated = await editWatchlistMovie(movie.id, payload);
+      setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
     } catch (err) {
+      setMovies((prev) => prev.map((m) => m.id === movie.id ? movie : m));
       console.error(err);
     }
   };
@@ -253,7 +261,7 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
   }
 
   return (
-    <div className="mlp">
+    <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
       <div className="mlp__hero">
         <div className="mlp__cards">
           <div className="mlp__card">
@@ -295,7 +303,7 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
         </div>
       </div>
 
-      <div className="movie-list" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
+      <div className="movie-list">
         {normalizedQuery && toWatch.length === 0 && watched.length === 0 && !showTmdb && (
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
         )}
@@ -336,7 +344,7 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
         {showTmdb && (
           <TmdbSearchSection
             query={searchQuery}
-            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then(loadMovies)}
+            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then((added) => setMovies((prev) => [...prev, added]))}
           />
         )}
       </div>

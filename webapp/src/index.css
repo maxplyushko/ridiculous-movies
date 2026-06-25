@@ -92,6 +92,7 @@ h1 {
 }
 
 .app-shell {
+  position: relative;
   height: var(--tg-viewport-stable-height, 100svh);
   min-height: var(--tg-viewport-stable-height, 100svh);
   display: flex;
@@ -665,7 +666,7 @@ h1 {
 }
 
 .movie-list__add__movie {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 100;
   background-color: var(--page-bg);
