@@ -373,7 +373,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
         <div className="confirm-dialog-overlay">
           <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }}>
             <FireworkSparks key={pickedHost} />
-            <p>Next random host is <strong>{pickedHost}</strong></p>
+            <p>Next Host is <strong>{pickedHost}</strong></p>
             <div className="confirm-dialog__actions">
               <button type="button" onClick={() => setPickedHost(null)}>OK</button>
             </div>

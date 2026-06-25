@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import type { WatchlistMovie } from "../types/WatchlistMovie.ts";
 import WatchlistMovieItem from "./WatchlistMovieItem.tsx";
 import AddWatchlistMoviePage from "./AddWatchlistMoviePage.tsx";
-import { Bookmark, BookmarkCheck, Plus, Search, Star, X } from "lucide-react";
+import { Eye, EyeDashed, Plus, Search, Star, X } from "lucide-react";
 import { addWatchlistMovie, deleteWatchlistMovie, editWatchlistMovie, fetchWatchlist } from "../api/watchlist.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticTabTap } from "../haptics.ts";
@@ -153,6 +153,7 @@ const WatchlistPage = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
+  const toggleVersionRef = useRef<Map<string, number>>(new Map());
 
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
@@ -222,12 +223,16 @@ const WatchlistPage = () => {
       rating: rating !== undefined ? rating : movie.rating,
       watched: !movie.watched,
     };
+    const version = (toggleVersionRef.current.get(movie.id) ?? 0) + 1;
+    toggleVersionRef.current.set(movie.id, version);
+    const isCurrent = () => toggleVersionRef.current.get(movie.id) === version;
+
     setMovies((prev) => prev.map((m) => m.id === movie.id ? { ...movie, ...payload } : m));
     try {
       const updated = await editWatchlistMovie(movie.id, payload);
-      setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+      if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
     } catch (err) {
-      setMovies((prev) => prev.map((m) => m.id === movie.id ? movie : m));
+      if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === movie.id ? movie : m));
       console.error(err);
     }
   };
@@ -272,12 +277,12 @@ const WatchlistPage = () => {
       <div className="mlp__hero">
         <div className="mlp__cards">
           <div className="mlp__card">
-            <Bookmark size={20} className="mlp__card-icon" />
+            <EyeDashed size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{movies.filter((m) => !m.watched).length}</span>
             <span className="mlp__card-label">To Watch</span>
           </div>
           <div className="mlp__card">
-            <BookmarkCheck size={20} className="mlp__card-icon" />
+            <Eye size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{movies.filter((m) => m.watched).length}</span>
             <span className="mlp__card-label">Watched</span>
           </div>
