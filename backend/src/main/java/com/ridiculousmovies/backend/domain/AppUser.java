@@ -12,4 +12,5 @@ public class AppUser {
   private UserRole role;
   private String theme;
   private String defaultPage;
+  private String oauthSub;
 }

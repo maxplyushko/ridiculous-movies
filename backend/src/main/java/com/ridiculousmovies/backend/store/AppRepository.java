@@ -32,6 +32,8 @@ public interface AppRepository {
 
   List<Object[]> userHostPreferencesByGroup(String groupId);
 
+  Optional<AppUser> findUserByOauthSub(String sub);
+
   void saveUserPreferences(String userId, String theme, String defaultPage);
 
   void saveMovie(Movie movie);

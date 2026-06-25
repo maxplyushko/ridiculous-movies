@@ -1768,6 +1768,55 @@ h1 {
   line-height: 1.5;
 }
 
+.google-signin-screen {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.google-signin-screen__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.google-signin-screen__error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  max-width: 20rem;
+}
+
+.google-signin__wrapper {
+  position: relative;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-signin__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-primary);
+  border-radius: 50%;
+  animation: page-loader-spin 0.7s linear infinite;
+  position: absolute;
+}
+
+.google-signin__error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
 /* ── User host preference chart ─────────────────────────────────────── */
 
 .stat-host-pref {
