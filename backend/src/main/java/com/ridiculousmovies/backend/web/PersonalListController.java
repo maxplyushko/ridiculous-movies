@@ -1,10 +1,10 @@
 package com.ridiculousmovies.backend.web;
 
-import com.ridiculousmovies.backend.domain.WatchlistMovie;
+import com.ridiculousmovies.backend.domain.PersonalMovie;
 import com.ridiculousmovies.backend.store.AppRepository;
-import com.ridiculousmovies.backend.web.dto.CreateWatchlistMovieRequest;
-import com.ridiculousmovies.backend.web.dto.UpdateWatchlistMovieRequest;
-import com.ridiculousmovies.backend.web.dto.WatchlistMovieResponse;
+import com.ridiculousmovies.backend.web.dto.CreatePersonalMovieRequest;
+import com.ridiculousmovies.backend.web.dto.UpdatePersonalMovieRequest;
+import com.ridiculousmovies.backend.web.dto.PersonalMovieResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,57 +21,57 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/watchlist")
-public class WatchlistController {
+@RequestMapping("/api/personal-list")
+public class PersonalListController {
 
   private final AppRepository dataStore;
 
   @GetMapping
-  public List<WatchlistMovieResponse> list(@RequestHeader("User-Id") String userId) {
-    return dataStore.findWatchlistMoviesForUser(userId).stream()
-        .map(WatchlistMovieResponse::from)
+  public List<PersonalMovieResponse> list(@RequestHeader("User-Id") String userId) {
+    return dataStore.findPersonalMoviesForUser(userId).stream()
+        .map(PersonalMovieResponse::from)
         .toList();
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public WatchlistMovieResponse create(
+  public PersonalMovieResponse create(
       @RequestHeader("User-Id") String userId,
-      @RequestBody CreateWatchlistMovieRequest req
+      @RequestBody CreatePersonalMovieRequest req
   ) {
-    WatchlistMovie wm = new WatchlistMovie();
-    wm.setUserId(userId);
-    wm.setTitle(req.title());
-    wm.setDescription(req.description() != null ? req.description() : "");
-    wm.setRating(req.rating());
-    wm.setWatched(false);
-    dataStore.saveWatchlistMovie(wm);
-    return WatchlistMovieResponse.from(wm);
+    PersonalMovie pm = new PersonalMovie();
+    pm.setUserId(userId);
+    pm.setTitle(req.title());
+    pm.setDescription(req.description() != null ? req.description() : "");
+    pm.setRating(req.rating());
+    pm.setWatched(false);
+    dataStore.savePersonalMovie(pm);
+    return PersonalMovieResponse.from(pm);
   }
 
   @PutMapping("/{id}")
-  public WatchlistMovieResponse update(
+  public PersonalMovieResponse update(
       @RequestHeader("User-Id") String userId,
       @PathVariable String id,
-      @RequestBody UpdateWatchlistMovieRequest req
+      @RequestBody UpdatePersonalMovieRequest req
   ) {
-    List<WatchlistMovie> movies = dataStore.findWatchlistMoviesForUser(userId);
-    WatchlistMovie wm = movies.stream()
+    List<PersonalMovie> movies = dataStore.findPersonalMoviesForUser(userId);
+    PersonalMovie pm = movies.stream()
         .filter(m -> id.equals(m.getId()))
         .findFirst()
         .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
             org.springframework.http.HttpStatus.NOT_FOUND));
-    wm.setTitle(req.title());
-    wm.setDescription(req.description() != null ? req.description() : "");
-    wm.setRating(req.rating());
-    wm.setWatched(req.watched());
-    dataStore.saveWatchlistMovie(wm);
-    return WatchlistMovieResponse.from(wm);
+    pm.setTitle(req.title());
+    pm.setDescription(req.description() != null ? req.description() : "");
+    pm.setRating(req.rating());
+    pm.setWatched(req.watched());
+    dataStore.savePersonalMovie(pm);
+    return PersonalMovieResponse.from(pm);
   }
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@RequestHeader("User-Id") String userId, @PathVariable String id) {
-    dataStore.deleteWatchlistMovieById(id, userId);
+    dataStore.deletePersonalMovieById(id, userId);
   }
 }

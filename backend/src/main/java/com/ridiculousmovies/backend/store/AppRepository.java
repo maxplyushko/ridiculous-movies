@@ -2,7 +2,7 @@ package com.ridiculousmovies.backend.store;
 
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.Movie;
-import com.ridiculousmovies.backend.domain.WatchlistMovie;
+import com.ridiculousmovies.backend.domain.PersonalMovie;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -38,9 +38,9 @@ public interface AppRepository {
 
   void deleteMovieById(String id);
 
-  List<WatchlistMovie> findWatchlistMoviesForUser(String userId);
+  List<PersonalMovie> findPersonalMoviesForUser(String userId);
 
-  void saveWatchlistMovie(WatchlistMovie movie);
+  void savePersonalMovie(PersonalMovie movie);
 
-  void deleteWatchlistMovieById(String id, String userId);
+  void deletePersonalMovieById(String id, String userId);
 }

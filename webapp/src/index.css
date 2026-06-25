@@ -535,7 +535,7 @@ h1 {
   opacity: 0.85;
 }
 
-.movie-item-management__watchlist {
+.movie-item-management__personal-list {
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -550,7 +550,7 @@ h1 {
   -webkit-tap-highlight-color: transparent;
 }
 
-.movie-item-management__watchlist:active {
+.movie-item-management__personal-list:active {
   opacity: 0.85;
 }
 
@@ -622,13 +622,13 @@ h1 {
   color: var(--text-secondary);
 }
 
-.watchlist-item__desc {
+.personal-item__desc {
   overflow: hidden;
   max-height: 2.7rem;
   transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.watchlist-item--expanded .watchlist-item__desc {
+.personal-item--expanded .personal-item__desc {
   max-height: 20rem;
 }
 
@@ -2053,13 +2053,13 @@ h1 {
   animation: sk-shimmer 1.4s ease-in-out infinite;
 }
 
-/* ── Watchlist ─────────────────────────────────────────── */
+/* ── Personal List ─────────────────────────────────────── */
 
-.watchlist-item--watched > .movie-item {
+.personal-item--watched > .movie-item {
   background: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
-.watchlist-item-header {
+.personal-item-header {
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
@@ -2072,7 +2072,7 @@ h1 {
   cursor: default;
 }
 
-.watchlist-item__checkbox {
+.personal-item__checkbox {
   all: unset;
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
@@ -2089,27 +2089,27 @@ h1 {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.watchlist-item__checkbox--checked {
+.personal-item__checkbox--checked {
   background: var(--accent);
   color: var(--button-text);
 }
 
-.watchlist-item__checkbox:active {
+.personal-item__checkbox:active {
   opacity: 0.7;
 }
 
-@keyframes watchlist-checkbox-pop {
+@keyframes personal-checkbox-pop {
   0%   { transform: scale(1); }
   35%  { transform: scale(1.65); }
   65%  { transform: scale(0.88); }
   100% { transform: scale(1); }
 }
 
-.watchlist-item__checkbox--pop {
-  animation: watchlist-checkbox-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+.personal-item__checkbox--pop {
+  animation: personal-checkbox-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.watchlist-item__title--watched {
+.personal-item__title--watched {
   text-decoration: line-through;
   opacity: 0.55;
 }
@@ -2143,23 +2143,23 @@ h1 {
   color: var(--button-text);
 }
 
-/* Watchlist rating toggle row */
-.watchlist-rating-toggle {
+/* Personal list rating toggle row */
+.personal-rating-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.75rem;
 }
 
-.watchlist-rating-dialog {
+.personal-rating-dialog {
   width: min(90vw, 340px);
 }
 
-.watchlist-rating-dialog__slider-area {
+.personal-rating-dialog__slider-area {
   padding: 0.5rem 0 0.75rem;
 }
 
-.watchlist-rating-dialog__value {
+.personal-rating-dialog__value {
   display: flex;
   align-items: center;
   justify-content: center;

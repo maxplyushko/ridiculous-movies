@@ -2,9 +2,8 @@ package com.ridiculousmovies.backend.web.dto;
 
 import java.math.BigDecimal;
 
-public record UpdateWatchlistMovieRequest(
+public record CreatePersonalMovieRequest(
     String title,
     String description,
-    BigDecimal rating,
-    boolean watched
+    BigDecimal rating
 ) {}

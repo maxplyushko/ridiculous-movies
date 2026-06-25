@@ -11,7 +11,7 @@ type TmdbMovieItemProps = {
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
-  onAddToWatchlist?: () => void;
+  onAddToPersonalList?: () => void;
 };
 
 const ACTIONS_WIDTH = 56;
@@ -25,9 +25,9 @@ const TmdbMovieItem = ({
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
-  onAddToWatchlist,
+  onAddToPersonalList,
 }: TmdbMovieItemProps) => {
-  const swipeable = !!onAddToWatchlist;
+  const swipeable = !!onAddToPersonalList;
   const {
     offsetX,
     isDragging,
@@ -68,8 +68,8 @@ const TmdbMovieItem = ({
         <div className="movie-item-management">
           <button
             type="button"
-            className="movie-item-management__watchlist"
-            onClick={() => { closeSwipe(); hapticTabTap(); onAddToWatchlist!(); }}
+            className="movie-item-management__personal-list"
+            onClick={() => { closeSwipe(); hapticTabTap(); onAddToPersonalList!(); }}
           >
             <Bookmark size={16} />
           </button>
@@ -79,12 +79,14 @@ const TmdbMovieItem = ({
         type="button"
         className={`tmdb-movie-item${isExpanded ? " tmdb-movie-item--expanded" : ""}`}
         onClick={handleClick}
-        style={{
-          transform: `translateX(${offsetX}px)`,
-          transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        }}
-        onTransitionEnd={(e) => { handleTransitionEnd(e.propertyName); }}
-        {...touchHandlers}
+        {...(swipeable ? {
+          style: {
+            transform: `translateX(${offsetX}px)`,
+            transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+          },
+          onTransitionEnd: (e: React.TransitionEvent) => handleTransitionEnd(e.propertyName),
+          ...touchHandlers,
+        } : {})}
       >
         <div className="tmdb-movie-item__left">
           <span className="tmdb-movie-item__title">{movie.title}</span>

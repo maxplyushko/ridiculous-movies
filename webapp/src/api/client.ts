@@ -22,9 +22,7 @@ function parseErrorMessage(text: string, status: number): string {
     if (json.error) {
       return json.error;
     }
-  } catch {
-    // plain text response
-  }
+  } catch { /* empty */ }
   return text;
 }
 

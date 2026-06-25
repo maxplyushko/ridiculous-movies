@@ -7,7 +7,7 @@ import com.ridiculousmovies.backend.domain.Movie;
 import com.ridiculousmovies.backend.domain.Rating;
 import com.ridiculousmovies.backend.domain.UserGroup;
 import com.ridiculousmovies.backend.domain.UserRole;
-import com.ridiculousmovies.backend.domain.WatchlistMovie;
+import com.ridiculousmovies.backend.domain.PersonalMovie;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class DataStore implements AppRepository {
 
   private Map<String, AppUser> usersById;
   private Map<String, Movie> moviesById;
-  private Map<String, WatchlistMovie> watchlistMoviesById;
+  private Map<String, PersonalMovie> personalMoviesById;
 
   public DataStore(
       ObjectMapper objectMapper,
@@ -112,20 +112,20 @@ public class DataStore implements AppRepository {
       moviesById.put(m.getId(), m);
     }
 
-    watchlistMoviesById = new LinkedHashMap<>();
-    List<AppData.WatchlistMovieRecord> watchlistRecords = data.getWatchlistMovies();
-    if (watchlistRecords != null) {
-      for (AppData.WatchlistMovieRecord r : watchlistRecords) {
-        WatchlistMovie wm = new WatchlistMovie();
-        wm.setId(r.id());
-        wm.setUserId(r.userId());
-        wm.setTitle(r.title());
-        wm.setDescription(r.description() != null ? r.description() : "");
-        wm.setRating(r.rating());
-        wm.setWatched(r.watched());
-        wm.setCreatedAt(r.createdAt());
-        wm.setUpdatedAt(r.updatedAt());
-        watchlistMoviesById.put(wm.getId(), wm);
+    personalMoviesById = new LinkedHashMap<>();
+    List<AppData.PersonalMovieRecord> personalRecords = data.getPersonalMovies();
+    if (personalRecords != null) {
+      for (AppData.PersonalMovieRecord r : personalRecords) {
+        PersonalMovie pm = new PersonalMovie();
+        pm.setId(r.id());
+        pm.setUserId(r.userId());
+        pm.setTitle(r.title());
+        pm.setDescription(r.description() != null ? r.description() : "");
+        pm.setRating(r.rating());
+        pm.setWatched(r.watched());
+        pm.setCreatedAt(r.createdAt());
+        pm.setUpdatedAt(r.updatedAt());
+        personalMoviesById.put(pm.getId(), pm);
       }
     }
   }
@@ -364,12 +364,12 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public List<WatchlistMovie> findWatchlistMoviesForUser(String userId) {
+  public List<PersonalMovie> findPersonalMoviesForUser(String userId) {
     lock.readLock().lock();
     try {
-      return watchlistMoviesById.values().stream()
-          .filter(wm -> userId.equals(wm.getUserId()))
-          .sorted(Comparator.comparing(WatchlistMovie::getUpdatedAt,
+      return personalMoviesById.values().stream()
+          .filter(pm -> userId.equals(pm.getUserId()))
+          .sorted(Comparator.comparing(PersonalMovie::getUpdatedAt,
               Comparator.nullsLast(Comparator.reverseOrder())))
           .toList();
     } finally {
@@ -377,7 +377,7 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public void saveWatchlistMovie(WatchlistMovie movie) {
+  public void savePersonalMovie(PersonalMovie movie) {
     lock.writeLock().lock();
     try {
       if (movie.getId() == null) {
@@ -388,19 +388,19 @@ public class DataStore implements AppRepository {
         movie.setCreatedAt(now);
       }
       movie.setUpdatedAt(now);
-      watchlistMoviesById.put(movie.getId(), movie);
+      personalMoviesById.put(movie.getId(), movie);
       persist();
     } finally {
       lock.writeLock().unlock();
     }
   }
 
-  public void deleteWatchlistMovieById(String id, String userId) {
+  public void deletePersonalMovieById(String id, String userId) {
     lock.writeLock().lock();
     try {
-      WatchlistMovie wm = watchlistMoviesById.get(id);
-      if (wm != null && userId.equals(wm.getUserId())) {
-        watchlistMoviesById.remove(id);
+      PersonalMovie pm = personalMoviesById.get(id);
+      if (pm != null && userId.equals(pm.getUserId())) {
+        personalMoviesById.remove(id);
         persist();
       }
     } finally {
@@ -459,9 +459,9 @@ public class DataStore implements AppRepository {
                 .map(r -> new AppData.RatingRecord(r.getId(), r.getUser().getId(), r.getScore()))
                 .toList()))
         .toList());
-    data.setWatchlistMovies(watchlistMoviesById.values().stream()
-        .map(wm -> new AppData.WatchlistMovieRecord(wm.getId(), wm.getUserId(), wm.getTitle(),
-            wm.getDescription(), wm.getRating(), wm.isWatched(), wm.getCreatedAt(), wm.getUpdatedAt()))
+    data.setPersonalMovies(personalMoviesById.values().stream()
+        .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
+            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt()))
         .toList());
     return data;
   }

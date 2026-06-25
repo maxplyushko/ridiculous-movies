@@ -24,14 +24,14 @@ const MiscPage = ({ savedTheme, savedDefaultPage }: MiscPageProps) => {
           className={`misc-page__page-btn${defaultPage === "list" ? " misc-page__page-btn--active" : ""}`}
           onClick={() => { hapticTabTap(); setDefaultPage("list"); }}
         >
-          Group Movie List
+          Group List
         </button>
         <button
           type="button"
           className={`misc-page__page-btn${defaultPage === "watchlist" ? " misc-page__page-btn--active" : ""}`}
           onClick={() => { hapticTabTap(); setDefaultPage("watchlist"); }}
         >
-          Personal Movie List
+          Personal List
         </button>
       </div>
     </div>

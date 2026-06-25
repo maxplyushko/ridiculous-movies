@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { WatchlistMovie } from "../types/WatchlistMovie.ts";
-import { addWatchlistMovie, editWatchlistMovie, type WatchlistMoviePayload } from "../api/watchlist.ts";
+import type { PersonalMovie } from "../types/PersonalMovie.ts";
+import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "../api/personalList.ts";
 import { useTelegramBackButton, useTelegramMainButton } from "../hooks/useTelegramButtons.ts";
 import { isTelegramMiniApp } from "../api/telegram.ts";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
@@ -12,12 +12,12 @@ const SCORE_MAX = 10;
 const SCORE_STEP = 0.25;
 const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
 
-type AddWatchlistMoviePageProps = {
-  movie?: WatchlistMovie;
+type AddPersonalMoviePageProps = {
+  movie?: PersonalMovie;
   onBack: () => void;
 };
 
-const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) => {
+const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
@@ -34,15 +34,15 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const payload: WatchlistMoviePayload = {
+      const payload: PersonalMoviePayload = {
         title,
         description,
         rating: hasRating ? rating : null,
       };
       if (movie) {
-        await editWatchlistMovie(movie.id, { ...payload, watched: movie.watched });
+        await editPersonalMovie(movie.id, { ...payload, watched: movie.watched });
       } else {
-        await addWatchlistMovie(payload);
+        await addPersonalMovie(payload);
       }
       onBack();
     } catch (e) {
@@ -60,12 +60,12 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
 
   return (
     <section className="add-movie">
-      <h1>{isEditMode ? "Edit" : "Add to Watchlist"}</h1>
+      <h1>{isEditMode ? "Edit" : "Add to Personal List"}</h1>
       <div className="add-movie__fields">
         <div className="add-movie__item add-movie__item--autocomplete">
-          <label htmlFor="wl-movie-title">Title</label>
+          <label htmlFor="pl-movie-title">Title</label>
           <input
-            id="wl-movie-title"
+            id="pl-movie-title"
             type="text"
             value={title}
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
@@ -92,9 +92,9 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
           )}
         </div>
         <div className="add-movie__item">
-          <label htmlFor="wl-movie-desc">Description</label>
+          <label htmlFor="pl-movie-desc">Description</label>
           <input
-            id="wl-movie-desc"
+            id="pl-movie-desc"
             type="text"
             value={description}
             onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
@@ -114,7 +114,7 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
       </div>
 
       <div className="add-movie__ratings">
-        <div className="watchlist-rating-toggle">
+        <div className="personal-rating-toggle">
           <p className="add-movie__ratings__title">My Rating</p>
           <label className="theme-toggle" aria-label="Include rating">
             <input
@@ -162,4 +162,4 @@ const AddWatchlistMoviePage = ({ movie, onBack }: AddWatchlistMoviePageProps) =>
   );
 };
 
-export default AddWatchlistMoviePage;
+export default AddPersonalMoviePage;

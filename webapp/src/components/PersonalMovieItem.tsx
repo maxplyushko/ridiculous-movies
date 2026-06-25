@@ -1,17 +1,17 @@
-import type { WatchlistMovie } from "../types/WatchlistMovie";
+import type { PersonalMovie } from "../types/PersonalMovie";
 import { Calendar, Check, Pencil, Star, Trash2 } from "lucide-react";
 import { hapticTabTap } from "../haptics.ts";
 import { useSwipeGesture } from "../hooks/useSwipeGesture.ts";
 
-type WatchlistMovieItemProps = {
-  movie: WatchlistMovie;
+type PersonalMovieItemProps = {
+  movie: PersonalMovie;
   isExpanded: boolean;
   isSwipeOpen: boolean;
   isCelebrating?: boolean;
   onToggle: () => void;
-  onEdit: (movie: WatchlistMovie) => void;
-  onDelete: (movie: WatchlistMovie) => void;
-  onToggleWatched: (movie: WatchlistMovie) => void;
+  onEdit: (movie: PersonalMovie) => void;
+  onDelete: (movie: PersonalMovie) => void;
+  onToggleWatched: (movie: PersonalMovie) => void;
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
@@ -27,7 +27,7 @@ const formatDate = (utc: string) =>
     timeZone: "UTC",
   });
 
-const WatchlistMovieItem = ({
+const PersonalMovieItem = ({
   movie,
   isExpanded,
   isSwipeOpen,
@@ -39,7 +39,7 @@ const WatchlistMovieItem = ({
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
-}: WatchlistMovieItemProps) => {
+}: PersonalMovieItemProps) => {
   const {
     offsetX,
     isDragging,
@@ -88,7 +88,7 @@ const WatchlistMovieItem = ({
 
   return (
     <div
-      className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}${movie.watched ? " watchlist-item--watched" : ""}`}
+      className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}${movie.watched ? " personal-item--watched" : ""}`}
       style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
     >
       <div className="movie-item-management">
@@ -109,7 +109,7 @@ const WatchlistMovieItem = ({
       </div>
       <article
         tabIndex={-1}
-        className={`movie-item${isExpanded ? " watchlist-item--expanded" : ""}`}
+        className={`movie-item${isExpanded ? " personal-item--expanded" : ""}`}
         aria-label={movie.title}
         onBlur={(e) => {
           if (!e.currentTarget.contains(e.relatedTarget) && isExpanded) onToggle();
@@ -121,21 +121,21 @@ const WatchlistMovieItem = ({
         onTransitionEnd={(e) => handleTransitionEnd(e.propertyName)}
         {...touchHandlers}
       >
-        <div className="movie-item-header watchlist-item-header" onClick={handleHeaderClick}>
+        <div className="movie-item-header personal-item-header" onClick={handleHeaderClick}>
           <button
             type="button"
-            className={`watchlist-item__checkbox${movie.watched ? " watchlist-item__checkbox--checked" : ""}${isCelebrating ? " watchlist-item__checkbox--pop" : ""}`}
+            className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}${isCelebrating ? " personal-item__checkbox--pop" : ""}`}
             onClick={handleCheckboxClick}
             aria-label={movie.watched ? "Mark as unwatched" : "Mark as watched"}
           >
             {movie.watched && <Check size={14} strokeWidth={3} />}
           </button>
           <div className="movie-item-header__left">
-            <span className={`movie-item-header__title${movie.watched ? " watchlist-item__title--watched" : ""}`}>
+            <span className={`movie-item-header__title${movie.watched ? " personal-item__title--watched" : ""}`}>
               {movie.title}
             </span>
             {movie.description && (
-              <span className="movie-item-header__desc watchlist-item__desc">{movie.description}</span>
+              <span className="movie-item-header__desc personal-item__desc">{movie.description}</span>
             )}
           </div>
           <div className="movie-item-header__right">
@@ -156,4 +156,4 @@ const WatchlistMovieItem = ({
   );
 };
 
-export default WatchlistMovieItem;
+export default PersonalMovieItem;

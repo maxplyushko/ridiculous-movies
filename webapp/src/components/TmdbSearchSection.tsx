@@ -6,10 +6,10 @@ import TmdbMovieItem from "./TmdbMovieItem.tsx";
 
 type TmdbSearchSectionProps = {
   query: string;
-  onAddToWatchlist?: (movie: TmdbMovie) => void;
+  onAddToPersonalList?: (movie: TmdbMovie) => void;
 };
 
-const TmdbSearchSection = ({ query, onAddToWatchlist }: TmdbSearchSectionProps) => {
+const TmdbSearchSection = ({ query, onAddToPersonalList }: TmdbSearchSectionProps) => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<number | null>(null);
 
@@ -36,7 +36,7 @@ const TmdbSearchSection = ({ query, onAddToWatchlist }: TmdbSearchSectionProps) 
           onSwipeOpen={() => setOpenSwipeId(m.id)}
           onSwipeClose={() => setOpenSwipeId((cur) => cur === m.id ? null : cur)}
           onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== m.id) setOpenSwipeId(null); }}
-          onAddToWatchlist={onAddToWatchlist ? () => onAddToWatchlist(m) : undefined}
+          onAddToPersonalList={onAddToPersonalList ? () => onAddToPersonalList(m) : undefined}
         />
       ))}
     </div>

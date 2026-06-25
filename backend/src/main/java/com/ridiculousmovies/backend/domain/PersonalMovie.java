@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class WatchlistMovie {
+public class PersonalMovie {
   private String id;
   private String userId;
   private String title;

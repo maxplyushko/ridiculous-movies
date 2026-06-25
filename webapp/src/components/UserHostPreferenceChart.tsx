@@ -1,3 +1,4 @@
+import React from "react";
 import type { UserHostPreference } from "../types/Stat.ts";
 
 type Props = {
@@ -22,18 +23,18 @@ export function UserHostPreferenceChart({ preferences }: Readonly<Props>) {
         {preferences.map((p) => {
           const singleHost = p.mostFavHostName != null && p.mostFavHostName === p.leastFavHostName;
           return (
-            <>
-              <span key={`${p.userId}-name`} className="stat-host-pref__cell stat-host-pref__cell--name">{p.userName}</span>
-              <span key={`${p.userId}-avg`} className="stat-host-pref__cell stat-host-pref__cell--avg">{fmt(p.overallAverage)}</span>
-              <span key={`${p.userId}-best`} className="stat-host-pref__cell stat-host-pref__cell--best">
+            <React.Fragment key={p.userId}>
+              <span className="stat-host-pref__cell stat-host-pref__cell--name">{p.userName}</span>
+              <span className="stat-host-pref__cell stat-host-pref__cell--avg">{fmt(p.overallAverage)}</span>
+              <span className="stat-host-pref__cell stat-host-pref__cell--best">
                 {p.mostFavHostName ?? "—"}
                 {p.mostFavHostAvg != null && <span className="stat-host-pref__score"> {fmt(p.mostFavHostAvg)}</span>}
               </span>
-              <span key={`${p.userId}-worst`} className="stat-host-pref__cell stat-host-pref__cell--worst">
+              <span className="stat-host-pref__cell stat-host-pref__cell--worst">
                 {singleHost ? "—" : (p.leastFavHostName ?? "—")}
                 {!singleHost && p.leastFavHostAvg != null && <span className="stat-host-pref__score"> {fmt(p.leastFavHostAvg)}</span>}
               </span>
-            </>
+            </React.Fragment>
           );
         })}
       </div>

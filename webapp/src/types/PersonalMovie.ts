@@ -1,4 +1,4 @@
-export interface WatchlistMovie {
+export interface PersonalMovie {
   id: string;
   title: string;
   description: string;

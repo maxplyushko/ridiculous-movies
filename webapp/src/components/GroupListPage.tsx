@@ -70,6 +70,7 @@ function RoundSection({
 type ConfirmDeleteDialogProps = {
   movie: Movie;
   error: string | null;
+  isDeleting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -84,22 +85,24 @@ function FireworkSparks() {
   );
 }
 
-function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
+function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
   return (
     <div className="confirm-dialog-overlay">
       <div className="confirm-dialog">
         <p>Delete "{movie.title}"?</p>
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel}>Cancel</button>
-          <button type="button" onClick={onConfirm}>Delete</button>
+          <button type="button" onClick={onCancel} disabled={isDeleting}>Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : "Delete"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
+const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [maxRound, setMaxRound] = useState(0);
@@ -111,6 +114,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [watchedBurst, setWatchedBurst] = useState<number | null>(null);
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
@@ -146,6 +150,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
 
   const pickHost = async () => {
     if (hostPickerSpinning) return;
+    hapticTabTap();
 
     let pool = users;
     if (pool.length === 0) {
@@ -226,16 +231,21 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const cancelDelete = () => {
     setMovieToDelete(null);
     setDeleteError(null);
+    setIsDeleting(false);
   };
 
   const executeDelete = async () => {
     if (!movieToDelete) return;
+    hapticTabTap();
+    setIsDeleting(true);
     try {
       await deleteMovie(movieToDelete.id);
       setMovieToDelete(null);
       setDeleteError(null);
+      setIsDeleting(false);
       loadMovieGroups();
     } catch (err) {
+      setIsDeleting(false);
       setDeleteError(err instanceof Error ? err.message : "Failed to delete movie");
     }
   };
@@ -365,6 +375,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
         <ConfirmDeleteDialog
           movie={movieToDelete}
           error={deleteError}
+          isDeleting={isDeleting}
           onConfirm={executeDelete}
           onCancel={cancelDelete}
         />
@@ -384,4 +395,4 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   );
 };
 
-export default MovieListPage;
+export default GroupListPage;

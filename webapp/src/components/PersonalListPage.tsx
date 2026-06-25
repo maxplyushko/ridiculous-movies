@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import type { WatchlistMovie } from "../types/WatchlistMovie.ts";
-import WatchlistMovieItem from "./WatchlistMovieItem.tsx";
-import AddWatchlistMoviePage from "./AddWatchlistMoviePage.tsx";
-import { Eye, EyeDashed, Plus, Search, Star, X } from "lucide-react";
-import { addWatchlistMovie, deleteWatchlistMovie, editWatchlistMovie, fetchWatchlist } from "../api/watchlist.ts";
+import type { PersonalMovie } from "../types/PersonalMovie.ts";
+import PersonalMovieItem from "./PersonalMovieItem.tsx";
+import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
+import { Eye, EyeDashed, Loader, Plus, Search, Star, X } from "lucide-react";
+import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticTabTap } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
@@ -16,21 +16,24 @@ const SCORE_STEP = 0.25;
 const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
 
 type ConfirmDeleteDialogProps = {
-  movie: WatchlistMovie;
+  movie: PersonalMovie;
   error: string | null;
+  isDeleting: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
 
-function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
+function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
   return (
     <div className="confirm-dialog-overlay">
       <div className="confirm-dialog">
         <p>Delete "{movie.title}"?</p>
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel}>Cancel</button>
-          <button type="button" onClick={onConfirm}>Delete</button>
+          <button type="button" onClick={onCancel} disabled={isDeleting}>Cancel</button>
+          <button type="button" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : "Delete"}
+          </button>
         </div>
       </div>
     </div>
@@ -38,7 +41,7 @@ function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<Con
 }
 
 type RatingDialogProps = {
-  movie: WatchlistMovie;
+  movie: PersonalMovie;
   onSkip: () => void;
   onSave: (rating: number) => void;
 };
@@ -47,10 +50,10 @@ function RatingDialog({ movie, onSkip, onSave }: Readonly<RatingDialogProps>) {
   const [rating, setRating] = useState<number>(movie.rating ?? 7);
   return (
     <div className="confirm-dialog-overlay">
-      <div className="confirm-dialog watchlist-rating-dialog">
+      <div className="confirm-dialog personal-rating-dialog">
         <p>Rate "{movie.title}"</p>
-        <div className="watchlist-rating-dialog__slider-area">
-          <span className="watchlist-rating-dialog__value">
+        <div className="personal-rating-dialog__slider-area">
+          <span className="personal-rating-dialog__value">
             {rating.toFixed(2)}<Star size={14} />
           </span>
           <input
@@ -84,22 +87,22 @@ function fireWatchedCelebration() {
   confetti({ ...defaults, particleCount: 15, spread: 360, startVelocity: 36, ticks: 50, scalar: 0.55 });
 }
 
-type WatchlistSectionProps = {
+type PersonalSectionProps = {
   title: string;
-  movies: WatchlistMovie[];
+  movies: PersonalMovie[];
   openSwipeId: string | null;
   expandedId: string | null;
   celebratingId: string | null;
-  onEdit: (movie: WatchlistMovie) => void;
-  onDelete: (movie: WatchlistMovie) => void;
-  onToggleWatched: (movie: WatchlistMovie) => void;
+  onEdit: (movie: PersonalMovie) => void;
+  onDelete: (movie: PersonalMovie) => void;
+  onToggleWatched: (movie: PersonalMovie) => void;
   onToggle: (id: string) => void;
   onSwipeOpen: (id: string) => void;
   onSwipeClose: (id: string) => void;
   onSwipeBegin: (id: string) => void;
 };
 
-function WatchlistSection({
+function PersonalSection({
   title,
   movies,
   openSwipeId,
@@ -112,7 +115,7 @@ function WatchlistSection({
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
-}: Readonly<WatchlistSectionProps>) {
+}: Readonly<PersonalSectionProps>) {
   if (movies.length === 0) return null;
   return (
     <div className="movie-group">
@@ -120,7 +123,7 @@ function WatchlistSection({
         <h3>{title}</h3>
       </div>
       {movies.map((movie) => (
-        <WatchlistMovieItem
+        <PersonalMovieItem
           key={movie.id}
           movie={movie}
           isExpanded={expandedId === movie.id}
@@ -139,18 +142,19 @@ function WatchlistSection({
   );
 }
 
-const WatchlistPage = () => {
-  const [movies, setMovies] = useState<WatchlistMovie[]>([]);
+const PersonalListPage = () => {
+  const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingMovie, setEditingMovie] = useState<WatchlistMovie | undefined>(undefined);
-  const [movieToDelete, setMovieToDelete] = useState<WatchlistMovie | null>(null);
-  const [ratingMovie, setRatingMovie] = useState<WatchlistMovie | null>(null);
+  const [editingMovie, setEditingMovie] = useState<PersonalMovie | undefined>(undefined);
+  const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
+  const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
@@ -158,7 +162,7 @@ const WatchlistPage = () => {
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
     setError(null);
-    fetchWatchlist()
+    fetchPersonalList()
       .then(setMovies)
       .catch((err) => { if (!silent) setError(err); })
       .finally(() => setLoading(false));
@@ -188,13 +192,13 @@ const WatchlistPage = () => {
     return () => document.removeEventListener('touchstart', close);
   }, [openSwipeId]);
 
-  const handleEdit = (movie: WatchlistMovie) => {
+  const handleEdit = (movie: PersonalMovie) => {
     setOpenSwipeId(null);
     setEditingMovie(movie);
     setShowForm(true);
   };
 
-  const handleDelete = (movie: WatchlistMovie) => {
+  const handleDelete = (movie: PersonalMovie) => {
     setDeleteError(null);
     setMovieToDelete(movie);
   };
@@ -202,21 +206,26 @@ const WatchlistPage = () => {
   const cancelDelete = () => {
     setMovieToDelete(null);
     setDeleteError(null);
+    setIsDeleting(false);
   };
 
   const executeDelete = async () => {
     if (!movieToDelete) return;
+    hapticTabTap();
+    setIsDeleting(true);
     try {
-      await deleteWatchlistMovie(movieToDelete.id);
+      await deletePersonalMovie(movieToDelete.id);
       setMovieToDelete(null);
       setDeleteError(null);
+      setIsDeleting(false);
       loadMovies();
     } catch (err) {
+      setIsDeleting(false);
       setDeleteError(err instanceof Error ? err.message : "Failed to delete");
     }
   };
 
-  const applyToggle = async (movie: WatchlistMovie, rating?: number) => {
+  const applyToggle = async (movie: PersonalMovie, rating?: number) => {
     const payload = {
       title: movie.title,
       description: movie.description,
@@ -229,7 +238,7 @@ const WatchlistPage = () => {
 
     setMovies((prev) => prev.map((m) => m.id === movie.id ? { ...movie, ...payload } : m));
     try {
-      const updated = await editWatchlistMovie(movie.id, payload);
+      const updated = await editPersonalMovie(movie.id, payload);
       if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
     } catch (err) {
       if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === movie.id ? movie : m));
@@ -244,7 +253,7 @@ const WatchlistPage = () => {
     setTimeout(() => setCelebratingId(null), 500);
   };
 
-  const handleToggleWatched = (movie: WatchlistMovie) => {
+  const handleToggleWatched = (movie: PersonalMovie) => {
     if (movie.watched) {
       applyToggle(movie);
     } else {
@@ -320,9 +329,9 @@ const WatchlistPage = () => {
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
         )}
         {showTmdb && (toWatch.length > 0 || watched.length > 0) && (
-          <div className="movie-group__header"><h3>In your watchlist</h3></div>
+          <div className="movie-group__header"><h3>In your personal list</h3></div>
         )}
-        <WatchlistSection
+        <PersonalSection
           title="To Watch"
           movies={toWatch}
           openSwipeId={openSwipeId}
@@ -336,7 +345,7 @@ const WatchlistPage = () => {
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
-        <WatchlistSection
+        <PersonalSection
           title="Watched"
           movies={watched}
           openSwipeId={openSwipeId}
@@ -351,19 +360,19 @@ const WatchlistPage = () => {
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
         {movies.length === 0 && !normalizedQuery && (
-          <p className="movie-list__no-results">Your watchlist is empty. Add something!</p>
+          <p className="movie-list__no-results">Your personal list is empty. Add something!</p>
         )}
         {showTmdb && (
           <TmdbSearchSection
             query={searchQuery}
-            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then((added) => setMovies((prev) => [...prev, added]))}
+            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null }).then((added) => setMovies((prev) => [added, ...prev]))}
           />
         )}
       </div>
 
       {showForm && (
         <div className="movie-list__add__movie" ref={setFormEl}>
-          <AddWatchlistMoviePage
+          <AddPersonalMoviePage
             key={editingMovie?.id ?? "new"}
             movie={editingMovie}
             onBack={closeForm}
@@ -374,6 +383,7 @@ const WatchlistPage = () => {
         <ConfirmDeleteDialog
           movie={movieToDelete}
           error={deleteError}
+          isDeleting={isDeleting}
           onConfirm={executeDelete}
           onCancel={cancelDelete}
         />
@@ -399,4 +409,4 @@ const WatchlistPage = () => {
   );
 };
 
-export default WatchlistPage;
+export default PersonalListPage;
