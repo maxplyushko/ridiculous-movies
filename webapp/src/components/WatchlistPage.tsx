@@ -139,7 +139,7 @@ function WatchlistSection({
   );
 }
 
-const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
+const WatchlistPage = () => {
   const [movies, setMovies] = useState<WatchlistMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -168,10 +168,6 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (refreshKey > 0) queueMicrotask(() => loadMovies(true));
-  }, [refreshKey, loadMovies]);
-
   const closeForm = () => {
     setShowForm(false);
     setEditingMovie(undefined);
@@ -179,6 +175,17 @@ const WatchlistPage = ({ refreshKey }: { refreshKey: number }) => {
   };
 
   useSwipeBack(closeForm, formEl);
+
+  useEffect(() => {
+    if (openSwipeId === null) return;
+    const close = (e: TouchEvent) => {
+      if (!(e.target as HTMLElement).closest('.movie-item-wrapper')) {
+        setOpenSwipeId(null);
+      }
+    };
+    document.addEventListener('touchstart', close, { passive: true });
+    return () => document.removeEventListener('touchstart', close);
+  }, [openSwipeId]);
 
   const handleEdit = (movie: WatchlistMovie) => {
     setOpenSwipeId(null);

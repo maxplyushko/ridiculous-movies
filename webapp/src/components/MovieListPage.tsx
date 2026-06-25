@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
+import type { User } from "../types/User.ts";
 import MovieItem from "./MovieItem.tsx";
 import TmdbSearchSection from "./TmdbSearchSection.tsx";
-import { Clapperboard, Plus, Search, Trophy, X } from "lucide-react";
+import { Clapperboard, Loader, Plus, Search, Trophy, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups } from "../api/movies.ts";
-import { addWatchlistMovie } from "../api/watchlist.ts";
+import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
-import { hapticTabTap } from "../haptics.ts";
+import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, hapticTabTap, stopHaptics } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
+
+const SPIN_TICK_MS = 65;
+const SPIN_TICK_COUNT = 20;
 
 type RoundSectionProps = {
   movieGroup: MovieGroup;
@@ -94,7 +99,7 @@ function ConfirmDeleteDialog({ movie, error, onConfirm, onCancel }: Readonly<Con
   );
 }
 
-const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWatchlistMutated: () => void }) => {
+const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [maxRound, setMaxRound] = useState(0);
@@ -107,15 +112,73 @@ const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWa
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roundBurst, setRoundBurst] = useState<number | null>(null);
   const [watchedBurst, setWatchedBurst] = useState<number | null>(null);
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [hostPickerSpinning, setHostPickerSpinning] = useState(false);
+  const [pickedHost, setPickedHost] = useState<string | null>(null);
+  const spinIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => {
+    if (spinIntervalRef.current) clearInterval(spinIntervalRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!pickedHost) return;
+    confetti({
+      origin: { x: 0.5, y: 0.5 },
+      particleCount: 80,
+      spread: 360,
+      startVelocity: 30,
+      ticks: 80,
+      scalar: 0.9,
+      colors: ["#3390ec", "#ff9500", "#ff3b30", "#34c759", "#ffd60a", "#bf5af2"],
+      disableForReducedMotion: true,
+    });
+  }, [pickedHost]);
 
   const fireBurst = (set: (v: number | null) => void) => {
     hapticTabTap();
     const id = Date.now();
     set(id);
     setTimeout(() => set(null), 800);
+  };
+
+  const pickHost = async () => {
+    if (hostPickerSpinning) return;
+
+    let pool = users;
+    if (pool.length === 0) {
+      try {
+        pool = await fetchUsers();
+        setUsers(pool);
+      } catch { return; }
+    }
+    if (pool.length === 0) return;
+
+    const currentGroup = movieGroups.find((g) => g.groupId === currentRound);
+    const hostedIds = new Set(currentGroup?.movies.map((m) => m.owner.id) ?? []);
+    const remaining = pool.filter((u) => !hostedIds.has(u.id));
+    const candidates = remaining.length > 0 ? remaining : pool;
+
+    const final = candidates[Math.floor(Math.random() * candidates.length)];
+
+    hapticSpinStart();
+    setHostPickerSpinning(true);
+
+    let ticks = 0;
+    spinIntervalRef.current = setInterval(() => {
+      ticks++;
+      hapticSpinTick();
+      if (ticks >= SPIN_TICK_COUNT) {
+        clearInterval(spinIntervalRef.current!);
+        spinIntervalRef.current = null;
+        stopHaptics();
+        setHostPickerSpinning(false);
+        setPickedHost(final.name);
+        hapticSpinReveal();
+      }
+    }, SPIN_TICK_MS);
   };
 
   const loadMovieGroups = useCallback(() => {
@@ -208,12 +271,21 @@ const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWa
           <button
             type="button"
             className="mlp__card"
-            onClick={() => fireBurst(setRoundBurst)}
+            onClick={pickHost}
+            disabled={hostPickerSpinning}
           >
-            {roundBurst !== null && <FireworkSparks key={roundBurst} />}
-            <Trophy size={20} className="mlp__card-icon" />
-            <span className="mlp__card-value">{currentRound}</span>
-            <span className="mlp__card-label">Round</span>
+            {hostPickerSpinning ? (
+              <>
+                <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
+                <span className="mlp__card-label">Picking host…</span>
+              </>
+            ) : (
+              <>
+                <Trophy size={20} className="mlp__card-icon" />
+                <span className="mlp__card-value">{currentRound}</span>
+                <span className="mlp__card-label">Round</span>
+              </>
+            )}
           </button>
           <button
             type="button"
@@ -275,10 +347,7 @@ const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWa
           />
         ))}
         {showTmdb && (
-          <TmdbSearchSection
-            query={searchQuery}
-            onAddToWatchlist={(m) => addWatchlistMovie({ title: m.title, description: m.overview ?? "", rating: null }).then(onWatchlistMutated)}
-          />
+          <TmdbSearchSection query={searchQuery} />
         )}
       </div>
       {showMovieForm && (
@@ -299,6 +368,17 @@ const MovieListPage = ({ isAdmin, onWatchlistMutated }: { isAdmin: boolean; onWa
           onConfirm={executeDelete}
           onCancel={cancelDelete}
         />
+      )}
+      {pickedHost && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }}>
+            <FireworkSparks key={pickedHost} />
+            <p>Next random host is <strong>{pickedHost}</strong></p>
+            <div className="confirm-dialog__actions">
+              <button type="button" onClick={() => setPickedHost(null)}>OK</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

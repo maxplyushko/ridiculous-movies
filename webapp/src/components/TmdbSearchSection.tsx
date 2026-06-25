@@ -6,7 +6,7 @@ import TmdbMovieItem from "./TmdbMovieItem.tsx";
 
 type TmdbSearchSectionProps = {
   query: string;
-  onAddToWatchlist: (movie: TmdbMovie) => void;
+  onAddToWatchlist?: (movie: TmdbMovie) => void;
 };
 
 const TmdbSearchSection = ({ query, onAddToWatchlist }: TmdbSearchSectionProps) => {
@@ -36,7 +36,7 @@ const TmdbSearchSection = ({ query, onAddToWatchlist }: TmdbSearchSectionProps) 
           onSwipeOpen={() => setOpenSwipeId(m.id)}
           onSwipeClose={() => setOpenSwipeId((cur) => cur === m.id ? null : cur)}
           onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== m.id) setOpenSwipeId(null); }}
-          onAddToWatchlist={() => onAddToWatchlist(m)}
+          onAddToWatchlist={onAddToWatchlist ? () => onAddToWatchlist(m) : undefined}
         />
       ))}
     </div>

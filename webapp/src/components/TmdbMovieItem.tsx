@@ -11,7 +11,7 @@ type TmdbMovieItemProps = {
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
-  onAddToWatchlist: () => void;
+  onAddToWatchlist?: () => void;
 };
 
 const ACTIONS_WIDTH = 56;
@@ -27,6 +27,7 @@ const TmdbMovieItem = ({
   onSwipeBegin,
   onAddToWatchlist,
 }: TmdbMovieItemProps) => {
+  const swipeable = !!onAddToWatchlist;
   const {
     offsetX,
     isDragging,
@@ -37,8 +38,8 @@ const TmdbMovieItem = ({
     suppressNextClickRef,
     touchHandlers,
   } = useSwipeGesture({
-    actionsWidth: ACTIONS_WIDTH,
-    openThreshold: OPEN_THRESHOLD,
+    actionsWidth: swipeable ? ACTIONS_WIDTH : 0,
+    openThreshold: swipeable ? OPEN_THRESHOLD : 999,
     isOpen: isSwipeOpen,
     onOpen: onSwipeOpen,
     onClose: onSwipeClose,
@@ -60,18 +61,20 @@ const TmdbMovieItem = ({
 
   return (
     <div
-      className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}`}
+      className={`movie-item-wrapper${showActions && swipeable ? " movie-item-wrapper--actions-visible" : ""}`}
       style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
     >
-      <div className="movie-item-management">
-        <button
-          type="button"
-          className="movie-item-management__watchlist"
-          onClick={() => { closeSwipe(); hapticTabTap(); onAddToWatchlist(); }}
-        >
-          <Bookmark size={16} />
-        </button>
-      </div>
+      {swipeable && (
+        <div className="movie-item-management">
+          <button
+            type="button"
+            className="movie-item-management__watchlist"
+            onClick={() => { closeSwipe(); hapticTabTap(); onAddToWatchlist!(); }}
+          >
+            <Bookmark size={16} />
+          </button>
+        </div>
+      )}
       <button
         type="button"
         className={`tmdb-movie-item${isExpanded ? " tmdb-movie-item--expanded" : ""}`}
