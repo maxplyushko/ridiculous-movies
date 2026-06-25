@@ -3,21 +3,24 @@ import { useEffect, useState } from "react";
 import MovieListPage from "./components/MovieListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
 import MiscPage from "./components/MiscPage.tsx";
+import WatchlistPage from "./components/WatchlistPage.tsx";
 import { AuthGate } from "./components/AuthGate.tsx";
 import type { AuthResponse } from "./api/auth.ts";
-import { ChartLine, Film, MoreHorizontal } from "lucide-react";
+import { ChartLine, Film, ListTodo, Settings } from "lucide-react";
 import { hapticTabTap } from "./haptics.ts";
 
-type Tab = "stat" | "list" | "misc";
+type Tab = "stat" | "list" | "watchlist" | "misc";
 
 const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "stat", label: "Statistics", icon: <ChartLine size={30} /> },
   { id: "list", label: "Movie List", icon: <Film size={30} /> },
-  { id: "misc", label: "Misc", icon: <MoreHorizontal size={30} /> },
+  { id: "watchlist", label: "Watchlist", icon: <ListTodo size={30} /> },
+  { id: "misc", label: "Misc", icon: <Settings size={30} /> },
 ];
 
 function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
-  const [currentPage, setCurrentPage] = useState<Tab>("list");
+  const defaultTab: Tab = session.defaultPage === "watchlist" ? "watchlist" : "list";
+  const [currentPage, setCurrentPage] = useState<Tab>(defaultTab);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const isAdmin = session.role === "admin";
 
@@ -43,7 +46,8 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
       <main className="app-main">
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} /></div>
         <div hidden={currentPage !== "list"}><MovieListPage isAdmin={isAdmin} /></div>
-        <div hidden={currentPage !== "misc"}><MiscPage savedTheme={session.theme} /></div>
+        <div hidden={currentPage !== "watchlist"}><WatchlistPage /></div>
+        <div hidden={currentPage !== "misc"}><MiscPage savedTheme={session.theme} savedDefaultPage={session.defaultPage} /></div>
       </main>
       <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         {TABS.map(({ id, label, icon }) => (

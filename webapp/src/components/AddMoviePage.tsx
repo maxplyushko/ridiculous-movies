@@ -195,6 +195,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
   };
 
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [proposedOverview, setProposedOverview] = useState<string | null>(null);
   const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200 });
 
   const isSubmitDisabled = isSubmitting || !title.trim();
@@ -226,6 +227,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setTitle(s.title);
+                      if (s.overview) setProposedOverview(s.overview);
                       setShowSuggestions(false);
                     }}
                   >
@@ -243,10 +245,19 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
             id="add-movie-desc"
             type="text"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
             onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300)}
             placeholder="Description"
           />
+          {proposedOverview && (
+            <div className="overview-proposal">
+              <span className="overview-proposal__text">{proposedOverview}</span>
+              <div className="overview-proposal__actions">
+                <button type="button" onClick={() => setProposedOverview(null)}>Dismiss</button>
+                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>Use</button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="add-movie__item">
           <RoundPicker value={round} maxRound={Math.max(maxRound, currentRound) + 1} onChange={setRound} />

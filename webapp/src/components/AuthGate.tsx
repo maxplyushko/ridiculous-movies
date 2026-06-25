@@ -1,6 +1,5 @@
 import { checkAccess, PRIVATE_USE_MESSAGE, type AuthResponse } from "../api/auth.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
-import { getTelegramId } from "../api/telegram.ts";
 import { useAsync } from "../hooks/useAsync.ts";
 import { applySavedTheme, hasTelegramThemeContext } from "../telegramTheme.ts";
 import * as React from "react";
@@ -16,7 +15,7 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
   if (state.status === "error") {
     return (
       <div className="access-denied">
-        <p>{state.error.message || PRIVATE_USE_MESSAGE}. Current User ID: {getTelegramId()}</p>
+        <p>{state.error.message || PRIVATE_USE_MESSAGE}</p>
       </div>
     );
   }

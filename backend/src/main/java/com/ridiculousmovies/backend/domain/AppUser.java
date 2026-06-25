@@ -11,4 +11,5 @@ public class AppUser {
   private UserGroup userGroup;
   private UserRole role;
   private String theme;
+  private String defaultPage;
 }

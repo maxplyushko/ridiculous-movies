@@ -9,6 +9,7 @@ export type AuthResponse = {
   groupId: string;
   groupName: string;
   theme: "dark" | "light" | null;
+  defaultPage: "list" | "watchlist" | null;
 };
 
 export async function checkAccess(): Promise<AuthResponse> {

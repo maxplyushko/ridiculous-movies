@@ -252,7 +252,7 @@ const MovieListPage = ({ isAdmin }: { isAdmin: boolean }) => {
         </div>
       </div>
 
-      <div className="movie-list">
+      <div className="movie-list" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
         {normalizedQuery && visibleGroups.length === 0 && !showTmdb && (
           <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
         )}
