@@ -1,5 +1,3 @@
-import {PRIVATE_USE_MESSAGE} from "./messages.ts";
-
 const TOKEN_KEY = "rm_access_token";
 
 export const tokenStore = {
@@ -15,20 +13,11 @@ type RequestOptions = {
 };
 
 function parseErrorMessage(text: string, status: number): string {
-  if (!text) {
-    return status === 403 ? PRIVATE_USE_MESSAGE : `HTTP ${status}`;
-  }
+  if (!text) return `HTTP ${status}`;
   try {
     const json = JSON.parse(text) as { message?: string; error?: string };
-    if (json.message) {
-      return json.message;
-    }
-    if (status === 403) {
-      return PRIVATE_USE_MESSAGE;
-    }
-    if (json.error) {
-      return json.error;
-    }
+    if (json.message) return json.message;
+    if (json.error) return json.error;
   } catch { /* empty */ }
   return text;
 }

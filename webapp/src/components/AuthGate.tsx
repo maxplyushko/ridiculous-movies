@@ -1,4 +1,4 @@
-import { checkAccess, telegramLogin, PRIVATE_USE_MESSAGE, type AuthResponse } from "../api/auth.ts";
+import { checkAccess, telegramLogin, type AuthResponse } from "../api/auth.ts";
 import { tokenStore } from "../api/client.ts";
 import { isTelegramMiniApp, getTelegramWebApp } from "../api/telegram.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
@@ -29,8 +29,13 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
       if (isTelegramMiniApp() && !tokenStore.get()) {
         const tg = getTelegramWebApp();
         if (tg?.initData) {
-          const res = await telegramLogin(tg.initData);
-          tokenStore.set(res.accessToken);
+          try {
+            const res = await telegramLogin(tg.initData);
+            tokenStore.set(res.accessToken);
+          } catch {
+            if (!cancelled) setState({ mode: "signin" });
+            return;
+          }
         }
       }
       const data = await checkAccess();
@@ -48,10 +53,8 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
           return;
         }
         setState({ mode: "signin" });
-      } else if (msg === PRIVATE_USE_MESSAGE) {
-        setState({ mode: "signin" });
       } else {
-        setState({ mode: "error", message: msg || PRIVATE_USE_MESSAGE });
+        setState({ mode: "error", message: msg || "Access denied" });
       }
     });
 
