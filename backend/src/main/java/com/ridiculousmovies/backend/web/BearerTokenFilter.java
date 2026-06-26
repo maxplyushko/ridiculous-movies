@@ -24,6 +24,11 @@ public class BearerTokenFilter extends OncePerRequestFilter {
   }
 
   @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    return !request.getRequestURI().startsWith("/api/");
+  }
+
+  @Override
   protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response,
       @NonNull FilterChain chain) throws ServletException, IOException {
     String auth = request.getHeader("Authorization");
@@ -37,7 +42,17 @@ public class BearerTokenFilter extends OncePerRequestFilter {
       chain.doFilter(new UserIdInjectingWrapper(request, userId.get()), response);
       return;
     }
-    chain.doFilter(request, response);
+    if (!isPublicPath(request)) {
+      response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+      return;
+    }
+    chain.doFilter(new UserIdInjectingWrapper(request, null), response);
+  }
+
+  private static boolean isPublicPath(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    return path.startsWith("/api/auth") || path.equals("/api/start")
+        || path.startsWith("/api/telegram/webhook");
   }
 
   private static class UserIdInjectingWrapper extends HttpServletRequestWrapper {
@@ -58,8 +73,10 @@ public class BearerTokenFilter extends OncePerRequestFilter {
 
     @Override
     public Enumeration<String> getHeaders(String name) {
-      if ("User-Id".equalsIgnoreCase(name))
+      if ("User-Id".equalsIgnoreCase(name)) {
+        if (userId == null) return Collections.emptyEnumeration();
         return Collections.enumeration(Collections.singleton(userId));
+      }
       return super.getHeaders(name);
     }
   }

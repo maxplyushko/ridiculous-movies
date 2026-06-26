@@ -34,6 +34,8 @@ public interface AppRepository {
 
   Optional<AppUser> findUserByOauthSub(String sub);
 
+  AppUser registerUser(String name, String oauthSub, String groupId);
+
   void saveUserPreferences(String userId, String theme, String defaultPage);
 
   void saveMovie(Movie movie);

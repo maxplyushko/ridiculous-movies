@@ -19,9 +19,10 @@ public class AuthService {
 
   public AppUser requireUser(String userId) {
     if (userId == null || userId.isBlank()) {
-      return requireGuest();
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
     }
-    return dataStore.findUserById(userId.trim()).orElseGet(this::requireGuest);
+    return dataStore.findUserById(userId.trim())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User not registered"));
   }
 
   public void assertUserInGroup(String userId, String groupId) {
@@ -40,11 +41,5 @@ public class AuthService {
     if (!"admin".equals(user.getRole().getName())) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
     }
-  }
-
-  private AppUser requireGuest() {
-    return dataStore.findUserById(GUEST_USER_ID)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-            "Guest user not configured"));
   }
 }

@@ -23,7 +23,7 @@ public class GoogleOAuthVerifier implements OAuthVerifier {
   }
 
   @Override
-  public String verifyAndGetSub(String idToken) {
+  public UserInfo verify(String idToken) {
     if (clientId == null || clientId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "OAuth not configured");
     }
@@ -33,7 +33,10 @@ public class GoogleOAuthVerifier implements OAuthVerifier {
       if (audience == null || !audience.contains(clientId)) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token audience mismatch");
       }
-      return jwt.getSubject();
+      String name = jwt.getClaimAsString("name");
+      if (name == null) name = jwt.getClaimAsString("email");
+      if (name == null) name = jwt.getSubject();
+      return new UserInfo(jwt.getSubject(), name);
     } catch (ResponseStatusException e) {
       throw e;
     } catch (JwtException e) {

@@ -1,5 +1,4 @@
 import {PRIVATE_USE_MESSAGE} from "./messages.ts";
-import { getTelegramId } from "./telegram.ts";
 
 const TOKEN_KEY = "rm_access_token";
 
@@ -40,13 +39,8 @@ export async function apiFetch<T>(path: string, {method, body, signal}: RequestO
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";
   }
-  const userId = getTelegramId();
-  if (userId) {
-    headers["User-Id"] = userId;
-  } else {
-    const token = tokenStore.get();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
+  const token = tokenStore.get();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const response = await fetch(path, {
     method,
     headers,

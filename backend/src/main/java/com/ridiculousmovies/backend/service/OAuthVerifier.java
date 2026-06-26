@@ -1,5 +1,6 @@
 package com.ridiculousmovies.backend.service;
 
 public interface OAuthVerifier {
-  String verifyAndGetSub(String idToken);
+  record UserInfo(String sub, String name) {}
+  UserInfo verify(String idToken);
 }

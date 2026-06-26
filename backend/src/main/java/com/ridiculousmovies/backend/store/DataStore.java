@@ -363,6 +363,43 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public AppUser registerUser(String name, String oauthSub, String groupId) {
+    lock.writeLock().lock();
+    try {
+      UserGroup g = usersById.values().stream()
+          .map(AppUser::getUserGroup)
+          .filter(userGroup -> groupId.equals(userGroup.getId()))
+          .findFirst()
+          .orElseGet(() -> {
+            UserGroup ug = new UserGroup();
+            ug.setId(groupId);
+            ug.setName(groupId);
+            return ug;
+          });
+      UserRole role = usersById.values().stream()
+          .map(AppUser::getRole)
+          .filter(uRole -> "user".equals(uRole.getName()))
+          .findFirst()
+          .orElseGet(() -> {
+            UserRole ur = new UserRole();
+            ur.setId("user");
+            ur.setName("user");
+            return ur;
+          });
+      AppUser u = new AppUser();
+      u.setId(UUID.randomUUID().toString());
+      u.setName(name);
+      u.setOauthSub(oauthSub);
+      u.setUserGroup(g);
+      u.setRole(role);
+      usersById.put(u.getId(), u);
+      persist();
+      return u;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
   public void saveUserPreferences(String userId, String theme, String defaultPage) {
     lock.writeLock().lock();
     try {

@@ -30,3 +30,11 @@ export async function checkAccess(): Promise<AuthResponse> {
 export async function oauthLogin(idToken: string): Promise<OAuthLoginResponse> {
   return apiFetch<OAuthLoginResponse>("/api/auth/login", { method: "POST", body: { idToken } });
 }
+
+export async function telegramLogin(initData: string): Promise<OAuthLoginResponse> {
+  return apiFetch<OAuthLoginResponse>("/api/auth/telegram", { method: "POST", body: { initData } });
+}
+
+export async function guestLogin(): Promise<OAuthLoginResponse> {
+  return apiFetch<OAuthLoginResponse>("/api/auth/guest", { method: "POST" });
+}
