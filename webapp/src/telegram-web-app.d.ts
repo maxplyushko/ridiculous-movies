@@ -77,6 +77,7 @@ declare global {
 
     ready(): void;
     expand(): void;
+    openLink?(url: string): void;
 
     onEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
     offEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;

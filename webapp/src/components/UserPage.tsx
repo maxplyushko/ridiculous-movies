@@ -4,7 +4,6 @@ import { hapticTabTap } from "../haptics.ts";
 import { applyColorScheme } from "../telegramTheme.ts";
 import { savePreferences } from "../api/users.ts";
 import { tokenStore } from "../api/client.ts";
-import { getTelegramWebApp } from "../api/telegram.ts";
 import type { AuthResponse } from "../api/auth.ts";
 
 type Props = { session: AuthResponse };
@@ -21,8 +20,6 @@ function ProfileView({ session, onSettings }: Readonly<{
   session: AuthResponse;
   onSettings: () => void
 }>) {
-  const isTgSession = !!getTelegramWebApp()?.initDataUnsafe?.user;
-
   const handleLogout = () => {
     hapticTabTap();
     tokenStore.clear();
@@ -53,14 +50,12 @@ function ProfileView({ session, onSettings }: Readonly<{
       </div>
 
 
-      {!isTgSession && (
-        <div className="user-page__section user-page__section--danger">
-          <button className="user-page__logout-btn" onClick={handleLogout}>
-            <LogOut size={16} />
-            Sign out
-          </button>
-        </div>
-      )}
+      <div className="user-page__section user-page__section--danger">
+        <button className="user-page__logout-btn" onClick={handleLogout}>
+          <LogOut size={16} />
+          Sign out
+        </button>
+      </div>
     </section>
   );
 }

@@ -31,6 +31,10 @@ public class TelegramBotClient {
         .build();
   }
 
+  public String getBotUsername() {
+    return botUsername;
+  }
+
   public void loadBotUsername() {
     try {
       GetMeResponse response = restClient.get()

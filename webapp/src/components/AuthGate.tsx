@@ -1,4 +1,4 @@
-import { checkAccess, telegramLogin, type AuthResponse } from "../api/auth.ts";
+import { checkAccess, telegramLogin, exchangeGoogleToken, type AuthResponse } from "../api/auth.ts";
 import { tokenStore } from "../api/client.ts";
 import { isTelegramMiniApp, getTelegramWebApp } from "../api/telegram.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
@@ -26,6 +26,16 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
     setState({ mode: "loading" });
 
     const run = async () => {
+      const startParam = getTelegramWebApp()?.initDataUnsafe?.start_param;
+      if (startParam?.startsWith("gauth_") && !tokenStore.get()) {
+        try {
+          const res = await exchangeGoogleToken(startParam);
+          tokenStore.set(res.accessToken);
+        } catch {
+          // consumed or expired — fall through to normal flow
+        }
+      }
+
       if (isTelegramMiniApp() && !tokenStore.get()) {
         const tg = getTelegramWebApp();
         if (tg?.initData) {

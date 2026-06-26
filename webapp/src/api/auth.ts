@@ -36,3 +36,12 @@ export async function telegramLogin(initData: string): Promise<OAuthLoginRespons
 export async function guestLogin(): Promise<OAuthLoginResponse> {
   return apiFetch<OAuthLoginResponse>("/api/auth/guest", { method: "POST" });
 }
+
+export async function getGoogleAuthUrl(): Promise<string> {
+  const res = await apiFetch<{ url: string }>("/api/auth/google/url");
+  return res.url;
+}
+
+export async function exchangeGoogleToken(token: string): Promise<OAuthLoginResponse> {
+  return apiFetch<OAuthLoginResponse>(`/api/auth/google/token?token=${encodeURIComponent(token)}`);
+}
