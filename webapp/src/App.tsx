@@ -2,11 +2,11 @@ import './index.css';
 import { useEffect, useState } from "react";
 import GroupListPage from "./components/GroupListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
-import MiscPage from "./components/MiscPage.tsx";
+import UserPage from "./components/UserPage.tsx";
 import PersonalListPage from "./components/PersonalListPage.tsx";
 import { AuthGate } from "./components/AuthGate.tsx";
 import type { AuthResponse } from "./api/auth.ts";
-import { ChartLine, Film, ListTodo, Settings } from "lucide-react";
+import { ChartLine, CircleUser, Film, ListTodo } from "lucide-react";
 import { hapticTabTap } from "./haptics.ts";
 
 type Tab = "stat" | "group" | "personal" | "misc";
@@ -15,7 +15,7 @@ const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "stat", label: "Statistics", icon: <ChartLine size={30} /> },
   { id: "group", label: "Group List", icon: <Film size={30} /> },
   { id: "personal", label: "Personal List", icon: <ListTodo size={30} /> },
-  { id: "misc", label: "Misc", icon: <Settings size={30} /> },
+  { id: "misc", label: "Profile", icon: <CircleUser size={30} /> },
 ];
 
 function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
@@ -47,7 +47,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} /></div>
         <div hidden={currentPage !== "group"}><GroupListPage isAdmin={isAdmin} /></div>
         <div hidden={currentPage !== "personal"}><PersonalListPage /></div>
-        <div hidden={currentPage !== "misc"}><MiscPage savedTheme={session.theme} savedDefaultPage={session.defaultPage} /></div>
+        <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>
       <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         {TABS.map(({ id, label, icon }) => (
