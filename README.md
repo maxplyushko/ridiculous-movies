@@ -11,7 +11,8 @@ A Telegram Mini App for a private movie club. Members add films by round, rate e
 - [x] Fix light bg accents
 - [ ] Migrate BE to Kotlin + GraalVM for fast start and cleanup the BE code
 - [x] Add mode for personal movie list (not shared with the club)
-- [ ] Introduce user page. Hide current settings innit.
+- [x] Introduce user page. Hide current settings innit.
+- [ ] Change the rating mechasim. (3 focus points)
 - [ ] Add possibility to see other user's personal movie lists (if they allow it). Add notification when I've added movie from some user's personal list.
 - [ ] Migrate storage back to PostgreSQL (`AppRepository` interface is ready — add `PostgresRepository implements AppRepository` and wire via `@ConditionalOnProperty`)
 - 
