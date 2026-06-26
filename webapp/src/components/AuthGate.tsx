@@ -48,6 +48,8 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
           return;
         }
         setState({ mode: "signin" });
+      } else if (msg === PRIVATE_USE_MESSAGE) {
+        setState({ mode: "signin" });
       } else {
         setState({ mode: "error", message: msg || PRIVATE_USE_MESSAGE });
       }

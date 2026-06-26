@@ -167,6 +167,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
   return (
     <div className="confirm-dialog-overlay" onClick={onClose}>
       <div className="confirm-dialog mlp__number-picker" onClick={(e) => e.stopPropagation()}>
+        <div className="mlp__picker-title">Pick randomizer range</div>
         <div className="mlp__range-wrap">
           <div className="mlp__range-labels">
             <span className="mlp__range-value">{npMin}</span>
@@ -206,7 +207,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
             disabled={spinning}
             onClick={pick}
           >
-            {spinning ? "Picking…" : "Pick"}
+            {spinning ? "Quantumizing…" : "Generate"}
           </button>
           {final !== null && !spinning && (
             <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>OK</button>
@@ -228,6 +229,12 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
+  useEffect(() => {
+    if (openSwipeId === null) return;
+    const close = () => setOpenSwipeId(null);
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [openSwipeId]);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -467,8 +474,8 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
       )}
 
       {hostPicker.result && (
-        <div className="confirm-dialog-overlay">
-          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }}>
+        <div className="confirm-dialog-overlay" onClick={hostPicker.clear}>
+          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }} onClick={(e) => e.stopPropagation()}>
             <FireworkSparks key={hostPicker.result} />
             <p>Next Host is <strong>{hostPicker.result}</strong></p>
             <div className="confirm-dialog__actions">

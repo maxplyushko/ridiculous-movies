@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ArrowLeft, LogOut, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { hapticTabTap } from "../haptics.ts";
 import { applyColorScheme } from "../telegramTheme.ts";
 import { savePreferences } from "../api/users.ts";
 import { tokenStore } from "../api/client.ts";
+import { getTelegramWebApp } from "../api/telegram.ts";
 import type { AuthResponse } from "../api/auth.ts";
 
 type Props = { session: AuthResponse };
@@ -20,6 +21,8 @@ function ProfileView({ session, onSettings }: Readonly<{
   session: AuthResponse;
   onSettings: () => void
 }>) {
+  const isTgSession = !!getTelegramWebApp()?.initDataUnsafe?.user;
+
   const handleLogout = () => {
     hapticTabTap();
     tokenStore.clear();
@@ -39,27 +42,25 @@ function ProfileView({ session, onSettings }: Readonly<{
           <span className="user-page__initials">{getInitials(session.userName)}</span>
         </div>
         <h1 className="user-page__name">{session.userName}</h1>
-        <span className={`user-page__role-badge user-page__role-badge--${session.role}`}>
-          {session.role === "admin" ? "Admin" : "Member"}
-        </span>
-      </div>
-
-      <div className="user-page__section">
-        <p className="user-page__section-title">Account</p>
-        <div className="user-page__card">
-          <div className="user-page__row">
-            <span className="user-page__row-label">Group</span>
-            <span className="user-page__row-value">{session.groupName}</span>
-          </div>
+        <div className="user-page__badges">
+          <span className={`user-page__role-badge user-page__role-badge--${session.role}`}>
+            {session.role === "admin" ? "Admin" : "Member"}
+          </span>
+          <span className="user-page__role-badge user-page__role-badge--group">
+            {session.groupName}
+          </span>
         </div>
       </div>
 
-      <div className="user-page__section user-page__section--danger">
-        <button className="user-page__logout-btn" onClick={handleLogout}>
-          <LogOut size={16} />
-          Sign out
-        </button>
-      </div>
+
+      {!isTgSession && (
+        <div className="user-page__section user-page__section--danger">
+          <button className="user-page__logout-btn" onClick={handleLogout}>
+            <LogOut size={16} />
+            Sign out
+          </button>
+        </div>
+      )}
     </section>
   );
 }
@@ -76,12 +77,7 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
 
   return (
     <section className="user-page">
-      <div className="user-page__topbar user-page__topbar--back">
-        <button className="user-page__icon-btn" onClick={() => { hapticTabTap(); onBack(); }} aria-label="Back">
-          <ArrowLeft size={20} />
-        </button>
-        <h2 className="user-page__topbar-title">Settings</h2>
-      </div>
+      <h2 className="user-page__topbar-title">Settings</h2>
 
       <div className="user-page__section">
         <p className="user-page__section-title">Homepage</p>
@@ -124,25 +120,27 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
         </div>
       </div>
 
-      {isDirty && (
-        <button
-          type="button"
-          className="misc-page__save-btn"
-          disabled={isSaving}
-          onClick={async () => {
-            setIsSaving(true);
-            try {
-              await savePreferences({ theme: isDark ? "dark" : "light", defaultPage });
-              setPersistedDark(isDark);
-              setPersistedDefaultPage(defaultPage);
-            } finally {
-              setIsSaving(false);
-            }
-          }}
-        >
-          {isSaving ? "Saving…" : "Save Changes"}
-        </button>
-      )}
+      <div className="add-movie__control">
+        <button type="button" onClick={() => { hapticTabTap(); onBack(); }}>Back</button>
+        {isDirty && (
+          <button
+            type="button"
+            disabled={isSaving}
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                await savePreferences({ theme: isDark ? "dark" : "light", defaultPage });
+                setPersistedDark(isDark);
+                setPersistedDefaultPage(defaultPage);
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+          >
+            {isSaving ? "Saving…" : "Save Changes"}
+          </button>
+        )}
+      </div>
     </section>
   );
 }
@@ -150,9 +148,16 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
 const UserPage = ({ session }: Props) => {
   const [view, setView] = useState<"profile" | "settings">("profile");
 
-  return view === "profile"
-    ? <ProfileView session={session} onSettings={() => setView("settings")} />
-    : <SettingsView session={session} onBack={() => setView("profile")} />;
+  return (
+    <>
+      <ProfileView session={session} onSettings={() => setView("settings")} />
+      {view === "settings" && (
+        <div className="user-page__settings-overlay">
+          <SettingsView session={session} onBack={() => setView("profile")} />
+        </div>
+      )}
+    </>
+  );
 };
 
 export default UserPage;
