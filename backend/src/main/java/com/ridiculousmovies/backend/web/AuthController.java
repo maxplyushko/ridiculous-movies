@@ -40,7 +40,7 @@ public class AuthController {
   public AuthController(AuthService authService, OAuthVerifier oAuthVerifier,
       JwtService jwtService, AppRepository dataStore, TelegramAuthService telegramAuthService,
       GoogleOAuthFlowService googleOAuthFlowService,
-      @Value("${google.default-group:test_user_group}") String defaultGroup) {
+      @Value("${google.default-group:Guest group}") String defaultGroup) {
     this.authService = authService;
     this.oAuthVerifier = oAuthVerifier;
     this.jwtService = jwtService;
