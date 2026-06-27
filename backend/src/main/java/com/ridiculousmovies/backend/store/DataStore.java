@@ -94,7 +94,9 @@ public class DataStore implements AppRepository {
       m.setId(r.id());
       m.setTitle(r.title());
       m.setDescription(r.description() != null ? r.description() : "");
-      m.setOwner(usersById.get(r.ownerId()));
+      AppUser owner = usersById.get(r.ownerId());
+      if (owner == null) continue;
+      m.setOwner(owner);
       m.setRound(r.round());
       m.setCreatedAt(r.createdAt());
       m.setUpdatedAt(r.updatedAt());
