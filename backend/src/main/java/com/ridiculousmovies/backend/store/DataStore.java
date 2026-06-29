@@ -84,6 +84,7 @@ public class DataStore implements AppRepository {
       u.setRole(role);
       u.setTheme(r.theme());
       u.setDefaultPage(r.defaultPage());
+      u.setLang(r.lang());
       u.setOauthSub(r.oauthSub());
       usersById.put(u.getId(), u);
     }
@@ -103,10 +104,12 @@ public class DataStore implements AppRepository {
       List<Rating> ratings = new ArrayList<>();
       if (r.ratings() != null) {
         for (AppData.RatingRecord rr : r.ratings()) {
+          AppUser ratingUser = usersById.get(rr.userId());
+          if (ratingUser == null) continue;
           Rating rating = new Rating();
           rating.setId(rr.id());
           rating.setMovie(m);
-          rating.setUser(usersById.get(rr.userId()));
+          rating.setUser(ratingUser);
           rating.setScore(rr.score());
           ratings.add(rating);
         }
@@ -402,13 +405,14 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public void saveUserPreferences(String userId, String theme, String defaultPage) {
+  public void saveUserPreferences(String userId, String theme, String defaultPage, String lang) {
     lock.writeLock().lock();
     try {
       AppUser u = usersById.get(userId);
       if (u == null) return;
       if (theme != null) u.setTheme(theme);
       if (defaultPage != null) u.setDefaultPage(defaultPage);
+      if (lang != null) u.setLang(lang);
       persist();
     } finally {
       lock.writeLock().unlock();
@@ -502,7 +506,7 @@ public class DataStore implements AppRepository {
     data.setUsers(usersById.values().stream()
         .map(u -> new AppData.UserRecord(u.getId(), u.getName(),
             u.getUserGroup().getName(), u.getRole().getName(), u.getTheme(), u.getDefaultPage(),
-            u.getOauthSub()))
+            u.getLang(), u.getOauthSub()))
         .toList());
     data.setMovies(moviesById.values().stream()
         .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(),

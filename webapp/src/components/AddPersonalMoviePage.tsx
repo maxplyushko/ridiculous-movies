@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "../api/personalList.ts";
@@ -18,6 +19,7 @@ type AddPersonalMoviePageProps = {
 };
 
 const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
+  const { t } = useTranslation();
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
@@ -53,17 +55,17 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   };
 
   const isSubmitDisabled = isSubmitting || !title.trim();
-  const submitLabel = isEditMode ? "Save" : "Add";
+  const submitLabel = isEditMode ? t('addPersonal.btnSave') : t('addPersonal.btnAdd');
 
   useTelegramBackButton(onBack);
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
 
   return (
     <section className="add-movie">
-      <h1>{isEditMode ? "Edit" : "Add to Personal List"}</h1>
+      <h1>{isEditMode ? t('addPersonal.headingEdit') : t('addPersonal.headingAdd')}</h1>
       <div className="add-movie__fields">
         <div className="add-movie__item add-movie__item--autocomplete">
-          <label htmlFor="pl-movie-title">Title</label>
+          <label htmlFor="pl-movie-title">{t('addPersonal.labelTitle')}</label>
           <input
             id="pl-movie-title"
             type="text"
@@ -71,7 +73,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-            placeholder="Title"
+            placeholder={t('addPersonal.placeholderTitle')}
             autoComplete="off"
           />
           {showSuggestions && suggestions.length > 0 && (
@@ -92,21 +94,21 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
           )}
         </div>
         <div className="add-movie__item">
-          <label htmlFor="pl-movie-desc">Description</label>
+          <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
           <input
             id="pl-movie-desc"
             type="text"
             value={description}
             onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
             onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            placeholder="Description"
+            placeholder={t('addPersonal.placeholderDescription')}
           />
           {proposedOverview && (
             <div className="overview-proposal">
               <span className="overview-proposal__text">{proposedOverview}</span>
               <div className="overview-proposal__actions">
-                <button type="button" onClick={() => setProposedOverview(null)}>Dismiss</button>
-                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>Use</button>
+                <button type="button" onClick={() => setProposedOverview(null)}>{t('addPersonal.btnDismiss')}</button>
+                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>{t('addPersonal.btnUse')}</button>
               </div>
             </div>
           )}
@@ -115,7 +117,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
 
       <div className="add-movie__ratings">
         <div className="personal-rating-toggle">
-          <p className="add-movie__ratings__title">My Rating</p>
+          <p className="add-movie__ratings__title">{t('addPersonal.sectionMyRating')}</p>
           <label className="theme-toggle" aria-label="Include rating">
             <input
               type="checkbox"
@@ -136,12 +138,12 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
                 max={SCORE_MAX}
                 step={SCORE_STEP}
                 value={rating}
-                onChange={(e) => setRating(parseFloat(e.target.value))}
-                aria-label="Rating"
+                onChange={(e) => setRating(Number.parseFloat(e.target.value))}
+                aria-label={t('personalList.labelRating')}
               />
               <div className="rating-card__ticks">
-                {TICK_LABELS.map((t) => (
-                  <span key={t}>{t}</span>
+                {TICK_LABELS.map((n) => (
+                  <span key={n}>{n}</span>
                 ))}
               </div>
             </div>
@@ -152,7 +154,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       {error && <span className="add-movie__error">{error}</span>}
       {!isTg && (
         <div className="add-movie__control">
-          <button type="button" onClick={onBack}>Back</button>
+          <button type="button" onClick={onBack}>{t('addPersonal.btnBack')}</button>
           <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
           </button>

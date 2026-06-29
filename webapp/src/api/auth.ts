@@ -8,6 +8,7 @@ export type AuthResponse = {
   groupName: string;
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
+  lang: string | null;
 };
 
 export type OAuthLoginResponse = {
@@ -19,6 +20,7 @@ export type OAuthLoginResponse = {
   groupName: string;
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
+  lang: string | null;
 };
 
 export async function checkAccess(): Promise<AuthResponse> {

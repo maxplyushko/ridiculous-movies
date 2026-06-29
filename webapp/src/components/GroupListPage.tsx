@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import * as Slider from "@radix-ui/react-slider";
 import confetti from "canvas-confetti";
 import type { MovieGroup } from "../types/MovieGroup.ts";
@@ -40,11 +41,12 @@ function RoundSection({
   onSwipeClose,
   onSwipeBegin,
 }: Readonly<RoundSectionProps>) {
+  const { t } = useTranslation();
   return (
     <div className="movie-group">
       <div className="movie-group__header">
         <div className="movie-group__header__round">
-          <h3>Round {movieGroup.groupId}</h3>
+          <h3>{t('groupList.labelRound')} {movieGroup.groupId}</h3>
         </div>
       </div>
       {movieGroup.movies.map((movie) => (
@@ -85,15 +87,16 @@ function FireworkSparks() {
 }
 
 function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
+  const { t } = useTranslation();
   return (
     <div className="confirm-dialog-overlay">
       <div className="confirm-dialog">
-        <p>Delete "{movie.title}"?</p>
+        <p>{t('groupList.confirmDelete', { title: movie.title })}</p>
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel} disabled={isDeleting}>Cancel</button>
+          <button type="button" onClick={onCancel} disabled={isDeleting}>{t('groupList.btnCancel')}</button>
           <button type="button" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : "Delete"}
+            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : t('groupList.btnDelete')}
           </button>
         </div>
       </div>
@@ -105,6 +108,7 @@ const NP_TICK_MS = 65;
 const NP_TICK_COUNT = 20;
 
 function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number; onClose: () => void }>) {
+  const { t } = useTranslation();
   const [npMin, setNpMin] = useState(1);
   const [npMax, setNpMax] = useState(sliderMax);
   const [display, setDisplay] = useState<number | null>(null);
@@ -167,7 +171,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
   return (
     <div className="confirm-dialog-overlay" onClick={onClose}>
       <div className="confirm-dialog mlp__number-picker" onClick={(e) => e.stopPropagation()}>
-        <div className="mlp__picker-title">Pick randomizer range</div>
+        <div className="mlp__picker-title">{t('groupList.dialogRandomizerTitle')}</div>
         <div className="mlp__range-wrap">
           <div className="mlp__range-labels">
             <span className="mlp__range-value">{npMin}</span>
@@ -191,7 +195,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
         {display !== null && (
           <div className="misc-page__result misc-page__result--inline">
             {!spinning && final !== null && <FireworkSparks key={resultKey} />}
-            <span className="misc-page__result-label">{spinning ? "PICKING…" : "YOUR NUMBER"}</span>
+            <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
             <span
               key={spinning ? `spin-${display}` : `result-${resultKey}`}
               className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
@@ -207,10 +211,10 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
             disabled={spinning}
             onClick={pick}
           >
-            {spinning ? "Quantumizing…" : "Generate"}
+            {spinning ? t('groupList.btnQuantumizing') : t('groupList.btnGenerate')}
           </button>
           {final !== null && !spinning && (
-            <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>OK</button>
+            <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
           )}
         </div>
       </div>
@@ -219,6 +223,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
 }
 
 const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
+  const { t } = useTranslation();
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [maxRound, setMaxRound] = useState(0);
@@ -378,13 +383,13 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             {hostPicker.spinning ? (
               <>
                 <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
-                <span className="mlp__card-label">Picking host…</span>
+                <span className="mlp__card-label">{t('groupList.labelPickingHost')}</span>
               </>
             ) : (
               <>
                 <Trophy size={20} className="mlp__card-icon" />
                 <span className="mlp__card-value">{currentRound}</span>
-                <span className="mlp__card-label">Round</span>
+                <span className="mlp__card-label">{t('groupList.labelRound')}</span>
               </>
             )}
           </button>
@@ -395,11 +400,11 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
           >
             <Clapperboard size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{totalMovies}</span>
-            <span className="mlp__card-label">Watched</span>
+            <span className="mlp__card-label">{t('groupList.labelWatched')}</span>
           </button>
           <button type="button" className="mlp__card--action" onClick={openAddMovie}>
             <Plus size={26} className="mlp__card-icon" />
-            <span className="mlp__card-label">Add movie</span>
+            <span className="mlp__card-label">{t('groupList.btnAddMovie')}</span>
           </button>
         </div>
       </div>
@@ -410,12 +415,12 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
           <input
             type="search"
             inputMode="search"
-            placeholder="Search movies…"
+            placeholder={t('groupList.placeholderSearch')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="mlp__search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
+            <button className="mlp__search-clear" onClick={() => setSearchQuery("")} aria-label={t('groupList.placeholderSearch')}>
               <X size={18} />
             </button>
           )}
@@ -424,11 +429,11 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
 
       <div className="movie-list">
         {normalizedQuery && visibleGroups.length === 0 && !showTmdb && (
-          <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
+          <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
         )}
         {showTmdb && visibleGroups.length > 0 && (
           <div className="movie-group__header">
-            <h3>In your club</h3>
+            <h3>{t('groupList.sectionInYourClub')}</h3>
           </div>
         )}
         {visibleGroups.map((group) => (

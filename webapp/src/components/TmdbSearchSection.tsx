@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Loader } from "lucide-react";
 import type { TmdbMovie } from "../types/TmdbMovie.ts";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
@@ -10,6 +11,7 @@ type TmdbSearchSectionProps = {
 };
 
 const TmdbSearchSection = ({ query, onAddToPersonalList }: TmdbSearchSectionProps) => {
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<number | null>(null);
 
@@ -20,11 +22,11 @@ const TmdbSearchSection = ({ query, onAddToPersonalList }: TmdbSearchSectionProp
   return (
     <div className="tmdb-section">
       <div className="movie-group__header">
-        <h3>On TMDB</h3>
+        <h3>{t('tmdb.section')}</h3>
         {loading && <Loader size={14} className="tmdb-section__spinner" />}
       </div>
       {!loading && results.length === 0 && (
-        <p className="movie-list__no-results">No TMDB results</p>
+        <p className="movie-list__no-results">{t('tmdb.empty')}</p>
       )}
       {results.map((m) => (
         <TmdbMovieItem

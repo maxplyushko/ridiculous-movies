@@ -1,4 +1,5 @@
 import {type CSSProperties, useEffect, useState} from "react";
+import { useTranslation } from "react-i18next";
 import {hapticBarGrowTick} from "../haptics.ts";
 import type {UserStats} from "../types/Stat.ts";
 
@@ -19,6 +20,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function UsersRatingChart({users, active}: Readonly<Props>) {
+  const { t } = useTranslation();
   const [triggered, setTriggered] = useState(false);
   const grow = active && triggered;
 
@@ -47,8 +49,8 @@ export function UsersRatingChart({users, active}: Readonly<Props>) {
 
   return (
       <div className="stat-chart">
-        <h2 className="stat-chart__title">Hosts by average rating</h2>
-        <ul className="stat-bars" aria-label="Hosts by average rating">
+        <h2 className="stat-chart__title">{t('stats.hostsByRating')}</h2>
+        <ul className="stat-bars" aria-label={t('stats.hostsByRating')}>
           {users.map((user, index) => {
             const score = user.averageRatingGiven ?? 0;
             const pct = Math.min(100, (score / MAX_SCORE) * 100);

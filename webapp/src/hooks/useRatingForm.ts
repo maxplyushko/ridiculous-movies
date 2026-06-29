@@ -1,10 +1,20 @@
 import { useState } from "react";
 import type { Movie } from "../types/Movie.ts";
 
+export type DetailedScores = {
+  r1: number | null;
+  r2: number | null;
+  r3: number | null;
+};
+
+export type RatingMode = "detailed" | "classic";
+
 export type RatingForm = {
   id: string;
   userId: string;
   scoreInput: string;
+  mode: RatingMode;
+  detailed: DetailedScores;
 };
 
 function parseScoreInput(raw: string): number {
@@ -12,6 +22,11 @@ function parseScoreInput(raw: string): number {
   if (t === "") return 0;
   const n = Number(t.replace(",", "."));
   return Number.isFinite(n) ? n : 0;
+}
+
+export function calcDetailedScore(d: DetailedScores): number | null {
+  if (d.r1 === null || d.r2 === null || d.r3 === null) return null;
+  return Math.round(((d.r1 + d.r2 + d.r3) / 3) * 4) / 4;
 }
 
 const SCORE_MAX = 10;
@@ -22,6 +37,8 @@ function initialForms(movie: Movie | undefined): RatingForm[] {
         id: crypto.randomUUID(),
         userId: r.user.id,
         scoreInput: String(r.score),
+        mode: "detailed" as RatingMode,
+        detailed: { r1: null, r2: null, r3: null },
       }))
     : [];
 }
@@ -36,7 +53,16 @@ export function useRatingForm(movie: Movie | undefined) {
   }
 
   const add = () =>
-    setForms((prev) => [...prev, { id: crypto.randomUUID(), userId: "", scoreInput: "5" }]);
+    setForms((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        userId: "",
+        scoreInput: "5",
+        mode: "detailed" as RatingMode,
+        detailed: { r1: null, r2: null, r3: null },
+      },
+    ]);
 
   const updateUser = (id: string, userId: string) =>
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, userId } : f)));
@@ -44,13 +70,24 @@ export function useRatingForm(movie: Movie | undefined) {
   const updateScore = (id: string, scoreInput: string) =>
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, scoreInput } : f)));
 
+  const updateMode = (id: string, mode: RatingMode) =>
+    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, mode } : f)));
+
+  const updateDetailed = (id: string, field: keyof DetailedScores, value: number | null) =>
+    setForms((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, detailed: { ...f.detailed, [field]: value } } : f))
+    );
+
   const buildRatings = () =>
     forms
       .filter((f) => f.userId !== "")
       .map((f) => ({
         userId: f.userId,
-        score: Math.min(SCORE_MAX, Math.max(0, parseScoreInput(f.scoreInput))),
+        score:
+          f.mode === "detailed"
+            ? (calcDetailedScore(f.detailed) ?? 0)
+            : Math.min(SCORE_MAX, Math.max(0, parseScoreInput(f.scoreInput))),
       }));
 
-  return { forms, add, updateUser, updateScore, buildRatings };
+  return { forms, add, updateUser, updateScore, updateMode, updateDetailed, buildRatings };
 }

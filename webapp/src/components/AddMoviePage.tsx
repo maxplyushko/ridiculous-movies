@@ -1,14 +1,21 @@
 import type { User } from "../types/User.ts";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Loader2, UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Loader2, Star, UserPlus } from "lucide-react";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
-import { useRatingForm } from "../hooks/useRatingForm.ts";
+import {
+  useRatingForm,
+  calcDetailedScore,
+  type DetailedScores,
+  type RatingMode,
+} from "../hooks/useRatingForm.ts";
 import { useTelegramBackButton, useTelegramMainButton } from "../hooks/useTelegramButtons.ts";
 import { isTelegramMiniApp } from "../api/telegram.ts";
 import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 import scrollIntoViewAfterKeyboard from "../hooks/useScrollIntoViewOnKeyboard.ts";
+import { hapticTabTap } from "../haptics.ts";
 
 const SCORE_MIN = 1;
 const SCORE_MAX = 10;
@@ -16,9 +23,64 @@ const SCORE_STEP = 0.25;
 const ITEM_H = 44;
 
 const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
+const STAR_INDICES = Array.from({ length: 10 }, (_, i) => i + 1);
+
+const CATEGORIES: Array<{ key: keyof DetailedScores; labelKey: string }> = [
+  { key: "r1", labelKey: "addMovie.ratingR1" },
+  { key: "r2", labelKey: "addMovie.ratingR2" },
+  { key: "r3", labelKey: "addMovie.ratingR3" },
+];
 
 function initials(name: string): string {
   return name.split(" ").map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
+}
+
+type StarRatingProps = {
+  value: number | null;
+  onChange: (v: number | null) => void;
+};
+
+function StarRating({ value, onChange }: Readonly<StarRatingProps>) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const btn = target?.closest('[data-star]') as HTMLElement | null;
+      if (btn?.dataset.star) onChangeRef.current(Number(btn.dataset.star));
+    };
+    el.addEventListener('touchmove', onMove, { passive: false });
+    return () => el.removeEventListener('touchmove', onMove);
+  }, []);
+
+  return (
+    <div className="star-rating" ref={containerRef}>
+      {STAR_INDICES.map((n) => {
+        const filled = value !== null && n <= value;
+        return (
+          <button
+            key={n}
+            type="button"
+            data-star={n}
+            className={`star-rating__item${filled ? " star-rating__item--filled" : ""}`}
+            onClick={() => {
+              hapticTabTap();
+              onChange(n);
+            }}
+            aria-label={`Rate ${n}`}
+          >
+            <Star size={22} className="star-rating__icon" strokeWidth={2.5} />
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 type UserChipSelectorProps = {
@@ -102,14 +164,31 @@ type RatingCardProps = {
   formId: string;
   userId: string;
   scoreInput: string;
+  mode: RatingMode;
+  detailed: DetailedScores;
   users: User[];
   onUpdateUser: (id: string, userId: string) => void;
   onUpdateScore: (id: string, score: string) => void;
+  onUpdateMode: (id: string, mode: RatingMode) => void;
+  onUpdateDetailed: (id: string, field: keyof DetailedScores, value: number | null) => void;
 };
 
-function RatingCard({ formId, userId, scoreInput, users, onUpdateUser, onUpdateScore }: Readonly<RatingCardProps>) {
-  const numericScore = parseFloat(scoreInput) || SCORE_MIN;
+function RatingCard({
+  formId,
+  userId,
+  scoreInput,
+  mode,
+  detailed,
+  users,
+  onUpdateUser,
+  onUpdateScore,
+  onUpdateMode,
+  onUpdateDetailed,
+}: Readonly<RatingCardProps>) {
+  const { t } = useTranslation();
+  const numericScore = Number.parseFloat(scoreInput) || SCORE_MIN;
   const clamped = Math.min(SCORE_MAX, Math.max(SCORE_MIN, numericScore));
+  const detailedScore = calcDetailedScore(detailed);
 
   return (
     <div className="rating-card">
@@ -120,24 +199,57 @@ function RatingCard({ formId, userId, scoreInput, users, onUpdateUser, onUpdateS
           onChange={(id) => onUpdateUser(formId, id)}
         />
       </div>
-      <div className="rating-card__slider-area">
-        <p className="rating-card__value">{clamped.toFixed(2)}</p>
-        <input
-          type="range"
-          className="rating-card__slider"
-          min={SCORE_MIN}
-          max={SCORE_MAX}
-          step={SCORE_STEP}
-          value={clamped}
-          onChange={(e) => onUpdateScore(formId, e.target.value)}
-          aria-label="Score"
-        />
-        <div className="rating-card__ticks">
-          {TICK_LABELS.map((t) => (
-            <span key={t}>{t}</span>
-          ))}
-        </div>
+      <div className="rating-card__mode-toggle">
+        <button
+          type="button"
+          className={`rating-mode-btn${mode === "detailed" ? " rating-mode-btn--active" : ""}`}
+          onClick={() => { hapticTabTap(); onUpdateMode(formId, "detailed"); }}
+        >
+          {t('addMovie.ratingExtended')}
+        </button>
+        <button
+          type="button"
+          className={`rating-mode-btn${mode === "classic" ? " rating-mode-btn--active" : ""}`}
+          onClick={() => { hapticTabTap(); onUpdateMode(formId, "classic"); }}
+        >
+          {t('addMovie.ratingClassic')}
+        </button>
       </div>
+      {mode === "detailed" ? (
+        <div className="rating-card__detailed">
+          {CATEGORIES.map(({ key, labelKey }) => (
+            <div key={key} className="rating-category">
+              <span className="rating-category__label">{t(labelKey)}</span>
+              <StarRating
+                value={detailed[key]}
+                onChange={(v) => onUpdateDetailed(formId, key, v)}
+              />
+            </div>
+          ))}
+          <p className="rating-card__value">
+            {detailedScore !== null ? detailedScore.toFixed(2) : "—"}
+          </p>
+        </div>
+      ) : (
+        <div className="rating-card__slider-area">
+          <p className="rating-card__value">{clamped.toFixed(2)}</p>
+          <input
+            type="range"
+            className="rating-card__slider"
+            min={SCORE_MIN}
+            max={SCORE_MAX}
+            step={SCORE_STEP}
+            value={clamped}
+            onChange={(e) => onUpdateScore(formId, e.target.value)}
+            aria-label="Score"
+          />
+          <div className="rating-card__ticks">
+            {TICK_LABELS.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -159,8 +271,9 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { forms, add, updateUser, updateScore, buildRatings } = useRatingForm(movie);
-  const submitLabel = isEditMode ? "Save" : "Add";
+  const { t } = useTranslation();
+  const { forms, add, updateUser, updateScore, updateMode, updateDetailed, buildRatings } = useRatingForm(movie);
+  const submitLabel = isEditMode ? t('addMovie.btnSave') : t('addMovie.btnAdd');
   const isTg = isTelegramMiniApp();
 
   const sortedUsers = useMemo(
@@ -205,10 +318,10 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
 
   return (
     <section className="add-movie">
-      <h1>{isEditMode ? "Edit Movie" : "Add Movie"}</h1>
+      <h1>{isEditMode ? t('addMovie.headingEdit') : t('addMovie.headingAdd')}</h1>
       <div className="add-movie__fields">
         <div className="add-movie__item add-movie__item--autocomplete">
-          <label htmlFor="add-movie-title">Title</label>
+          <label htmlFor="add-movie-title">{t('addMovie.labelTitle')}</label>
           <input
             id="add-movie-title"
             type="text"
@@ -216,7 +329,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-            placeholder="Title"
+            placeholder={t('addMovie.placeholderTitle')}
             autoComplete="off"
           />
           {showSuggestions && suggestions.length > 0 && (
@@ -241,21 +354,21 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
           )}
         </div>
         <div className="add-movie__item">
-          <label htmlFor="add-movie-desc">Description</label>
+          <label htmlFor="add-movie-desc">{t('addMovie.labelDescription')}</label>
           <input
             id="add-movie-desc"
             type="text"
             value={description}
             onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
             onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            placeholder="Description"
+            placeholder={t('addMovie.placeholderDescription')}
           />
           {proposedOverview && (
             <div className="overview-proposal">
               <span className="overview-proposal__text">{proposedOverview}</span>
               <div className="overview-proposal__actions">
-                <button type="button" onClick={() => setProposedOverview(null)}>Dismiss</button>
-                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>Use</button>
+                <button type="button" onClick={() => setProposedOverview(null)}>{t('addMovie.btnDismiss')}</button>
+                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>{t('addMovie.btnUse')}</button>
               </div>
             </div>
           )}
@@ -266,7 +379,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
       </div>
 
       <div className="add-movie__ratings" aria-labelledby="add-movie-host-heading">
-        <p id="add-movie-host-heading" className="add-movie__ratings__title">Host</p>
+        <p id="add-movie-host-heading" className="add-movie__ratings__title">{t('addMovie.sectionHost')}</p>
         <div className="add-movie__host-chips">
           <UserChipSelector
             users={sortedUsers}
@@ -277,7 +390,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
       </div>
 
       <div className="add-movie__ratings" aria-labelledby="add-movie-ratings-heading">
-        <p id="add-movie-ratings-heading" className="add-movie__ratings__title">Ratings</p>
+        <p id="add-movie-ratings-heading" className="add-movie__ratings__title">{t('addMovie.sectionRatings')}</p>
         <div className="add-movie__ratings__cards">
           {forms.map((form) => (
             <RatingCard
@@ -285,22 +398,26 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
               formId={form.id}
               userId={form.userId}
               scoreInput={form.scoreInput}
+              mode={form.mode}
+              detailed={form.detailed}
               users={sortedUsers}
               onUpdateUser={updateUser}
               onUpdateScore={updateScore}
+              onUpdateMode={updateMode}
+              onUpdateDetailed={updateDetailed}
             />
           ))}
         </div>
         <button type="button" className="add-rater-btn" onClick={add}>
           <UserPlus size={16} />
-          Add rater
+          {t('addMovie.btnAddRater')}
         </button>
       </div>
 
       {error && <span className="add-movie__error">{error}</span>}
       {!isTg && (
         <div className="add-movie__control">
-          <button type="button" onClick={onBack}>Back</button>
+          <button type="button" onClick={onBack}>{t('addMovie.btnBack')}</button>
           <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
           </button>

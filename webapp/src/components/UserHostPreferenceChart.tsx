@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { UserHostPreference } from "../types/Stat.ts";
 
 type Props = {
@@ -10,16 +11,17 @@ function fmt(value: number | null): string {
 }
 
 export function UserHostPreferenceChart({ preferences }: Readonly<Props>) {
+  const { t } = useTranslation();
   if (preferences.length === 0) return null;
 
   return (
     <div className="stat-host-pref">
-      <h2 className="stat-host-pref__title">Rating tendencies</h2>
+      <h2 className="stat-host-pref__title">{t('stats.ratingTendencies')}</h2>
       <div className="stat-host-pref__grid">
-        <span className="stat-host-pref__col-head">Rater</span>
-        <span className="stat-host-pref__col-head">Avg</span>
-        <span className="stat-host-pref__col-head stat-host-pref__col-head--best">Most loved</span>
-        <span className="stat-host-pref__col-head stat-host-pref__col-head--worst">Least loved</span>
+        <span className="stat-host-pref__col-head">{t('stats.tableRater')}</span>
+        <span className="stat-host-pref__col-head">{t('stats.tableAvg')}</span>
+        <span className="stat-host-pref__col-head stat-host-pref__col-head--best">{t('stats.tableMostLoved')}</span>
+        <span className="stat-host-pref__col-head stat-host-pref__col-head--worst">{t('stats.tableLeastLoved')}</span>
         {preferences.map((p) => {
           const singleHost = p.mostFavHostName != null && p.mostFavHostName === p.leastFavHostName;
           return (

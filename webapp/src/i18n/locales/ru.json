@@ -1,0 +1,125 @@
+{
+  "nav": {
+    "stats": "Статистика",
+    "groupList": "Фильмы группы",
+    "personalList": "Личный список",
+    "profile": "Профиль"
+  },
+  "addMovie": {
+    "headingEdit": "Редактировать Фильм",
+    "headingAdd": "ОК",
+    "labelTitle": "Название",
+    "placeholderTitle": "Название",
+    "labelDescription": "Описание",
+    "placeholderDescription": "Описание",
+    "btnDismiss": "Отмена",
+    "btnUse": "Применить",
+    "btnBack": "Назад",
+    "btnSave": "Сохранить",
+    "btnAdd": "ОК",
+    "sectionHost": "Хост",
+    "sectionRatings": "Рейтинги",
+    "btnAddRater": "Добавить оценщика",
+    "ratingExtended": "Расширенно",
+    "ratingClassic": "Классика",
+    "ratingR1": "дурацкость",
+    "ratingR2": "сценарий",
+    "ratingR3": "спецэффекты"
+  },
+  "addPersonal": {
+    "headingEdit": "Редактировать",
+    "headingAdd": "Добавить в личное",
+    "labelTitle": "Название",
+    "placeholderTitle": "Название",
+    "labelDescription": "Описание",
+    "placeholderDescription": "Описание",
+    "btnDismiss": "Отмена",
+    "btnUse": "Применить",
+    "btnBack": "Назад",
+    "btnSave": "Сохранить",
+    "btnAdd": "ОК",
+    "sectionMyRating": "Мой рейтинг"
+  },
+  "groupList": {
+    "btnCancel": "Отмена",
+    "btnDelete": "Удалить",
+    "confirmDelete": "Удалить «{{title}}»?",
+    "dialogRandomizerTitle": "Выбери диапазон рандомайзера",
+    "labelPicking": "ГЕНЕРИРУЮ",
+    "labelYourNumber": "НОМЕР",
+    "btnQuantumizing": "Генерирую",
+    "btnGenerate": "Сгенерировать",
+    "btnOk": "ОК",
+    "labelPickingHost": "Выбираю хоста...",
+    "labelRound": "Раунд",
+    "labelWatched": "Просмотрено",
+    "btnAddMovie": "Добавить",
+    "placeholderSearch": "Поиск",
+    "sectionInYourClub": "В твоей группе",
+    "noMatch": "нет совпадений"
+  },
+  "personalList": {
+    "btnCancel": "Отмена",
+    "btnDelete": "Удалить",
+    "confirmDelete": "Удалить «{{title}}»?",
+    "rateDialog": "Оценить «{{title}}»",
+    "btnSkip": "Пропустить",
+    "btnSave": "Сохранить",
+    "labelRating": "Рейтинг",
+    "labelToWatch": "К просмотру",
+    "labelWatched": "Просмотрено",
+    "btnAddMovie": "Добавить",
+    "placeholderSearch": "Поиск",
+    "sectionToWatch": "К просмотру",
+    "sectionWatched": "Просмотрено",
+    "empty": "Список пуст. Добавь что-нибудь!",
+    "sectionInYourList": "В твоём списке",
+    "noMatch": "нет совпадений"
+  },
+  "personalMovie": {
+    "markWatched": "Пометить как просмотренное",
+    "markUnwatched": "Пометить как непросмотренное"
+  },
+  "settings": {
+    "sectionHomepage": "Основная страница",
+    "btnGroupList": "Фильмы группы",
+    "btnPersonalList": "Личный список",
+    "sectionAppearance": "Тема",
+    "labelDarkMode": "Тёмная",
+    "btnSaving": "Сохраняю...",
+    "btnSave": "Сохранить изменения",
+    "btnBack": "Назад",
+    "sectionLanguage": "Язык"
+  },
+  "userPage": {
+    "headingSettings": "Настройки",
+    "badgeAdmin": "Админ",
+    "badgeMember": "Пользователь",
+    "btnSignOut": "Выйти"
+  },
+  "stats": {
+    "podiumBest": "Топ-3 лучших",
+    "podiumWorst": "Топ-3 худших",
+    "hostsByRating": "Средний рейтинг по хостам",
+    "ratingTendencies": "Тенденции рейтинга",
+    "tableRater": "Оценщик",
+    "tableAvg": "СРД",
+    "tableMostLoved": "ТОП",
+    "tableLeastLoved": "НЕ ТОП"
+  },
+  "tmdb": {
+    "section": "TMDB",
+    "empty": "нет результатов"
+  },
+  "signIn": {
+    "heading": "Дурацкие фильмы",
+    "tagline": "Закрытый кино-клуб",
+    "description": "Оценивайте фильмы, сравнивайте подборки и отслеживайте историю просмотров фильмов вашей группы в каждом раунде",
+    "card": "Войдите, чтобы продолжить",
+    "browserOpened": "Браузер открыт. Выполните вход в систему, затем нажмите на ссылку, которую отправит вам Telegram, чтобы вернуться.",
+    "btnGoogle": "Войти через Google",
+    "btnLoading": "Загрузка...",
+    "btnGuest": "Продолжить как гость",
+    "or": "или"
+  }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import confetti from "canvas-confetti";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import PersonalMovieItem from "./PersonalMovieItem.tsx";
@@ -24,15 +25,16 @@ type ConfirmDeleteDialogProps = {
 };
 
 function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: Readonly<ConfirmDeleteDialogProps>) {
+  const { t } = useTranslation();
   return (
     <div className="confirm-dialog-overlay">
       <div className="confirm-dialog">
-        <p>Delete "{movie.title}"?</p>
+        <p>{t('personalList.confirmDelete', { title: movie.title })}</p>
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel} disabled={isDeleting}>Cancel</button>
+          <button type="button" onClick={onCancel} disabled={isDeleting}>{t('personalList.btnCancel')}</button>
           <button type="button" onClick={onConfirm} disabled={isDeleting}>
-            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : "Delete"}
+            {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : t('personalList.btnDelete')}
           </button>
         </div>
       </div>
@@ -47,11 +49,12 @@ type RatingDialogProps = {
 };
 
 function RatingDialog({ movie, onSkip, onSave }: Readonly<RatingDialogProps>) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState<number>(movie.rating ?? 7);
   return (
     <div className="confirm-dialog-overlay">
       <div className="confirm-dialog personal-rating-dialog">
-        <p>Rate "{movie.title}"</p>
+        <p>{t('personalList.rateDialog', { title: movie.title })}</p>
         <div className="personal-rating-dialog__slider-area">
           <span className="personal-rating-dialog__value">
             {rating.toFixed(2)}<Star size={14} />
@@ -63,16 +66,16 @@ function RatingDialog({ movie, onSkip, onSave }: Readonly<RatingDialogProps>) {
             max={SCORE_MAX}
             step={SCORE_STEP}
             value={rating}
-            onChange={(e) => setRating(parseFloat(e.target.value))}
-            aria-label="Rating"
+            onChange={(e) => setRating(Number.parseFloat(e.target.value))}
+            aria-label={t('personalList.labelRating')}
           />
           <div className="rating-card__ticks">
-            {TICK_LABELS.map((t) => <span key={t}>{t}</span>)}
+            {TICK_LABELS.map((n) => <span key={n}>{n}</span>)}
           </div>
         </div>
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={() => { hapticTabTap(); onSkip(); }}>Skip</button>
-          <button type="button" onClick={() => { hapticTabTap(); onSave(rating); }}>Save</button>
+          <button type="button" onClick={() => { hapticTabTap(); onSkip(); }}>{t('personalList.btnSkip')}</button>
+          <button type="button" onClick={() => { hapticTabTap(); onSave(rating); }}>{t('personalList.btnSave')}</button>
         </div>
       </div>
     </div>
@@ -143,6 +146,7 @@ function PersonalSection({
 }
 
 const PersonalListPage = () => {
+  const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -288,12 +292,12 @@ const PersonalListPage = () => {
           <div className="mlp__card">
             <EyeDashed size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{movies.filter((m) => !m.watched).length}</span>
-            <span className="mlp__card-label">To Watch</span>
+            <span className="mlp__card-label">{t('personalList.labelToWatch')}</span>
           </div>
           <div className="mlp__card">
             <Eye size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{movies.filter((m) => m.watched).length}</span>
-            <span className="mlp__card-label">Watched</span>
+            <span className="mlp__card-label">{t('personalList.labelWatched')}</span>
           </div>
           <button
             type="button"
@@ -301,7 +305,7 @@ const PersonalListPage = () => {
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
             <Plus size={26} className="mlp__card-icon" />
-            <span className="mlp__card-label">Add movie</span>
+            <span className="mlp__card-label">{t('personalList.btnAddMovie')}</span>
           </button>
         </div>
       </div>
@@ -312,12 +316,12 @@ const PersonalListPage = () => {
           <input
             type="search"
             inputMode="search"
-            placeholder="Search movies…"
+            placeholder={t('personalList.placeholderSearch')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="mlp__search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
+            <button className="mlp__search-clear" onClick={() => setSearchQuery("")} aria-label={t('personalList.placeholderSearch')}>
               <X size={18} />
             </button>
           )}
@@ -326,13 +330,13 @@ const PersonalListPage = () => {
 
       <div className="movie-list">
         {normalizedQuery && toWatch.length === 0 && watched.length === 0 && !showTmdb && (
-          <p className="movie-list__no-results">No movies match "{searchQuery}"</p>
+          <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
         )}
         {showTmdb && (toWatch.length > 0 || watched.length > 0) && (
-          <div className="movie-group__header"><h3>In your personal list</h3></div>
+          <div className="movie-group__header"><h3>{t('personalList.sectionInYourList')}</h3></div>
         )}
         <PersonalSection
-          title="To Watch"
+          title={t('personalList.sectionToWatch')}
           movies={toWatch}
           openSwipeId={openSwipeId}
           celebratingId={celebratingId}
@@ -346,7 +350,7 @@ const PersonalListPage = () => {
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
         <PersonalSection
-          title="Watched"
+          title={t('personalList.sectionWatched')}
           movies={watched}
           openSwipeId={openSwipeId}
           celebratingId={celebratingId}
@@ -360,7 +364,7 @@ const PersonalListPage = () => {
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
         {movies.length === 0 && !normalizedQuery && (
-          <p className="movie-list__no-results">Your personal list is empty. Add something!</p>
+          <p className="movie-list__no-results">{t('personalList.empty')}</p>
         )}
         {showTmdb && (
           <TmdbSearchSection

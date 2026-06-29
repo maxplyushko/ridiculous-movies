@@ -9,7 +9,8 @@ public record AuthResponse(
     String groupId,
     String groupName,
     String theme,
-    String defaultPage
+    String defaultPage,
+    String lang
 ) {
 
   public static AuthResponse from(AppUser user) {
@@ -20,7 +21,8 @@ public record AuthResponse(
         user.getUserGroup().getId(),
         user.getUserGroup().getName(),
         user.getTheme(),
-        user.getDefaultPage()
+        user.getDefaultPage(),
+        user.getLang()
     );
   }
 }

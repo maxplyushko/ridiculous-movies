@@ -36,7 +36,7 @@ public interface AppRepository {
 
   AppUser registerUser(String name, String oauthSub, String groupId);
 
-  void saveUserPreferences(String userId, String theme, String defaultPage);
+  void saveUserPreferences(String userId, String theme, String defaultPage, String lang);
 
   void saveMovie(Movie movie);
 

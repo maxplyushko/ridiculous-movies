@@ -10,7 +10,8 @@ public record OAuthLoginResponse(
     String groupId,
     String groupName,
     String theme,
-    String defaultPage
+    String defaultPage,
+    String lang
 ) {
   public static OAuthLoginResponse of(String accessToken, AppUser user) {
     return new OAuthLoginResponse(
@@ -21,7 +22,8 @@ public record OAuthLoginResponse(
         user.getUserGroup().getId(),
         user.getUserGroup().getName(),
         user.getTheme(),
-        user.getDefaultPage()
+        user.getDefaultPage(),
+        user.getLang()
     );
   }
 }

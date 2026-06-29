@@ -1,0 +1,125 @@
+{
+  "nav": {
+    "stats": "Statistics",
+    "groupList": "Group List",
+    "personalList": "Personal List",
+    "profile": "Profile"
+  },
+  "addMovie": {
+    "headingEdit": "Edit Movie",
+    "headingAdd": "Add Movie",
+    "labelTitle": "Title",
+    "placeholderTitle": "Title",
+    "labelDescription": "Description",
+    "placeholderDescription": "Description",
+    "btnDismiss": "Dismiss",
+    "btnUse": "Use",
+    "btnBack": "Back",
+    "btnSave": "Save",
+    "btnAdd": "Add",
+    "sectionHost": "Host",
+    "sectionRatings": "Ratings",
+    "btnAddRater": "Add rater",
+    "ratingExtended": "Extended",
+    "ratingClassic": "Classic",
+    "ratingR1": "ridiculousity",
+    "ratingR2": "script",
+    "ratingR3": "special effects"
+  },
+  "addPersonal": {
+    "headingEdit": "Edit",
+    "headingAdd": "Add to Personal List",
+    "labelTitle": "Title",
+    "placeholderTitle": "Title",
+    "labelDescription": "Description",
+    "placeholderDescription": "Description",
+    "btnDismiss": "Dismiss",
+    "btnUse": "Use",
+    "btnBack": "Back",
+    "btnSave": "Save",
+    "btnAdd": "Add",
+    "sectionMyRating": "My Rating"
+  },
+  "groupList": {
+    "btnCancel": "Cancel",
+    "btnDelete": "Delete",
+    "confirmDelete": "Delete \"{{title}}\"?",
+    "dialogRandomizerTitle": "Pick randomizer range",
+    "labelPicking": "PICKING…",
+    "labelYourNumber": "YOUR NUMBER",
+    "btnQuantumizing": "Quantumizing…",
+    "btnGenerate": "Generate",
+    "btnOk": "OK",
+    "labelPickingHost": "Picking host…",
+    "labelRound": "Round",
+    "labelWatched": "Watched",
+    "btnAddMovie": "Add movie",
+    "placeholderSearch": "Search movies…",
+    "sectionInYourClub": "In your club",
+    "noMatch": "No movies match"
+  },
+  "personalList": {
+    "btnCancel": "Cancel",
+    "btnDelete": "Delete",
+    "confirmDelete": "Delete \"{{title}}\"?",
+    "rateDialog": "Rate \"{{title}}\"",
+    "btnSkip": "Skip",
+    "btnSave": "Save",
+    "labelRating": "Rating",
+    "labelToWatch": "To Watch",
+    "labelWatched": "Watched",
+    "btnAddMovie": "Add movie",
+    "placeholderSearch": "Search movies…",
+    "sectionToWatch": "To Watch",
+    "sectionWatched": "Watched",
+    "empty": "Your personal list is empty. Add something!",
+    "sectionInYourList": "In your personal list",
+    "noMatch": "No movies match"
+  },
+  "personalMovie": {
+    "markWatched": "Mark as watched",
+    "markUnwatched": "Mark as unwatched"
+  },
+  "settings": {
+    "sectionHomepage": "Homepage",
+    "btnGroupList": "Group List",
+    "btnPersonalList": "Personal List",
+    "sectionAppearance": "Appearance",
+    "labelDarkMode": "Dark Mode",
+    "btnSaving": "Saving…",
+    "btnSave": "Save Changes",
+    "btnBack": "Back",
+    "sectionLanguage": "Language"
+  },
+  "userPage": {
+    "headingSettings": "Settings",
+    "badgeAdmin": "Admin",
+    "badgeMember": "Member",
+    "btnSignOut": "Sign out"
+  },
+  "stats": {
+    "podiumBest": "Top 3 best",
+    "podiumWorst": "Top 3 worst",
+    "hostsByRating": "Hosts by average rating",
+    "ratingTendencies": "Rating tendencies",
+    "tableRater": "Rater",
+    "tableAvg": "Avg",
+    "tableMostLoved": "Most loved",
+    "tableLeastLoved": "Least loved"
+  },
+  "tmdb": {
+    "section": "On TMDB",
+    "empty": "No TMDB results"
+  },
+  "signIn": {
+    "heading": "Ridiculous Movies",
+    "tagline": "Private movie club",
+    "description": "Rate films, compare picks, and track your group's movie history across every round.",
+    "card": "Sign in to continue",
+    "browserOpened": "Browser opened. Complete sign-in, then tap the link Telegram sends you to return.",
+    "btnGoogle": "Sign in with Google",
+    "btnLoading": "Loading…",
+    "btnGuest": "Continue as guest",
+    "or": "or"
+  }
+}

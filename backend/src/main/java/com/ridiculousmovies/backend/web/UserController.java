@@ -33,14 +33,14 @@ public class UserController {
     return userStatsService.listUsers(userId, sort);
   }
 
-  public record PreferencesRequest(String theme, String defaultPage) {}
+  public record PreferencesRequest(String theme, String defaultPage, String lang) {}
 
   @PutMapping("/me/preferences")
   public ResponseEntity<Void> savePreferences(
       @RequestHeader("User-Id") String userId,
       @RequestBody PreferencesRequest body
   ) {
-    dataStore.saveUserPreferences(userId, body.theme(), body.defaultPage());
+    dataStore.saveUserPreferences(userId, body.theme(), body.defaultPage(), body.lang());
     return ResponseEntity.noContent().build();
   }
 }

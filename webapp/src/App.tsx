@@ -8,17 +8,19 @@ import { AuthGate } from "./components/AuthGate.tsx";
 import type { AuthResponse } from "./api/auth.ts";
 import { ChartLine, CircleUser, Film, ListTodo } from "lucide-react";
 import { hapticTabTap } from "./haptics.ts";
+import { useTranslation } from "react-i18next";
 
 type Tab = "stat" | "group" | "personal" | "misc";
 
-const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
-  { id: "stat", label: "Statistics", icon: <ChartLine size={30} /> },
-  { id: "group", label: "Group List", icon: <Film size={30} /> },
-  { id: "personal", label: "Personal List", icon: <ListTodo size={30} /> },
-  { id: "misc", label: "Profile", icon: <CircleUser size={30} /> },
+const TABS: Array<{ id: Tab; labelKey: string; icon: React.ReactNode }> = [
+  { id: "stat", labelKey: "nav.stats", icon: <ChartLine size={30} /> },
+  { id: "group", labelKey: "nav.groupList", icon: <Film size={30} /> },
+  { id: "personal", labelKey: "nav.personalList", icon: <ListTodo size={30} /> },
+  { id: "misc", labelKey: "nav.profile", icon: <CircleUser size={30} /> },
 ];
 
 function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
+  const { t } = useTranslation();
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Tab>(defaultTab);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -50,11 +52,11 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>
       <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
-        {TABS.map(({ id, label, icon }) => (
+        {TABS.map(({ id, labelKey, icon }) => (
           <button
             key={id}
             className={`bottom-bar-button${currentPage === id ? " active" : ""}`}
-            aria-label={label}
+            aria-label={t(labelKey)}
             aria-current={currentPage === id ? "page" : undefined}
             onClick={() => selectTab(id)}
           >

@@ -1,5 +1,6 @@
 import type { PersonalMovie } from "../types/PersonalMovie";
 import { Calendar, Check, Pencil, Star, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { hapticTabTap } from "../haptics.ts";
 import { useSwipeGesture } from "../hooks/useSwipeGesture.ts";
 
@@ -40,6 +41,7 @@ const PersonalMovieItem = ({
   onSwipeClose,
   onSwipeBegin,
 }: PersonalMovieItemProps) => {
+  const { t } = useTranslation();
   const {
     offsetX,
     isDragging,
@@ -126,7 +128,7 @@ const PersonalMovieItem = ({
             type="button"
             className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}${isCelebrating ? " personal-item__checkbox--pop" : ""}`}
             onClick={handleCheckboxClick}
-            aria-label={movie.watched ? "Mark as unwatched" : "Mark as watched"}
+            aria-label={movie.watched ? t('personalMovie.markUnwatched') : t('personalMovie.markWatched')}
           >
             {movie.watched && <Check size={14} strokeWidth={3} />}
           </button>

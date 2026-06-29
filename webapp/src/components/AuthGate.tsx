@@ -4,6 +4,7 @@ import { isTelegramMiniApp, getTelegramWebApp } from "../api/telegram.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { SignInScreen } from "./SignInScreen.tsx";
 import { applySavedTheme, hasTelegramThemeContext } from "../telegramTheme.ts";
+import i18n from "../i18n/index.ts";
 import * as React from "react";
 
 type AuthGateProps = {
@@ -49,7 +50,13 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
         }
       }
       const data = await checkAccess();
-      if (!cancelled) setState({ mode: "ok", data });
+      if (!cancelled) {
+        if (data.lang) {
+          i18n.changeLanguage(data.lang);
+          localStorage.setItem("i18n-lang", data.lang);
+        }
+        setState({ mode: "ok", data });
+      }
     };
 
     run().catch((e: Error) => {
