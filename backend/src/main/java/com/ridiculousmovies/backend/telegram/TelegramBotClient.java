@@ -109,7 +109,15 @@ public class TelegramBotClient {
   }
 
   public void sendMessage(long chatId, String text) {
-    post("sendMessage", Map.of("chat_id", chatId, "text", text));
+    Map<String, Object> body = new LinkedHashMap<>();
+    body.put("chat_id", chatId);
+    body.put("text", text);
+    body.put("reply_markup", Map.of(
+        "inline_keyboard", List.of(List.of(
+            Map.of("text", "Open App", "url", resolveGroupStartUrl())
+        ))
+    ));
+    post("sendMessage", body);
   }
 
   public void setWebhook(String webhookUrl, String secretToken) {

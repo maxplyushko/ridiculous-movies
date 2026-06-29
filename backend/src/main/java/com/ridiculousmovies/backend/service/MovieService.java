@@ -61,7 +61,8 @@ public class MovieService {
           groupId, minRatings, requireAllUsers, groupMemberCount, true));
       case "lowest_rating" -> rankedMovies(groupId, dataStore.findIdsWithExtremumAvgForGroup(
           groupId, minRatings, requireAllUsers, groupMemberCount, false));
-      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown filter: " + filter);
+      default ->
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown filter: " + filter);
     };
   }
 
@@ -73,7 +74,8 @@ public class MovieService {
     Map<Integer, List<MovieResponse>> byRound = new LinkedHashMap<>();
     for (Movie m : movies) {
       int round = m.getRound() != null ? m.getRound() : 0;
-      byRound.computeIfAbsent(round, k -> new ArrayList<>()).add(movieMapper.toResponse(m, groupId));
+      byRound.computeIfAbsent(round, k -> new ArrayList<>())
+          .add(movieMapper.toResponse(m, groupId));
     }
     int currentRound = dataStore.findLatestRoundForGroup(groupId);
     byRound.putIfAbsent(currentRound, new ArrayList<>());
@@ -99,7 +101,7 @@ public class MovieService {
     replaceRatings(groupId, movie, req.ratings());
 
     dataStore.saveMovie(movie);
-    notifyGroupChat(groupId, "New movie was added " + movie.getTitle() + ". Time to rate it!!");
+    notifyGroupChat(groupId, "New movie was added \"" + movie.getTitle() + "\". Time to rate it!!");
     return movieMapper.toResponse(movie, groupId);
   }
 
@@ -187,7 +189,8 @@ public class MovieService {
         rating.setId(UUID.randomUUID().toString());
         rating.setMovie(movie);
         rating.setUser(dataStore.findUserById(entry.userId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")));
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")));
       }
       rating.setScore(score);
       desired.add(rating);
@@ -210,12 +213,16 @@ public class MovieService {
   }
 
   private static String normalizeFilter(String filter) {
-    if (filter == null || filter.isBlank()) return "all";
+    if (filter == null || filter.isBlank()) {
+      return "all";
+    }
     return filter.trim().toLowerCase();
   }
 
   private static String normalizeSort(String sort) {
-    if (sort == null || sort.isBlank()) return "desc";
+    if (sort == null || sort.isBlank()) {
+      return "desc";
+    }
     String s = sort.trim().toLowerCase();
     if (!"asc".equals(s) && !"desc".equals(s)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be asc or desc");
