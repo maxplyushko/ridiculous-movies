@@ -38,6 +38,7 @@ public class DataStore implements AppRepository {
   private Map<String, AppUser> usersById;
   private Map<String, Movie> moviesById;
   private Map<String, PersonalMovie> personalMoviesById;
+  private Map<String, Long> groupChatIdsMap = new LinkedHashMap<>();
 
   public DataStore(
       ObjectMapper objectMapper,
@@ -133,6 +134,11 @@ public class DataStore implements AppRepository {
         pm.setUpdatedAt(r.updatedAt());
         personalMoviesById.put(pm.getId(), pm);
       }
+    }
+
+    groupChatIdsMap = new LinkedHashMap<>();
+    if (data.getGroupChatIds() != null) {
+      groupChatIdsMap.putAll(data.getGroupChatIds());
     }
   }
 
@@ -519,6 +525,26 @@ public class DataStore implements AppRepository {
         .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
             pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt()))
         .toList());
+    data.setGroupChatIds(new LinkedHashMap<>(groupChatIdsMap));
     return data;
+  }
+
+  public void setGroupChatId(String groupId, Long chatId) {
+    lock.writeLock().lock();
+    try {
+      groupChatIdsMap.put(groupId, chatId);
+      persist();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public Long getGroupChatId(String groupId) {
+    lock.readLock().lock();
+    try {
+      return groupChatIdsMap.get(groupId);
+    } finally {
+      lock.readLock().unlock();
+    }
   }
 }

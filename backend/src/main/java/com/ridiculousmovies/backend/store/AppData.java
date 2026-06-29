@@ -3,13 +3,16 @@ package com.ridiculousmovies.backend.store;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AppData {
 
   private List<UserRecord> users = new ArrayList<>();
   private List<MovieRecord> movies = new ArrayList<>();
   private List<PersonalMovieRecord> personalMovies = new ArrayList<>();
+  private Map<String, Long> groupChatIds = new LinkedHashMap<>();
 
   public List<UserRecord> getUsers() { return users; }
   public void setUsers(List<UserRecord> v) { this.users = v; }
@@ -19,6 +22,9 @@ public class AppData {
 
   public List<PersonalMovieRecord> getPersonalMovies() { return personalMovies; }
   public void setPersonalMovies(List<PersonalMovieRecord> v) { this.personalMovies = v != null ? v : new ArrayList<>(); }
+
+  public Map<String, Long> getGroupChatIds() { return groupChatIds; }
+  public void setGroupChatIds(Map<String, Long> v) { this.groupChatIds = v != null ? v : new LinkedHashMap<>(); }
 
   public record UserRecord(String id, String name, String group, String role, String theme, String defaultPage,
                            String lang, String oauthSub) {}

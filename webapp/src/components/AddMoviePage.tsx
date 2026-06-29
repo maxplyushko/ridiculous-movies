@@ -61,20 +61,26 @@ type RoundPickerProps = {
 function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) {
   const rounds = useMemo(() => Array.from({ length: maxRound }, (_, i) => i + 1), [maxRound]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   return (
-    <div className="round-picker-row" ref={containerRef}>
-      {rounds.map((r) => (
-        <button
-          key={r}
-          type="button"
-          className={`round-picker-row__item${r === value ? " round-picker-row__item--active" : ""}`}
-          onClick={() => { hapticTabTap(); onChange(r); }}
-        >
-          Round {r}
-        </button>
-      ))}
-    </div>
+      <div className="round-picker-row" ref={containerRef}>
+        {[...rounds]
+        .sort((a, b) => b - a)
+        .map((r) => (
+            <button
+                key={r}
+                type="button"
+                className={`round-picker-row__item${r === value ? " round-picker-row__item--active" : ""}`}
+                onClick={() => {
+                  hapticTabTap();
+                  onChange(r);
+                }}
+            >
+              {t('addMovie.roundLabel', {r})}
+            </button>
+        ))}
+      </div>
   );
 }
 

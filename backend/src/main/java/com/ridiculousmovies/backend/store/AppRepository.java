@@ -47,4 +47,8 @@ public interface AppRepository {
   void savePersonalMovie(PersonalMovie movie);
 
   void deletePersonalMovieById(String id, String userId);
+
+  void setGroupChatId(String groupId, Long chatId);
+
+  Long getGroupChatId(String groupId);
 }

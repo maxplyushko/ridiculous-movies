@@ -4,6 +4,7 @@ import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.Movie;
 import com.ridiculousmovies.backend.domain.Rating;
 import com.ridiculousmovies.backend.store.AppRepository;
+import com.ridiculousmovies.backend.telegram.TelegramBotClient;
 import com.ridiculousmovies.backend.web.dto.CreateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.MovieGroupResponse;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -31,11 +33,14 @@ public class MovieService {
   private final AppRepository dataStore;
   private final MovieMapper movieMapper;
   private final AuthService authService;
+  private final Optional<TelegramBotClient> botClient;
 
-  public MovieService(AppRepository dataStore, MovieMapper movieMapper, AuthService authService) {
+  public MovieService(AppRepository dataStore, MovieMapper movieMapper, AuthService authService,
+      Optional<TelegramBotClient> botClient) {
     this.dataStore = dataStore;
     this.movieMapper = movieMapper;
     this.authService = authService;
+    this.botClient = botClient;
   }
 
   public List<MovieResponse> listMovies(
@@ -94,6 +99,7 @@ public class MovieService {
     replaceRatings(groupId, movie, req.ratings());
 
     dataStore.saveMovie(movie);
+    notifyGroupChat(groupId, "New movie was added " + movie.getTitle() + ". Time to rate it!!");
     return movieMapper.toResponse(movie, groupId);
   }
 
@@ -125,6 +131,15 @@ public class MovieService {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
     }
     dataStore.deleteMovieById(movieId);
+  }
+
+  private void notifyGroupChat(String groupId, String text) {
+    botClient.ifPresent(bot -> {
+      Long chatId = dataStore.getGroupChatId(groupId);
+      if (chatId != null) {
+        bot.sendMessage(chatId, text);
+      }
+    });
   }
 
   private AppUser resolveOwner(String groupId, String title, String ownerId) {

@@ -1099,6 +1099,7 @@ h1 {
   box-sizing: border-box;
   cursor: pointer;
   display: inline-flex;
+  border-bottom: 1px solid var(--text-secondary);
   align-items: center;
   padding: 0.3rem 0.75rem;
   border-radius: 999px;
@@ -1116,7 +1117,7 @@ h1 {
 }
 
 .user-chip__avatar {
-  font-size: 0.6875rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -1141,12 +1142,13 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  margin: 0 auto 0.75rem;
-  padding-bottom: 0.2rem;
-  border-bottom: 1.5px solid var(--text-secondary);
+  margin: 1rem auto 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--text-secondary);
+  width: 100%;
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   user-select: none;

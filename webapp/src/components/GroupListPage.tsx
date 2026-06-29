@@ -101,7 +101,7 @@ function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: 
         <p>{t('groupList.confirmDelete', { title: movie.title })}</p>
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel} disabled={isDeleting}>{t('groupList.btnCancel')}</button>
+          <button type="button" onClick={onCancel} disabled={isDeleting}>{t('groupList.btn`Cancel')}</button>
           <button type="button" onClick={onConfirm} disabled={isDeleting}>
             {isDeleting ? <Loader size={14} className="tmdb-section__spinner" /> : t('groupList.btnDelete')}
           </button>

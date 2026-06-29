@@ -25,7 +25,8 @@
     "ratingClassic": "Classic",
     "ratingR1": "ridiculousity",
     "ratingR2": "script",
-    "ratingR3": "special effects"
+    "ratingR3": "special effects",
+    "roundLabel": "Round {{r}}"
   },
   "addPersonal": {
     "headingEdit": "Edit",

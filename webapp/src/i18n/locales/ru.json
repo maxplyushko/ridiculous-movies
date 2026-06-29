@@ -25,7 +25,8 @@
     "ratingClassic": "Классика",
     "ratingR1": "дурацкость",
     "ratingR2": "сценарий",
-    "ratingR3": "спецэффекты"
+    "ratingR3": "картинка",
+    "roundLabel": "{{r}} раунд"
   },
   "addPersonal": {
     "headingEdit": "Редактировать",
@@ -89,7 +90,7 @@
     "sectionAppearance": "Тема",
     "labelDarkMode": "Тёмная",
     "btnSaving": "Сохраняю...",
-    "btnSave": "Сохранить изменения",
+    "btnSave": "Сохранить",
     "btnBack": "Назад",
     "sectionLanguage": "Язык"
   },

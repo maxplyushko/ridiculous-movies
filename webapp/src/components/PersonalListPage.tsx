@@ -6,6 +6,7 @@ import PersonalMovieItem from "./PersonalMovieItem.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
 import { Eye, EyeDashed, Loader, Plus, Search, X } from "lucide-react";
 import { RatingModal } from "./RatingModal.tsx";
+import { useSpinPicker } from "../hooks/useSpinPicker.ts";
 import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticTabTap } from "../haptics.ts";
@@ -39,6 +40,16 @@ function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: 
   );
 }
 
+
+function FireworkSparks() {
+  return (
+    <div className="misc-page__fireworks" aria-hidden="true">
+      {Array.from({ length: 16 }, (_, i) => (
+        <span key={i} className="misc-page__firework-spark" style={{ "--i": i } as React.CSSProperties} />
+      ))}
+    </div>
+  );
+}
 
 const CELEBRATION_COLORS = ["#ffd60a", "#ff9f0a", "#30d158", "#3390ec", "#ff375f", "#bf5af2"];
 
@@ -120,6 +131,7 @@ const PersonalListPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
+  const moviePicker = useSpinPicker<string>();
 
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
@@ -247,11 +259,22 @@ const PersonalListPage = () => {
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
       <div className="mlp__hero">
         <div className="mlp__cards">
-          <div className="mlp__card">
-            <EyeDashed size={20} className="mlp__card-icon" />
+          <button
+            type="button"
+            className="mlp__card"
+            disabled={moviePicker.spinning || toWatch.length === 0}
+            onClick={() => {
+              if (toWatch.length === 0 || moviePicker.spinning) return;
+              hapticTabTap();
+              moviePicker.spin(() => toWatch[Math.floor(Math.random() * toWatch.length)].title);
+            }}
+          >
+            {moviePicker.spinning
+              ? <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
+              : <EyeDashed size={20} className="mlp__card-icon" />}
             <span className="mlp__card-value">{movies.filter((m) => !m.watched).length}</span>
             <span className="mlp__card-label">{t('personalList.labelToWatch')}</span>
-          </div>
+          </button>
           <div className="mlp__card">
             <Eye size={20} className="mlp__card-icon" />
             <span className="mlp__card-value">{movies.filter((m) => m.watched).length}</span>
@@ -350,6 +373,17 @@ const PersonalListPage = () => {
           onConfirm={executeDelete}
           onCancel={cancelDelete}
         />
+      )}
+      {moviePicker.result && (
+        <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
+          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }} onClick={(e) => e.stopPropagation()}>
+            <FireworkSparks key={moviePicker.result} />
+            <p><strong>{moviePicker.result}</strong></p>
+            <div className="confirm-dialog__actions">
+              <button type="button" onClick={moviePicker.clear}>OK</button>
+            </div>
+          </div>
+        </div>
       )}
       {ratingMovie && (
         <RatingModal
