@@ -9,21 +9,24 @@ import MovieItem from "./MovieItem.tsx";
 import TmdbSearchSection from "./TmdbSearchSection.tsx";
 import { Clapperboard, Loader, Plus, Search, Trophy, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
-import { deleteMovie, fetchMovieGroups } from "../api/movies.ts";
+import { deleteMovie, editMovie, fetchMovieGroups } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, hapticTabTap, stopHaptics } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
 import { useSpinPicker } from "../hooks/useSpinPicker.ts";
+import { RatingModal } from "./RatingModal.tsx";
 
 type RoundSectionProps = {
   movieGroup: MovieGroup;
   expandedId: string | null;
   openSwipeId: string | null;
   isAdmin: boolean;
+  currentUserId: string;
   onToggle: (id: string) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
+  onRate: (movie: Movie) => void;
   onSwipeOpen: (id: string) => void;
   onSwipeClose: (id: string) => void;
   onSwipeBegin: (id: string) => void;
@@ -34,9 +37,11 @@ function RoundSection({
   expandedId,
   openSwipeId,
   isAdmin,
+  currentUserId,
   onToggle,
   onEdit,
   onDelete,
+  onRate,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
@@ -56,9 +61,11 @@ function RoundSection({
           isExpanded={expandedId === movie.id}
           isSwipeOpen={openSwipeId === movie.id}
           canDelete={isAdmin}
+          currentUserId={currentUserId}
           onToggle={() => onToggle(movie.id)}
           onEdit={onEdit}
           onDelete={onDelete}
+          onRate={onRate}
           onSwipeOpen={() => onSwipeOpen(movie.id)}
           onSwipeClose={() => onSwipeClose(movie.id)}
           onSwipeBegin={() => onSwipeBegin(movie.id)}
@@ -103,6 +110,7 @@ function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: 
     </div>
   );
 }
+
 
 const NP_TICK_MS = 65;
 const NP_TICK_COUNT = 20;
@@ -222,7 +230,7 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
   );
 }
 
-const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
+const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUserId: string }) => {
   const { t } = useTranslation();
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -233,6 +241,7 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
   const [showMovieForm, setShowMovieForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
+  const [ratingMovie, setRatingMovie] = useState<Movie | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   useEffect(() => {
     if (openSwipeId === null) return;
@@ -402,8 +411,9 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             <span className="mlp__card-value">{totalMovies}</span>
             <span className="mlp__card-label">{t('groupList.labelWatched')}</span>
           </button>
-          <button type="button" className="mlp__card--action" onClick={openAddMovie}>
-            <Plus size={26} className="mlp__card-icon" />
+          <button type="button" className="mlp__card mlp__card--accent" onClick={openAddMovie}>
+            <span className="mlp__card-row-spacer" aria-hidden="true" />
+            <Plus size={20} className="mlp__card-icon" />
             <span className="mlp__card-label">{t('groupList.btnAddMovie')}</span>
           </button>
         </div>
@@ -443,9 +453,11 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             expandedId={expandedId}
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
+            currentUserId={currentUserId}
             onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onRate={setRatingMovie}
             onSwipeOpen={(id) => setOpenSwipeId(id)}
             onSwipeClose={(id) => setOpenSwipeId((cur) => cur === id ? null : cur)}
             onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -462,6 +474,7 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
             key={editingMovie?.id ?? "new"}
             currentRound={currentRound}
             maxRound={maxRound}
+            currentUserId={currentUserId}
             movie={editingMovie}
             onBack={closeMovieForm}
           />
@@ -475,6 +488,27 @@ const GroupListPage = ({ isAdmin }: { isAdmin: boolean }) => {
           isDeleting={isDeleting}
           onConfirm={executeDelete}
           onCancel={cancelDelete}
+        />
+      )}
+
+      {ratingMovie && (
+        <RatingModal
+          title={ratingMovie.title}
+          cancelLabel={t('groupList.btnCancel')}
+          saveLabel={t('personalList.btnSave')}
+          onCancel={() => setRatingMovie(null)}
+          onSave={async (score) => {
+            const existingRatings = ratingMovie.ratings.map((r) => ({ userId: r.user.id, score: r.score }));
+            await editMovie(ratingMovie.id, {
+              title: ratingMovie.title,
+              description: ratingMovie.description,
+              ownerId: ratingMovie.owner.id,
+              round: ratingMovie.round,
+              ratings: [...existingRatings, { userId: currentUserId, score }],
+            });
+            setRatingMovie(null);
+            loadMovieGroups();
+          }}
         />
       )}
 

@@ -4,4 +4,5 @@ export type Rating = {
   id: string;
   score: number;
   user: User;
+  isHostRating: boolean;
 };

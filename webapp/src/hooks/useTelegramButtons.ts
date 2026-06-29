@@ -3,6 +3,7 @@ import { getTelegramWebApp } from "../api/telegram.ts";
 
 export function useTelegramBackButton(onBack: () => void) {
   const cbRef = useRef(onBack);
+  // eslint-disable-next-line react-hooks/refs
   cbRef.current = onBack;
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export function useTelegramMainButton(
   loading = false,
 ) {
   const cbRef = useRef(onClick);
+  // eslint-disable-next-line react-hooks/refs
   cbRef.current = onClick;
 
   useEffect(() => {

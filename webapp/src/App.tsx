@@ -9,6 +9,7 @@ import type { AuthResponse } from "./api/auth.ts";
 import { ChartLine, CircleUser, Film, ListTodo } from "lucide-react";
 import { hapticTabTap } from "./haptics.ts";
 import { useTranslation } from "react-i18next";
+import { useNavDrag } from "./hooks/useNavDrag.ts";
 
 type Tab = "stat" | "group" | "personal" | "misc";
 
@@ -38,6 +39,11 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
     return () => vv.removeEventListener('resize', onResize);
   }, []);
 
+  const currentTabIndex = TABS.findIndex((tab) => tab.id === currentPage);
+  const { navRef, indicatorRef } = useNavDrag(TABS.length, currentTabIndex, (idx) => {
+    setCurrentPage(TABS[idx].id);
+  });
+
   const selectTab = (tab: Tab) => {
     hapticTabTap();
     setCurrentPage(tab);
@@ -47,11 +53,12 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
     <div className="app-shell">
       <main className="app-main">
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} /></div>
-        <div hidden={currentPage !== "group"}><GroupListPage isAdmin={isAdmin} /></div>
+        <div hidden={currentPage !== "group"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} /></div>
         <div hidden={currentPage !== "personal"}><PersonalListPage /></div>
         <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>
-      <nav className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
+      <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
+        <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />
         {TABS.map(({ id, labelKey, icon }) => (
           <button
             key={id}

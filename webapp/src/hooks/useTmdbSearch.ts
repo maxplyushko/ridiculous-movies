@@ -17,6 +17,7 @@ export function useTmdbSearch(query: string, { minLen = DEFAULT_MIN_LEN, debounc
 
     const trimmed = query.trim();
     if (trimmed.length < minLen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       setLoading(false);
       return;

@@ -4,17 +4,14 @@ import confetti from "canvas-confetti";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import PersonalMovieItem from "./PersonalMovieItem.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
-import { Eye, EyeDashed, Loader, Plus, Search, Star, X } from "lucide-react";
+import { Eye, EyeDashed, Loader, Plus, Search, X } from "lucide-react";
+import { RatingModal } from "./RatingModal.tsx";
 import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticTabTap } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
 import TmdbSearchSection from "./TmdbSearchSection.tsx";
 
-const SCORE_MIN = 1;
-const SCORE_MAX = 10;
-const SCORE_STEP = 0.25;
-const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
 
 type ConfirmDeleteDialogProps = {
   movie: PersonalMovie;
@@ -42,45 +39,6 @@ function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: 
   );
 }
 
-type RatingDialogProps = {
-  movie: PersonalMovie;
-  onSkip: () => void;
-  onSave: (rating: number) => void;
-};
-
-function RatingDialog({ movie, onSkip, onSave }: Readonly<RatingDialogProps>) {
-  const { t } = useTranslation();
-  const [rating, setRating] = useState<number>(movie.rating ?? 7);
-  return (
-    <div className="confirm-dialog-overlay">
-      <div className="confirm-dialog personal-rating-dialog">
-        <p>{t('personalList.rateDialog', { title: movie.title })}</p>
-        <div className="personal-rating-dialog__slider-area">
-          <span className="personal-rating-dialog__value">
-            {rating.toFixed(2)}<Star size={14} />
-          </span>
-          <input
-            type="range"
-            className="rating-card__slider"
-            min={SCORE_MIN}
-            max={SCORE_MAX}
-            step={SCORE_STEP}
-            value={rating}
-            onChange={(e) => setRating(Number.parseFloat(e.target.value))}
-            aria-label={t('personalList.labelRating')}
-          />
-          <div className="rating-card__ticks">
-            {TICK_LABELS.map((n) => <span key={n}>{n}</span>)}
-          </div>
-        </div>
-        <div className="confirm-dialog__actions">
-          <button type="button" onClick={() => { hapticTabTap(); onSkip(); }}>{t('personalList.btnSkip')}</button>
-          <button type="button" onClick={() => { hapticTabTap(); onSave(rating); }}>{t('personalList.btnSave')}</button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const CELEBRATION_COLORS = ["#ffd60a", "#ff9f0a", "#30d158", "#3390ec", "#ff375f", "#bf5af2"];
 
@@ -301,10 +259,11 @@ const PersonalListPage = () => {
           </div>
           <button
             type="button"
-            className="mlp__card mlp__card--action"
+            className="mlp__card mlp__card--accent"
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
-            <Plus size={26} className="mlp__card-icon" />
+            <span className="mlp__card-row-spacer" aria-hidden="true" />
+            <Plus size={20} className="mlp__card-icon" />
             <span className="mlp__card-label">{t('personalList.btnAddMovie')}</span>
           </button>
         </div>
@@ -393,15 +352,19 @@ const PersonalListPage = () => {
         />
       )}
       {ratingMovie && (
-        <RatingDialog
-          movie={ratingMovie}
-          onSkip={() => {
+        <RatingModal
+          title={t('personalList.rateDialog', { title: ratingMovie.title })}
+          initialScore={ratingMovie.rating}
+          defaultMode="classic"
+          cancelLabel={t('personalList.btnSkip')}
+          saveLabel={t('personalList.btnSave')}
+          onCancel={() => {
             const movie = ratingMovie;
             setRatingMovie(null);
             applyToggle(movie);
             celebrate(movie.id);
           }}
-          onSave={(rating) => {
+          onSave={async (rating) => {
             const movie = ratingMovie;
             setRatingMovie(null);
             applyToggle(movie, rating);

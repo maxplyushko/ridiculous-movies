@@ -1,7 +1,8 @@
 import type { User } from "../types/User.ts";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader2, Star, UserPlus } from "lucide-react";
+import { ChevronDown, Loader2, Trash2, UserPlus } from "lucide-react";
+import { StarRating } from "./StarRating.tsx";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
@@ -17,71 +18,13 @@ import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
 import scrollIntoViewAfterKeyboard from "../hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "../haptics.ts";
 
-const SCORE_MIN = 1;
 const SCORE_MAX = 10;
-const SCORE_STEP = 0.25;
-const ITEM_H = 44;
-
-const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
-const STAR_INDICES = Array.from({ length: 10 }, (_, i) => i + 1);
 
 const CATEGORIES: Array<{ key: keyof DetailedScores; labelKey: string }> = [
   { key: "r1", labelKey: "addMovie.ratingR1" },
   { key: "r2", labelKey: "addMovie.ratingR2" },
   { key: "r3", labelKey: "addMovie.ratingR3" },
 ];
-
-function initials(name: string): string {
-  return name.split(" ").map((w) => w[0] ?? "").join("").slice(0, 2).toUpperCase();
-}
-
-type StarRatingProps = {
-  value: number | null;
-  onChange: (v: number | null) => void;
-};
-
-function StarRating({ value, onChange }: Readonly<StarRatingProps>) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onMove = (e: TouchEvent) => {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const target = document.elementFromPoint(touch.clientX, touch.clientY);
-      const btn = target?.closest('[data-star]') as HTMLElement | null;
-      if (btn?.dataset.star) onChangeRef.current(Number(btn.dataset.star));
-    };
-    el.addEventListener('touchmove', onMove, { passive: false });
-    return () => el.removeEventListener('touchmove', onMove);
-  }, []);
-
-  return (
-    <div className="star-rating" ref={containerRef}>
-      {STAR_INDICES.map((n) => {
-        const filled = value !== null && n <= value;
-        return (
-          <button
-            key={n}
-            type="button"
-            data-star={n}
-            className={`star-rating__item${filled ? " star-rating__item--filled" : ""}`}
-            onClick={() => {
-              hapticTabTap();
-              onChange(n);
-            }}
-            aria-label={`Rate ${n}`}
-          >
-            <Star size={22} className="star-rating__icon" strokeWidth={2.5} />
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 type UserChipSelectorProps = {
   users: User[];
@@ -101,8 +44,7 @@ function UserChipSelector({ users, selectedId, onChange }: Readonly<UserChipSele
             className={`user-chip${selected ? " user-chip--selected" : ""}`}
             onClick={() => onChange(u.id)}
           >
-            <span className="user-chip__avatar">{initials(u.name)}</span>
-            <span className="user-chip__name">{u.name}</span>
+            <span className="user-chip__avatar">{u.name.split(/\s+/)[0]}</span>
           </button>
         );
       })}
@@ -119,43 +61,19 @@ type RoundPickerProps = {
 function RoundPicker({ value, maxRound, onChange }: Readonly<RoundPickerProps>) {
   const rounds = useMemo(() => Array.from({ length: maxRound }, (_, i) => i + 1), [maxRound]);
   const containerRef = useRef<HTMLDivElement>(null);
-  const ignoreScrollRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const target = (value - 1) * ITEM_H;
-    if (Math.abs(el.scrollTop - target) < 1) return;
-    ignoreScrollRef.current = true;
-    el.scrollTo({ top: target, behavior: "instant" });
-    requestAnimationFrame(() => { ignoreScrollRef.current = false; });
-  }, [value]);
-
-  const handleScroll = () => {
-    if (ignoreScrollRef.current) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      const el = containerRef.current;
-      if (!el) return;
-      const idx = Math.round(el.scrollTop / ITEM_H);
-      const clamped = Math.max(0, Math.min(idx, rounds.length - 1));
-      onChange(rounds[clamped]);
-    }, 80);
-  };
 
   return (
-    <div className="round-picker-wrapper">
-      <div className="round-picker" ref={containerRef} onScroll={handleScroll}>
-        <div className="round-picker__pad" />
-        {rounds.map((r) => (
-          <div key={r} className={`round-picker__item${r === value ? " round-picker__item--active" : ""}`}>
-            Round {r}
-          </div>
-        ))}
-        <div className="round-picker__pad" />
-      </div>
-      <div className="round-picker__selection" aria-hidden="true" />
+    <div className="round-picker-row" ref={containerRef}>
+      {rounds.map((r) => (
+        <button
+          key={r}
+          type="button"
+          className={`round-picker-row__item${r === value ? " round-picker-row__item--active" : ""}`}
+          onClick={() => { hapticTabTap(); onChange(r); }}
+        >
+          Round {r}
+        </button>
+      ))}
     </div>
   );
 }
@@ -171,6 +89,7 @@ type RatingCardProps = {
   onUpdateScore: (id: string, score: string) => void;
   onUpdateMode: (id: string, mode: RatingMode) => void;
   onUpdateDetailed: (id: string, field: keyof DetailedScores, value: number | null) => void;
+  onRemove: (id: string) => void;
 };
 
 function RatingCard({
@@ -184,11 +103,13 @@ function RatingCard({
   onUpdateScore,
   onUpdateMode,
   onUpdateDetailed,
+  onRemove,
 }: Readonly<RatingCardProps>) {
   const { t } = useTranslation();
-  const numericScore = Number.parseFloat(scoreInput) || SCORE_MIN;
-  const clamped = Math.min(SCORE_MAX, Math.max(SCORE_MIN, numericScore));
+  const numericScore = Number.parseFloat(scoreInput) || 0;
+  const clamped = Math.min(SCORE_MAX, Math.max(0, numericScore));
   const detailedScore = calcDetailedScore(detailed);
+  const toggleMode = () => { hapticTabTap(); onUpdateMode(formId, mode === "detailed" ? "classic" : "detailed"); };
 
   return (
     <div className="rating-card">
@@ -198,23 +119,25 @@ function RatingCard({
           selectedId={userId}
           onChange={(id) => onUpdateUser(formId, id)}
         />
-      </div>
-      <div className="rating-card__mode-toggle">
         <button
           type="button"
-          className={`rating-mode-btn${mode === "detailed" ? " rating-mode-btn--active" : ""}`}
-          onClick={() => { hapticTabTap(); onUpdateMode(formId, "detailed"); }}
+          className="rating-card__mode-icon-btn"
+          onClick={() => { hapticTabTap(); onRemove(formId); }}
+          aria-label={t('addMovie.btnRemoveRater')}
         >
-          {t('addMovie.ratingExtended')}
-        </button>
-        <button
-          type="button"
-          className={`rating-mode-btn${mode === "classic" ? " rating-mode-btn--active" : ""}`}
-          onClick={() => { hapticTabTap(); onUpdateMode(formId, "classic"); }}
-        >
-          {t('addMovie.ratingClassic')}
+          <Trash2 size={18} />
         </button>
       </div>
+      <button type="button" className="rating-value-toggle" onClick={toggleMode}>
+        <span className="rating-value-toggle__score">
+          {(mode === "detailed" ? detailedScore ?? 0 : clamped).toFixed(2)}
+        </span>
+        <ChevronDown
+          size={16}
+          className="rating-value-toggle__arrow"
+          style={{ transform: mode === "detailed" ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}
+        />
+      </button>
       {mode === "detailed" ? (
         <div className="rating-card__detailed">
           {CATEGORIES.map(({ key, labelKey }) => (
@@ -226,28 +149,13 @@ function RatingCard({
               />
             </div>
           ))}
-          <p className="rating-card__value">
-            {detailedScore !== null ? detailedScore.toFixed(2) : "—"}
-          </p>
         </div>
       ) : (
-        <div className="rating-card__slider-area">
-          <p className="rating-card__value">{clamped.toFixed(2)}</p>
-          <input
-            type="range"
-            className="rating-card__slider"
-            min={SCORE_MIN}
-            max={SCORE_MAX}
-            step={SCORE_STEP}
-            value={clamped}
-            onChange={(e) => onUpdateScore(formId, e.target.value)}
-            aria-label="Score"
+        <div className="rating-card__classic">
+          <StarRating
+            value={clamped > 0 ? Math.round(clamped) : null}
+            onChange={(v) => { if (v !== null) onUpdateScore(formId, String(v)); }}
           />
-          <div className="rating-card__ticks">
-            {TICK_LABELS.map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-          </div>
         </div>
       )}
     </div>
@@ -257,22 +165,23 @@ function RatingCard({
 type AddMoviePageProps = {
   currentRound: number;
   maxRound: number;
+  currentUserId: string;
   movie?: Movie;
   onBack: () => void;
 };
 
-const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePageProps) => {
+const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, onBack }: AddMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
-  const [ownerId, setOwnerId] = useState(movie?.owner.id ?? "");
+  const [ownerId, setOwnerId] = useState(movie?.owner.id ?? currentUserId);
   const [round, setRound] = useState(movie?.round ?? currentRound);
   const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { t } = useTranslation();
-  const { forms, add, updateUser, updateScore, updateMode, updateDetailed, buildRatings } = useRatingForm(movie);
+  const { forms, add, remove, updateUser, updateScore, updateMode, updateDetailed, buildRatings } = useRatingForm(movie);
   const submitLabel = isEditMode ? t('addMovie.btnSave') : t('addMovie.btnAdd');
   const isTg = isTelegramMiniApp();
 
@@ -405,6 +314,7 @@ const AddMoviePage = ({ currentRound, maxRound, movie, onBack }: AddMoviePagePro
               onUpdateScore={updateScore}
               onUpdateMode={updateMode}
               onUpdateDetailed={updateDetailed}
+              onRemove={remove}
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ const THRESHOLD = 80;
 
 export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
   const onBackRef = useRef(onBack);
+  // eslint-disable-next-line react-hooks/refs
   onBackRef.current = onBack;
 
   useEffect(() => {

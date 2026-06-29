@@ -2,15 +2,18 @@ import type { Movie } from "../types/Movie";
 import { Calendar, Pencil, Star, Trash2, User } from "lucide-react";
 import { hapticTabTap } from "../haptics.ts";
 import { useSwipeGesture } from "../hooks/useSwipeGesture.ts";
+import { useTranslation } from "react-i18next";
 
 type MovieItemProps = {
   movie: Movie;
   isExpanded: boolean;
   isSwipeOpen: boolean;
   canDelete: boolean;
+  currentUserId: string;
   onToggle: () => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
+  onRate: (movie: Movie) => void;
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
@@ -31,13 +34,16 @@ const MovieItem = ({
   isExpanded,
   isSwipeOpen,
   canDelete,
+  currentUserId,
   onToggle,
   onEdit,
   onDelete,
+  onRate,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
 }: MovieItemProps) => {
+  const { t } = useTranslation();
   const {
     offsetX,
     isDragging,
@@ -55,6 +61,8 @@ const MovieItem = ({
     onClose: onSwipeClose,
     onBegin: onSwipeBegin,
   });
+
+  const hasRated = movie.ratings.some((r) => r.user.id === currentUserId);
 
   const handleHeaderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -131,11 +139,23 @@ const MovieItem = ({
             {[...movie.ratings]
               .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
               .map((r) => (
-                <span key={r.id} className="movie-item-details__rating-item">
+                <span
+                  key={r.id}
+                  className={`movie-item-details__rating-item${r.isHostRating ? " movie-item-details__rating-item--host" : ""}`}
+                >
                   <User size={16} /> {r.user.name}: {r.score.toFixed(1)}
                 </span>
               ))}
           </div>
+          {!hasRated && (
+            <button
+              type="button"
+              className="movie-item-details__rate-btn"
+              onClick={(e) => { e.stopPropagation(); hapticTabTap(); onRate(movie); }}
+            >
+              {t('groupList.btnRate')}
+            </button>
+          )}
         </div>
       </article>
     </div>

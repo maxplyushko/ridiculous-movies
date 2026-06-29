@@ -20,6 +20,7 @@
     "sectionHost": "Host",
     "sectionRatings": "Ratings",
     "btnAddRater": "Add rater",
+    "btnRemoveRater": "Remove rater",
     "ratingExtended": "Extended",
     "ratingClassic": "Classic",
     "ratingR1": "ridiculousity",
@@ -55,6 +56,7 @@
     "labelWatched": "Watched",
     "btnAddMovie": "Add movie",
     "placeholderSearch": "Search movies…",
+    "btnRate": "Rate the movie",
     "sectionInYourClub": "In your club",
     "noMatch": "No movies match"
   },

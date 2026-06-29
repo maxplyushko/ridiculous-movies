@@ -58,11 +58,14 @@ export function useRatingForm(movie: Movie | undefined) {
       {
         id: crypto.randomUUID(),
         userId: "",
-        scoreInput: "5",
+        scoreInput: "0",
         mode: "detailed" as RatingMode,
         detailed: { r1: null, r2: null, r3: null },
       },
     ]);
+
+  const remove = (id: string) =>
+    setForms((prev) => prev.filter((f) => f.id !== id));
 
   const updateUser = (id: string, userId: string) =>
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, userId } : f)));
@@ -71,7 +74,18 @@ export function useRatingForm(movie: Movie | undefined) {
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, scoreInput } : f)));
 
   const updateMode = (id: string, mode: RatingMode) =>
-    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, mode } : f)));
+    setForms((prev) => prev.map((f) => {
+      if (f.id !== id) return f;
+      let { scoreInput, detailed } = f;
+      if (mode === "classic" && f.mode === "detailed") {
+        const s = calcDetailedScore(f.detailed);
+        if (s !== null) scoreInput = String(Math.round(s));
+      } else if (mode === "detailed" && f.mode === "classic") {
+        const v = parseScoreInput(f.scoreInput);
+        if (v > 0) detailed = { r1: v, r2: v, r3: v };
+      }
+      return { ...f, mode, scoreInput, detailed };
+    }));
 
   const updateDetailed = (id: string, field: keyof DetailedScores, value: number | null) =>
     setForms((prev) =>
@@ -89,5 +103,5 @@ export function useRatingForm(movie: Movie | undefined) {
             : Math.min(SCORE_MAX, Math.max(0, parseScoreInput(f.scoreInput))),
       }));
 
-  return { forms, add, updateUser, updateScore, updateMode, updateDetailed, buildRatings };
+  return { forms, add, remove, updateUser, updateScore, updateMode, updateDetailed, buildRatings };
 }

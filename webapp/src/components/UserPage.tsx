@@ -71,16 +71,10 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   );
   const [defaultPage, setDefaultPage] = useState<"list" | "watchlist">(session.defaultPage ?? "list");
   const [persistedDefaultPage, setPersistedDefaultPage] = useState<"list" | "watchlist">(session.defaultPage ?? "list");
+  const [selectedLang, setSelectedLang] = useState(() => i18n.language);
+  const [persistedLang, setPersistedLang] = useState(() => session.lang ?? i18n.language);
   const [isSaving, setIsSaving] = useState(false);
-  const isDirty = isDark !== persistedDark || defaultPage !== persistedDefaultPage;
-  const currentLang = i18n.language;
-
-  const changeLang = (lang: string) => {
-    hapticTabTap();
-    i18n.changeLanguage(lang);
-    localStorage.setItem("i18n-lang", lang);
-    savePreferences({ lang }).catch(() => {});
-  };
+  const isDirty = isDark !== persistedDark || defaultPage !== persistedDefaultPage || selectedLang !== persistedLang;
 
   return (
     <section className="user-page">
@@ -132,15 +126,15 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
         <div className="user-page__card user-page__segmented-row">
           <button
             type="button"
-            className={`user-page__seg-btn${currentLang === "en" ? " user-page__seg-btn--active" : ""}`}
-            onClick={() => changeLang("en")}
+            className={`user-page__seg-btn${selectedLang === "en" ? " user-page__seg-btn--active" : ""}`}
+            onClick={() => { hapticTabTap(); setSelectedLang("en"); i18n.changeLanguage("en"); }}
           >
             English
           </button>
           <button
             type="button"
-            className={`user-page__seg-btn${currentLang === "ru" ? " user-page__seg-btn--active" : ""}`}
-            onClick={() => changeLang("ru")}
+            className={`user-page__seg-btn${selectedLang === "ru" ? " user-page__seg-btn--active" : ""}`}
+            onClick={() => { hapticTabTap(); setSelectedLang("ru"); i18n.changeLanguage("ru"); }}
           >
             Русский
           </button>
@@ -156,9 +150,11 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
             onClick={async () => {
               setIsSaving(true);
               try {
-                await savePreferences({ theme: isDark ? "dark" : "light", defaultPage });
+                await savePreferences({ theme: isDark ? "dark" : "light", defaultPage, lang: selectedLang });
+                localStorage.setItem("i18n-lang", selectedLang);
                 setPersistedDark(isDark);
                 setPersistedDefaultPage(defaultPage);
+                setPersistedLang(selectedLang);
               } finally {
                 setIsSaving(false);
               }

@@ -15,14 +15,18 @@ import org.springframework.stereotype.Component;
 public class MovieMapper {
 
   public MovieResponse toResponse(Movie m, String groupId) {
+    String ownerId = m.getOwner().getId();
     List<Rating> groupRatings = m.getRatings().stream()
         .filter(r -> r.getUser().getUserGroup().getId().equals(groupId))
         .sorted(Comparator.comparing(r -> r.getUser().getId()))
         .toList();
     List<RatingEntryDto> ratings = groupRatings.stream()
-        .map(this::toRatingEntry)
+        .map(r -> toRatingEntry(r, ownerId))
         .toList();
-    Double avg = averageRating(groupRatings);
+    List<Rating> nonHostRatings = groupRatings.stream()
+        .filter(r -> !r.getUser().getId().equals(ownerId))
+        .toList();
+    Double avg = averageRating(nonHostRatings);
     UserRefDto owner = new UserRefDto(m.getOwner().getId(), m.getOwner().getName());
     return new MovieResponse(
         m.getId(),
@@ -37,9 +41,10 @@ public class MovieMapper {
     );
   }
 
-  private RatingEntryDto toRatingEntry(Rating r) {
+  private RatingEntryDto toRatingEntry(Rating r, String ownerId) {
     UserRefDto u = new UserRefDto(r.getUser().getId(), r.getUser().getName());
-    return new RatingEntryDto(r.getId(), u, r.getScore().setScale(2, RoundingMode.HALF_UP));
+    return new RatingEntryDto(r.getId(), u, r.getScore().setScale(2, RoundingMode.HALF_UP),
+        r.getUser().getId().equals(ownerId));
   }
 
   private Double averageRating(List<Rating> ratings) {

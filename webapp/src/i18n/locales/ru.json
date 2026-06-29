@@ -20,6 +20,7 @@
     "sectionHost": "Хост",
     "sectionRatings": "Рейтинги",
     "btnAddRater": "Добавить оценщика",
+    "btnRemoveRater": "Удалить оценщика",
     "ratingExtended": "Расширенно",
     "ratingClassic": "Классика",
     "ratingR1": "дурацкость",
@@ -55,6 +56,7 @@
     "labelWatched": "Просмотрено",
     "btnAddMovie": "Добавить",
     "placeholderSearch": "Поиск",
+    "btnRate": "Оценить фильм",
     "sectionInYourClub": "В твоей группе",
     "noMatch": "нет совпадений"
   },
@@ -119,7 +121,7 @@
     "browserOpened": "Браузер открыт. Выполните вход в систему, затем нажмите на ссылку, которую отправит вам Telegram, чтобы вернуться.",
     "btnGoogle": "Войти через Google",
     "btnLoading": "Загрузка...",
-    "btnGuest": "Продолжить как гость",
+    "btnGuest": "Войдите как гость",
     "or": "или"
   }
 }
