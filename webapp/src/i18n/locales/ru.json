@@ -3,7 +3,8 @@
     "stats": "Статистика",
     "groupList": "Фильмы группы",
     "personalList": "Личный список",
-    "profile": "Профиль"
+    "profile": "Профиль",
+    "back": "Назад"
   },
   "addMovie": {
     "headingEdit": "Редактировать Фильм",
@@ -55,6 +56,12 @@
     "labelPickingHost": "Выбираю хоста...",
     "labelRound": "Раунд",
     "labelWatched": "Просмотрено",
+    "labelRandom": "Рандом",
+    "labelStatistics": "Статистика",
+    "toggleByNumber": "По числу",
+    "toggleByHosts": "По хостам",
+    "btnPickHost": "Выбрать хоста",
+    "labelNextHost": "Следующий хост",
     "btnAddMovie": "Добавить",
     "placeholderSearch": "Поиск",
     "btnRate": "Оценить фильм",

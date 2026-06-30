@@ -3,7 +3,8 @@
     "stats": "Statistics",
     "groupList": "Group List",
     "personalList": "Personal List",
-    "profile": "Profile"
+    "profile": "Profile",
+    "back": "Back"
   },
   "addMovie": {
     "headingEdit": "Edit Movie",
@@ -55,6 +56,12 @@
     "labelPickingHost": "Picking host…",
     "labelRound": "Round",
     "labelWatched": "Watched",
+    "labelRandom": "Random",
+    "labelStatistics": "Statistics",
+    "toggleByNumber": "By number",
+    "toggleByHosts": "By hosts",
+    "btnPickHost": "Pick host",
+    "labelNextHost": "Next host",
     "btnAddMovie": "Add movie",
     "placeholderSearch": "Search movies…",
     "btnRate": "Rate the movie",

@@ -16,6 +16,7 @@ All new features and UI/UX changes must be fully consistent with existing patter
 - **Icons**: lucide-react only, consistent sizing (`size={30}` nav, `size={20}` cards, `size={16}` inline)
 - **API layer**: all calls through `apiFetch` in `api/client.ts`; new modules follow pattern of `api/movies.ts`
 - **Backend**: new controllers/DTOs follow `MovieController`/`MovieResponse` pattern; storage via `DataStore` with read/write lock + `persist()`
+- **i18n**: all user-visible strings via `useTranslation()` hook; add keys to both `webapp/src/i18n/locales/en.json` and `ru.json`
 
 ## Commands
 
@@ -34,26 +35,37 @@ npm run build        # compile TS + bundle → output to backend/src/main/resour
 npm run lint         # ESLint
 ```
 
-### Full stack
-```bash
-docker-compose up    # OUTDATED — still references Postgres which is no longer used
-```
-
 ## Architecture
 
 **Serving**: The backend serves the React SPA as static files from `src/main/resources/static/`. `npm run build` writes directly there. No separate frontend server in production.
 
-**Auth**: No JWT or sessions. Every API request carries a `User-Id` header containing the Telegram user's numeric ID. The backend looks up the user in the in-memory `DataStore` — 403 if not found. Users must be in the JSON data file; this is a private app.
+**Auth** (JWT-based):
+1. On load, `AuthGate` attempts auth based on environment:
+   - **Telegram MiniApp**: `POST /api/auth/telegram` with `tg.initData` → receives JWT
+   - **Google OAuth flow**: `GET /api/auth/google/url` → redirect → `/api/auth/google/callback` → redirect with token param → `GET /api/auth/google/token` → JWT
+   - **Google ID token**: `POST /api/auth/login` with `idToken` → JWT
+   - **Guest**: `POST /api/auth/guest` (requires a user with id `"guest"` in the data file)
+2. JWT stored in localStorage as `rm_access_token`, sent as `Authorization: Bearer <token>`
+3. `BearerTokenFilter` validates the JWT and injects the user ID as a `User-Id` header — controllers read `User-Id`, never the raw token
+4. `GET /api/auth` validates the current token and returns session info
+5. Users auto-register on first Google login into `google.default-group` (default: `"Guest group"`)
+6. `jwt.secret` property controls signing key — if blank, a random key is generated (tokens invalidated on restart)
+
+**Local dev auth**: Without Telegram, the sign-in screen appears. Use guest login (requires `"guest"` user in `scripts/data.json`) or Google OAuth.
 
 **Roles & groups**: Each user has a `role` (`user` or `admin`) and belongs to a `user_group`. Movies and stats are scoped to the caller's group. Only admins can delete movies they don't own.
 
-**Storage**: No SQL database. All data lives in a JSON file (`AppData`), loaded into memory at startup by `DataStoreInitializer`, held in `DataStore` with a `ReentrantReadWriteLock`. Every write persists the whole JSON back to storage.
-- **Dev** (`@Profile("dev")`): `LocalFileStorageClient` reads/writes `scripts/ridiculous-movies-db.json`
+**Storage**: No SQL database. All data lives in a JSON file (`AppData`), loaded into memory at startup by `DataStoreInitializer`, held in `DataStore` with a `ReentrantReadWriteLock`. Every write rebuilds the full `AppData` object and calls `driveClient.upload()`.
+- **Dev** (`@Profile("dev")`): `LocalFileStorageClient` reads/writes `scripts/data.json`
 - **Prod** (`@Profile("prod")`): `GoogleDriveClient` reads/writes a Google Drive file (ID from `GOOGLE_DRIVE_FILE_ID`)
 
-**Frontend dev auth bypass**: Set `VITE_DEV_USER_ID` in `webapp/.env` to a known user ID to skip Telegram WebApp initialization locally. The file already has one set.
+**Frontend API layer** (`webapp/src/api/`): `client.ts` wraps `fetch` — injects `Authorization: Bearer <token>` from localStorage. All API modules call through `apiFetch`. Vite proxies `/api` to the backend in dev.
 
-**Frontend API layer** (`webapp/src/api/`): `client.ts` wraps `fetch` — injects the `User-Id` header from either `VITE_DEV_USER_ID` or `window.Telegram.WebApp.initDataUnsafe.user.id`. All API modules call through it. Vite proxies `/api` to the backend in dev.
+**Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four tabs: Stats, Group List, Personal List, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
+
+**Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items have `watched` boolean and optional `rating`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies.
+
+**i18n**: `react-i18next`, locales in `webapp/src/i18n/locales/`. Language resolved from `AuthResponse.lang`, stored in `i18n-lang` localStorage key. Default `"en"`, fallback `"en"`.
 
 **Telegram bot**: Webhook at `/api/telegram/webhook` (secret-verified). Only handles `/start` — sends a Mini App launch button. Bot only activates when `telegram.bot.token` property is set (`@ConditionalOnProperty`).
 
@@ -68,15 +80,25 @@ docker-compose up    # OUTDATED — still references Postgres which is no longer
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/start` | Health/startup check |
-| GET | `/api/auth` | Verify user identity, return user info |
+| GET | `/api/auth` | Verify token, return user info |
+| POST | `/api/auth/telegram` | Login with Telegram `initData` → JWT |
+| POST | `/api/auth/login` | Login with Google ID token → JWT |
+| POST | `/api/auth/guest` | Login as guest → JWT |
+| GET | `/api/auth/google/url` | Get Google OAuth redirect URL |
+| GET | `/api/auth/google/callback` | OAuth redirect callback (server-side) |
+| GET | `/api/auth/google/token` | Exchange one-time token → JWT |
 | GET | `/api/movies` | List movies (params: `filter`, `sort`, `minRatings`, `requireAllUsers`) |
 | GET | `/api/movies/groups` | List movies grouped by round |
 | POST | `/api/movies` | Create movie (with optional ratings) |
 | PUT | `/api/movies/{id}` | Update movie (with optional ratings) |
 | DELETE | `/api/movies/{id}` | Delete movie (admin or owner) |
+| GET | `/api/personal-list` | List caller's personal watchlist |
+| POST | `/api/personal-list` | Add item to personal watchlist |
+| PUT | `/api/personal-list/{id}` | Update personal watchlist item |
+| DELETE | `/api/personal-list/{id}` | Remove personal watchlist item |
 | GET | `/api/stats` | Group stats |
 | GET | `/api/users` | List users in caller's group |
-| PUT | `/api/users/me/preferences` | Update caller's host preferences |
+| PUT | `/api/users/me/preferences` | Update caller's preferences (theme, defaultPage, lang) |
 | GET | `/api/tmdb/search` | Search TMDB for movies |
 | POST | `/api/telegram/webhook` | Telegram bot webhook |
 
@@ -84,7 +106,10 @@ docker-compose up    # OUTDATED — still references Postgres which is no longer
 
 | Var | Where | Purpose |
 |-----|-------|---------|
-| `VITE_DEV_USER_ID` | `webapp/.env` | Local dev user ID (bypasses Telegram) |
+| `jwt.secret` | backend | JWT signing key (random per-restart if blank) |
+| `jwt.expiry-days` | backend | JWT lifetime in days (default 30) |
+| `google.default-group` | backend | Group for auto-registered Google users (default `"Guest group"`) |
+| `VITE_GOOGLE_CLIENT_ID` | `webapp/.env` | Google OAuth client ID |
 | `TELEGRAM_BOT_TOKEN` | backend env | Required to enable the bot |
 | `TELEGRAM_WEBHOOK_URL` | backend env | Must be set to public URL for webhook |
 | `GOOGLE_DRIVE_FILE_ID` | backend env | Google Drive file used as prod database |

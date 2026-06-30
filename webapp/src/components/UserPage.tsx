@@ -7,6 +7,9 @@ import { savePreferences } from "../api/users.ts";
 import { tokenStore } from "../api/client.ts";
 import type { AuthResponse } from "../api/auth.ts";
 import i18n from "../i18n/index.ts";
+import { useTelegramBackButton } from "../hooks/useTelegramButtons.ts";
+import { useSwipeBack } from "../hooks/useSwipeBack.ts";
+import { isTelegramMiniApp } from "../api/telegram.ts";
 
 type Props = { session: AuthResponse };
 
@@ -65,6 +68,8 @@ function ProfileView({ session, onSettings }: Readonly<{
 
 function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () => void }) {
   const { t } = useTranslation();
+  const isTg = isTelegramMiniApp();
+  useTelegramBackButton(onBack);
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
   const [persistedDark, setPersistedDark] = useState(() =>
     session.theme != null ? session.theme === "dark" : document.documentElement.dataset.colorScheme === "dark"
@@ -142,7 +147,7 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
       </div>
 
       <div className="add-movie__control">
-        <button type="button" onClick={() => { hapticTabTap(); onBack(); }}>{t('settings.btnBack')}</button>
+        {!isTg && <button type="button" onClick={() => { hapticTabTap(); onBack(); }}>{t('settings.btnBack')}</button>}
         {isDirty && (
           <button
             type="button"
@@ -170,13 +175,16 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
 
 const UserPage = ({ session }: Props) => {
   const [view, setView] = useState<"profile" | "settings">("profile");
+  const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
+  const closeSettings = () => setView("profile");
+  useSwipeBack(closeSettings, overlayEl);
 
   return (
     <>
       <ProfileView session={session} onSettings={() => setView("settings")} />
       {view === "settings" && (
-        <div className="user-page__settings-overlay">
-          <SettingsView session={session} onBack={() => setView("profile")} />
+        <div className="user-page__settings-overlay" ref={setOverlayEl}>
+          <SettingsView session={session} onBack={closeSettings} />
         </div>
       )}
     </>

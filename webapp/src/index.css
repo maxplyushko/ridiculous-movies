@@ -323,6 +323,7 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary, #888);
+  margin-top: 1.5rem;
   margin-bottom: 1rem;
 }
 
@@ -1759,6 +1760,10 @@ h1 {
   animation: misc-pop-in 0.45s ease-out;
 }
 
+.misc-page__result-number--sm {
+  font-size: 1.5rem;
+}
+
 .misc-page__result-number--spinning {
   animation: misc-spin-tick 0.065s ease-out;
   opacity: 0.75;
@@ -1802,6 +1807,27 @@ h1 {
 .stat-page__error {
   margin: 1rem;
   color: var(--danger);
+}
+
+.stat-page__back {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem 0.25rem 0.125rem;
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.stat-page__back:active {
+  background: var(--active-highlight);
 }
 
 .stat-podium {

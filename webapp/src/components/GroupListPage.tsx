@@ -7,14 +7,13 @@ import type { Movie } from "../types/Movie.ts";
 import type { User } from "../types/User.ts";
 import MovieItem from "./MovieItem.tsx";
 import TmdbSearchSection from "./TmdbSearchSection.tsx";
-import { Clapperboard, Loader, Plus, Search, Trophy, X } from "lucide-react";
+import { ChartLine, Dices, Loader, Plus, Search, X } from "lucide-react";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, editMovie, fetchMovieGroups } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "./MovieListSkeleton.tsx";
 import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, hapticTabTap, stopHaptics } from "../haptics.ts";
 import { useSwipeBack } from "../hooks/useSwipeBack.ts";
-import { useSpinPicker } from "../hooks/useSpinPicker.ts";
 import { RatingModal } from "./RatingModal.tsx";
 
 type RoundSectionProps = {
@@ -115,8 +114,29 @@ function ConfirmDeleteDialog({ movie, error, isDeleting, onConfirm, onCancel }: 
 const NP_TICK_MS = 65;
 const NP_TICK_COUNT = 20;
 
-function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number; onClose: () => void }>) {
+const CONFETTI_OPTS = {
+  origin: { x: 0.5, y: 0.5 },
+  particleCount: 80,
+  spread: 360,
+  startVelocity: 30,
+  ticks: 80,
+  scalar: 0.9,
+  colors: ["#3390ec", "#ff9500", "#ff3b30", "#34c759", "#ffd60a", "#bf5af2"],
+  disableForReducedMotion: true,
+};
+
+type RandomizerDialogProps = {
+  sliderMax: number;
+  users: User[];
+  movieGroups: MovieGroup[];
+  currentRound: number;
+  onClose: () => void;
+};
+
+function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, onClose }: Readonly<RandomizerDialogProps>) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<"number" | "host">("number");
+
   const [npMin, setNpMin] = useState(1);
   const [npMax, setNpMax] = useState(sliderMax);
   const [display, setDisplay] = useState<number | null>(null);
@@ -125,21 +145,27 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
   const [resultKey, setResultKey] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-  useEffect(() => () => { clearInterval(intervalRef.current); stopHaptics(); }, []);
+  const [hostDisplay, setHostDisplay] = useState<string | null>(null);
+  const [hostFinal, setHostFinal] = useState<string | null>(null);
+  const [hostSpinning, setHostSpinning] = useState(false);
+  const [hostResultKey, setHostResultKey] = useState(0);
+  const hostIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  useEffect(() => () => {
+    clearInterval(intervalRef.current);
+    clearInterval(hostIntervalRef.current);
+    stopHaptics();
+  }, []);
 
   useEffect(() => {
     if (final === null || spinning) return;
-    confetti({
-      origin: { x: 0.5, y: 0.5 },
-      particleCount: 80,
-      spread: 360,
-      startVelocity: 30,
-      ticks: 80,
-      scalar: 0.9,
-      colors: ["#3390ec", "#ff9500", "#ff3b30", "#34c759", "#ffd60a", "#bf5af2"],
-      disableForReducedMotion: true,
-    });
+    confetti(CONFETTI_OPTS);
   }, [resultKey, final, spinning]);
+
+  useEffect(() => {
+    if (hostFinal === null || hostSpinning) return;
+    confetti(CONFETTI_OPTS);
+  }, [hostResultKey, hostFinal, hostSpinning]);
 
   const resetResult = () => {
     clearInterval(intervalRef.current);
@@ -176,61 +202,142 @@ function NumberPickerDialog({ sliderMax, onClose }: Readonly<{ sliderMax: number
     }, NP_TICK_MS);
   };
 
+  const pickHost = () => {
+    if (hostSpinning) return;
+    hapticTabTap();
+    if (users.length === 0) return;
+    const currentGroup = movieGroups.find((g) => g.groupId === currentRound);
+    const hostedIds = new Set(currentGroup?.movies.map((m) => m.owner.id) ?? []);
+    const remaining = users.filter((u) => !hostedIds.has(u.id));
+    const candidates = remaining.length > 0 ? remaining : users;
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)].name;
+    hapticSpinStart();
+    setHostSpinning(true);
+    setHostFinal(null);
+    setHostDisplay(candidates[Math.floor(Math.random() * candidates.length)].name);
+    let ticks = 0;
+    hostIntervalRef.current = setInterval(() => {
+      ticks++;
+      setHostDisplay(candidates[Math.floor(Math.random() * candidates.length)].name);
+      hapticSpinTick();
+      if (ticks >= NP_TICK_COUNT) {
+        clearInterval(hostIntervalRef.current);
+        hostIntervalRef.current = undefined;
+        stopHaptics();
+        setHostSpinning(false);
+        setHostDisplay(chosen);
+        setHostFinal(chosen);
+        setHostResultKey((k) => k + 1);
+        hapticSpinReveal();
+      }
+    }, NP_TICK_MS);
+  };
+
+  const switchMode = (newMode: "number" | "host") => {
+    hapticTabTap();
+    setMode(newMode);
+    if (newMode === "host") pickHost();
+  };
+
   return (
     <div className="confirm-dialog-overlay" onClick={onClose}>
       <div className="confirm-dialog mlp__number-picker" onClick={(e) => e.stopPropagation()}>
-        <div className="mlp__picker-title">{t('groupList.dialogRandomizerTitle')}</div>
-        <div className="mlp__range-wrap">
-          <div className="mlp__range-labels">
-            <span className="mlp__range-value">{npMin}</span>
-            <span className="mlp__range-value">{npMax}</span>
-          </div>
-          <Slider.Root
-            className="mlp__range-root"
-            min={1}
-            max={sliderMax}
-            step={1}
-            value={[npMin, npMax]}
-            onValueChange={([min, max]) => { setNpMin(min); setNpMax(max); resetResult(); }}
-          >
-            <Slider.Track className="mlp__range-track">
-              <Slider.Range className="mlp__range-range" />
-            </Slider.Track>
-            <Slider.Thumb className="mlp__range-thumb" />
-            <Slider.Thumb className="mlp__range-thumb" />
-          </Slider.Root>
-        </div>
-        {display !== null && (
-          <div className="misc-page__result misc-page__result--inline">
-            {!spinning && final !== null && <FireworkSparks key={resultKey} />}
-            <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
-            <span
-              key={spinning ? `spin-${display}` : `result-${resultKey}`}
-              className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
-            >
-              {display}
-            </span>
-          </div>
-        )}
-        <div className="mlp__action-row" style={{ marginTop: display !== null ? 0 : "0.5rem" }}>
+
+        <div className="misc-page__default-page-row" style={{ padding: 0 }}>
           <button
             type="button"
-            className="misc-page__generate"
-            disabled={spinning}
-            onClick={pick}
+            className={`misc-page__page-btn${mode === "number" ? " misc-page__page-btn--active" : ""}`}
+            onClick={() => switchMode("number")}
           >
-            {spinning ? t('groupList.btnQuantumizing') : t('groupList.btnGenerate')}
+            {t('groupList.toggleByNumber')}
           </button>
-          {final !== null && !spinning && (
-            <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
-          )}
+          <button
+            type="button"
+            className={`misc-page__page-btn${mode === "host" ? " misc-page__page-btn--active" : ""}`}
+            onClick={() => switchMode("host")}
+          >
+            {t('groupList.toggleByHosts')}
+          </button>
         </div>
+
+        {mode === "number" && (
+          <>
+            <div className="mlp__picker-title">{t('groupList.dialogRandomizerTitle')}</div>
+            <div className="mlp__range-wrap">
+              <div className="mlp__range-labels">
+                <span className="mlp__range-value">{npMin}</span>
+                <span className="mlp__range-value">{npMax}</span>
+              </div>
+              <Slider.Root
+                className="mlp__range-root"
+                min={1}
+                max={sliderMax}
+                step={1}
+                value={[npMin, npMax]}
+                onValueChange={([min, max]) => { setNpMin(min); setNpMax(max); resetResult(); }}
+              >
+                <Slider.Track className="mlp__range-track">
+                  <Slider.Range className="mlp__range-range" />
+                </Slider.Track>
+                <Slider.Thumb className="mlp__range-thumb" />
+                <Slider.Thumb className="mlp__range-thumb" />
+              </Slider.Root>
+            </div>
+            {display !== null && (
+              <div className="misc-page__result misc-page__result--inline">
+                {!spinning && final !== null && <FireworkSparks key={resultKey} />}
+                <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
+                <span
+                  key={spinning ? `spin-${display}` : `result-${resultKey}`}
+                  className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
+                >
+                  {display}
+                </span>
+              </div>
+            )}
+            <div className="mlp__action-row" style={{ marginTop: display !== null ? 0 : "0.5rem" }}>
+              <button type="button" className="misc-page__generate" disabled={spinning} onClick={pick}>
+                {spinning ? t('groupList.btnQuantumizing') : t('groupList.btnGenerate')}
+              </button>
+              {final !== null && !spinning && (
+                <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+              )}
+            </div>
+          </>
+        )}
+
+        {mode === "host" && (
+          <>
+            {hostDisplay !== null && (
+              <div className="misc-page__result misc-page__result--inline">
+                {!hostSpinning && hostFinal !== null && <FireworkSparks key={hostResultKey} />}
+                <span className="misc-page__result-label">
+                  {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.labelNextHost')}
+                </span>
+                <span
+                  key={hostSpinning ? `spin-${hostDisplay}` : `result-${hostResultKey}`}
+                  className={`misc-page__result-number misc-page__result-number--sm${hostSpinning ? " misc-page__result-number--spinning" : ""}`}
+                >
+                  {hostDisplay}
+                </span>
+              </div>
+            )}
+            <div className="mlp__action-row" style={{ marginTop: hostDisplay !== null ? 0 : "0.5rem" }}>
+              <button type="button" className="misc-page__generate" disabled={hostSpinning} onClick={pickHost}>
+                {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.btnPickHost')}
+              </button>
+              {hostFinal !== null && !hostSpinning && (
+                <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUserId: string }) => {
+const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boolean; currentUserId: string; onShowStats: () => void }) => {
   const { t } = useTranslation();
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -256,8 +363,7 @@ const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUs
   const [users, setUsers] = useState<User[]>([]);
   const [npOpen, setNpOpen] = useState(false);
   const [npSliderMax, setNpSliderMax] = useState(10);
-
-  const hostPicker = useSpinPicker<string>();
+  const [npUsers, setNpUsers] = useState<User[]>([]);
 
   const ensureUsers = async (): Promise<User[]> => {
     if (users.length > 0) return users;
@@ -270,23 +376,10 @@ const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUs
     }
   };
 
-  const pickHost = async () => {
-    if (hostPicker.spinning) return;
+  const openRandomizer = async () => {
     hapticTabTap();
     const pool = await ensureUsers();
-    if (pool.length === 0) return;
-
-    const currentGroup = movieGroups.find((g) => g.groupId === currentRound);
-    const hostedIds = new Set(currentGroup?.movies.map((m) => m.owner.id) ?? []);
-    const remaining = pool.filter((u) => !hostedIds.has(u.id));
-    const candidates = remaining.length > 0 ? remaining : pool;
-
-    hostPicker.spin(() => candidates[Math.floor(Math.random() * candidates.length)].name);
-  };
-
-  const openNumberPicker = async () => {
-    hapticTabTap();
-    const pool = await ensureUsers();
+    setNpUsers(pool);
     setNpSliderMax(pool.length > 1 ? pool.length : 10);
     setNpOpen(true);
   };
@@ -371,8 +464,6 @@ const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUs
 
   const showTmdb = normalizedQuery.length >= 3;
 
-  const totalMovies = movieGroups.reduce((sum, g) => sum + g.movies.length, 0);
-
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
     console.error(error);
@@ -386,33 +477,20 @@ const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUs
           <button
             type="button"
             className="mlp__card"
-            onClick={pickHost}
-            disabled={hostPicker.spinning}
+            onClick={openRandomizer}
           >
-            {hostPicker.spinning ? (
-              <>
-                <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
-                <span className="mlp__card-label">{t('groupList.labelPickingHost')}</span>
-              </>
-            ) : (
-              <>
-                <Trophy size={20} className="mlp__card-icon" />
-                <span className="mlp__card-value">{currentRound}</span>
-                <span className="mlp__card-label">{t('groupList.labelRound')}</span>
-              </>
-            )}
+            <Dices size={20} className="mlp__card-icon" />
+            <span className="mlp__card-label">{t('groupList.labelRandom')}</span>
           </button>
           <button
             type="button"
             className="mlp__card"
-            onClick={openNumberPicker}
+            onClick={() => { hapticTabTap(); onShowStats(); }}
           >
-            <Clapperboard size={20} className="mlp__card-icon" />
-            <span className="mlp__card-value">{totalMovies}</span>
-            <span className="mlp__card-label">{t('groupList.labelWatched')}</span>
+            <ChartLine size={20} className="mlp__card-icon" />
+            <span className="mlp__card-label">{t('groupList.labelStatistics')}</span>
           </button>
           <button type="button" className="mlp__card mlp__card--accent" onClick={openAddMovie}>
-            <span className="mlp__card-row-spacer" aria-hidden="true" />
             <Plus size={20} className="mlp__card-icon" />
             <span className="mlp__card-label">{t('groupList.btnAddMovie')}</span>
           </button>
@@ -512,21 +590,12 @@ const GroupListPage = ({ isAdmin, currentUserId }: { isAdmin: boolean; currentUs
         />
       )}
 
-      {hostPicker.result && (
-        <div className="confirm-dialog-overlay" onClick={hostPicker.clear}>
-          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }} onClick={(e) => e.stopPropagation()}>
-            <FireworkSparks key={hostPicker.result} />
-            <p>Next Host is <strong>{hostPicker.result}</strong></p>
-            <div className="confirm-dialog__actions">
-              <button type="button" onClick={hostPicker.clear}>OK</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {npOpen && (
-        <NumberPickerDialog
+        <RandomizerDialog
           sliderMax={npSliderMax}
+          users={npUsers}
+          movieGroups={movieGroups}
+          currentRound={currentRound}
           onClose={() => setNpOpen(false)}
         />
       )}
