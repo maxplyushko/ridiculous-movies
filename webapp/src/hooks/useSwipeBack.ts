@@ -12,6 +12,9 @@ export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
     const el = element;
     if (!el) return;
 
+    el.style.transform = "";
+    el.style.transition = "";
+
     let startX = 0;
     let startY = 0;
     let tracking = false;

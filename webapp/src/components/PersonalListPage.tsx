@@ -4,7 +4,7 @@ import confetti from "canvas-confetti";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import PersonalMovieItem from "./PersonalMovieItem.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
-import { Eye, EyeDashed, Loader, Plus, Search, X } from "lucide-react";
+import { ChartLine, Dices, Loader, Plus, Search, X } from "lucide-react";
 import { RatingModal } from "./RatingModal.tsx";
 import { useSpinPicker } from "../hooks/useSpinPicker.ts";
 import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
@@ -114,7 +114,7 @@ function PersonalSection({
   );
 }
 
-const PersonalListPage = () => {
+const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>) => {
   const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
@@ -271,21 +271,22 @@ const PersonalListPage = () => {
           >
             {moviePicker.spinning
               ? <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
-              : <EyeDashed size={20} className="mlp__card-icon" />}
-            <span className="mlp__card-value">{movies.filter((m) => !m.watched).length}</span>
-            <span className="mlp__card-label">{t('personalList.labelToWatch')}</span>
+              : <Dices size={20} className="mlp__card-icon" />}
+            <span className="mlp__card-label">{t('groupList.labelRandom')}</span>
           </button>
-          <div className="mlp__card">
-            <Eye size={20} className="mlp__card-icon" />
-            <span className="mlp__card-value">{movies.filter((m) => m.watched).length}</span>
-            <span className="mlp__card-label">{t('personalList.labelWatched')}</span>
-          </div>
+          <button
+            type="button"
+            className="mlp__card"
+            onClick={() => { hapticTabTap(); onShowStats(); }}
+          >
+            <ChartLine size={20} className="mlp__card-icon" />
+            <span className="mlp__card-label">{t('groupList.labelStatistics')}</span>
+          </button>
           <button
             type="button"
             className="mlp__card mlp__card--accent"
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
-            <span className="mlp__card-row-spacer" aria-hidden="true" />
             <Plus size={20} className="mlp__card-icon" />
             <span className="mlp__card-label">{t('personalList.btnAddMovie')}</span>
           </button>
@@ -378,6 +379,7 @@ const PersonalListPage = () => {
         <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
           <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }} onClick={(e) => e.stopPropagation()}>
             <FireworkSparks key={moviePicker.result} />
+            <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
             <p><strong>{moviePicker.result}</strong></p>
             <div className="confirm-dialog__actions">
               <button type="button" onClick={moviePicker.clear}>OK</button>

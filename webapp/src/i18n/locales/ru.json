@@ -84,7 +84,8 @@
     "sectionWatched": "Просмотрено",
     "empty": "Список пуст. Добавь что-нибудь!",
     "sectionInYourList": "В твоём списке",
-    "noMatch": "нет совпадений"
+    "noMatch": "нет совпадений",
+    "randomTitle": "Рандомный фильм"
   },
   "personalMovie": {
     "markWatched": "Пометить как просмотренное",

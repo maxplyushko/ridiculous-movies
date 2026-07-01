@@ -2,6 +2,7 @@ import './index.css';
 import { useEffect, useState } from "react";
 import GroupListPage from "./components/GroupListPage.tsx";
 import StatPage from "./components/StatPage.tsx";
+import PersonalStatPage from "./components/PersonalStatPage.tsx";
 import UserPage from "./components/UserPage.tsx";
 import PersonalListPage from "./components/PersonalListPage.tsx";
 import { AuthGate } from "./components/AuthGate.tsx";
@@ -12,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useNavDrag } from "./hooks/useNavDrag.ts";
 
 type Tab = "group" | "personal" | "misc";
-type Page = Tab | "stat";
+type Page = Tab | "stat" | "personalStat";
 
 const TABS: Array<{ id: Tab; labelKey: string; icon: React.ReactNode }> = [
   { id: "group", labelKey: "nav.groupList", icon: <Users size={30} /> },
@@ -40,7 +41,8 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   }, []);
 
   const rawTabIndex = TABS.findIndex((tab) => tab.id === (currentPage as Tab));
-  const currentTabIndex = rawTabIndex === -1 ? TABS.findIndex((tab) => tab.id === "group") : rawTabIndex;
+  const fallbackTab = currentPage === "personalStat" ? "personal" : "group";
+  const currentTabIndex = rawTabIndex === -1 ? TABS.findIndex((tab) => tab.id === fallbackTab) : rawTabIndex;
   const { navRef, indicatorRef } = useNavDrag(TABS.length, currentTabIndex, (idx) => {
     setCurrentPage(TABS[idx].id);
   });
@@ -53,9 +55,10 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   return (
     <div className="app-shell">
       <main className="app-main">
+        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
-        <div hidden={currentPage !== "group"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
-        <div hidden={currentPage !== "personal"}><PersonalListPage /></div>
+        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage onShowStats={() => setCurrentPage("personalStat")} /></div>
+        <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
         <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>
       <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
@@ -63,9 +66,9 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         {TABS.map(({ id, labelKey, icon }) => (
           <button
             key={id}
-            className={`bottom-bar-button${(currentPage === id || (currentPage === "stat" && id === "group")) ? " active" : ""}`}
+            className={`bottom-bar-button${(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? " active" : ""}`}
             aria-label={t(labelKey)}
-            aria-current={(currentPage === id || (currentPage === "stat" && id === "group")) ? "page" : undefined}
+            aria-current={(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? "page" : undefined}
             onClick={() => selectTab(id)}
           >
             {icon}

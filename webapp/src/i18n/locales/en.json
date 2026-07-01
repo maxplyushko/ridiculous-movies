@@ -84,7 +84,8 @@
     "sectionWatched": "Watched",
     "empty": "Your personal list is empty. Add something!",
     "sectionInYourList": "In your personal list",
-    "noMatch": "No movies match"
+    "noMatch": "No movies match",
+    "randomTitle": "Random movie is"
   },
   "personalMovie": {
     "markWatched": "Mark as watched",

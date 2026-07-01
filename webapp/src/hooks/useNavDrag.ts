@@ -49,6 +49,7 @@ export function useNavDrag(
     const onMove = (e: TouchEvent) => {
       const s = dragRef.current;
       if (!s || !navRef.current || !indicatorRef.current) return;
+      e.preventDefault();
       const step = (navRef.current.offsetWidth - 2 * PADDING_PX) / tabCount;
       const frac = Math.max(-s.startIdx, Math.min(tabCount - 1 - s.startIdx,
         (e.touches[0].clientX - s.startX) / step));
@@ -72,7 +73,7 @@ export function useNavDrag(
     };
 
     nav.addEventListener("touchstart", onStart, { passive: true });
-    nav.addEventListener("touchmove", onMove, { passive: true });
+    nav.addEventListener("touchmove", onMove, { passive: false });
     nav.addEventListener("touchend", onEnd, { passive: true });
     return () => {
       nav.removeEventListener("touchstart", onStart);
