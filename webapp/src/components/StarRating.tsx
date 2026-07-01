@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Star } from "lucide-react";
-import { hapticTabTap } from "../haptics.ts";
+import { hapticTabTap } from "@/utils/haptics.ts";
 
 const STAR_INDICES = Array.from({ length: 10 }, (_, i) => i + 1);
 

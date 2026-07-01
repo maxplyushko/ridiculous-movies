@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { getTelegramWebApp } from "../api/telegram.ts";
+import { getTelegramWebApp } from "@/lib/telegram/telegram.ts";
 
 export function useTelegramBackButton(onBack: () => void) {
   const cbRef = useRef(onBack);

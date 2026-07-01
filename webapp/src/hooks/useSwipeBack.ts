@@ -5,13 +5,13 @@ const THRESHOLD = 80;
 
 export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
   const onBackRef = useRef(onBack);
-  // eslint-disable-next-line react-hooks/refs
-  onBackRef.current = onBack;
+  useEffect(() => { onBackRef.current = onBack; }, [onBack]);
 
   useEffect(() => {
     const el = element;
     if (!el) return;
 
+    // eslint-disable-next-line react-hooks/immutability
     el.style.transform = "";
     el.style.transition = "";
 

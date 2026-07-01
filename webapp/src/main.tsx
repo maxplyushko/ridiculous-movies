@@ -1,9 +1,9 @@
 import {StrictMode} from "react";
 import {createRoot} from "react-dom/client";
-import "./index.css";
-import "./i18n/index.ts";
+import "@/styles/global.css";
+import "@/lib/i18n/index.ts";
 import App from "./App.tsx";
-import {initTelegramWebApp} from "./telegramTheme.ts";
+import {initTelegramWebApp} from "@/lib/telegram/telegramTheme.ts";
 
 initTelegramWebApp();
 

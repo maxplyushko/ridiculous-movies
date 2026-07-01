@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, stopHaptics } from "../haptics.ts";
+import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, stopHaptics } from "@/utils/haptics.ts";
 
 const SPIN_TICK_MS = 65;
 const SPIN_TICK_COUNT = 20;

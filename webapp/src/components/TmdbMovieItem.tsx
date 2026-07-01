@@ -1,7 +1,7 @@
 import { Bookmark, Calendar, Star } from "lucide-react";
-import type { TmdbMovie } from "../types/TmdbMovie";
-import { hapticTabTap } from "../haptics.ts";
-import { useSwipeGesture } from "../hooks/useSwipeGesture.ts";
+import type { TmdbMovie } from "@/types/TmdbMovie";
+import { hapticTabTap } from "@/utils/haptics.ts";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
 
 type TmdbMovieItemProps = {
   movie: TmdbMovie;

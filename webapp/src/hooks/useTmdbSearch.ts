@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { TmdbMovie } from "../types/TmdbMovie";
-import { searchTmdb } from "../api/tmdb";
+import { searchTmdb } from "@/features/group/api/tmdb";
 
 const DEFAULT_DEBOUNCE_MS = 500;
 const DEFAULT_MIN_LEN = 3;

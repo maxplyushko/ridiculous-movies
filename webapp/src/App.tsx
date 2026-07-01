@@ -1,16 +1,15 @@
-import './index.css';
 import { useEffect, useState } from "react";
-import GroupListPage from "./components/GroupListPage.tsx";
-import StatPage from "./components/StatPage.tsx";
-import PersonalStatPage from "./components/PersonalStatPage.tsx";
-import UserPage from "./components/UserPage.tsx";
-import PersonalListPage from "./components/PersonalListPage.tsx";
-import { AuthGate } from "./components/AuthGate.tsx";
-import type { AuthResponse } from "./api/auth.ts";
+import GroupListPage from "@/features/group/components/GroupListPage.tsx";
+import StatPage from "@/features/stats/components/StatPage.tsx";
+import PersonalStatPage from "@/features/personal/components/PersonalStatPage.tsx";
+import UserPage from "@/features/profile/components/UserPage.tsx";
+import PersonalListPage from "@/features/personal/components/PersonalListPage.tsx";
+import { AuthGate } from "@/features/auth/components/AuthGate.tsx";
+import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import { CircleUser, Film, Users } from "lucide-react";
-import { hapticTabTap } from "./haptics.ts";
+import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
-import { useNavDrag } from "./hooks/useNavDrag.ts";
+import { useNavDrag } from "@/hooks/useNavDrag.ts";
 
 type Tab = "group" | "personal" | "misc";
 type Page = Tab | "stat" | "personalStat";

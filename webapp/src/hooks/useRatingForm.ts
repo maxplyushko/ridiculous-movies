@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Movie } from "../types/Movie.ts";
+import type { Movie } from "@/features/group/types/Movie.ts";
 
 export type DetailedScores = {
   r1: number | null;

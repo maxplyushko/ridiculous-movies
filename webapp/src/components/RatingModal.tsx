@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, Loader } from "lucide-react";
-import { StarRating } from "./StarRating.tsx";
-import { calcDetailedScore, type DetailedScores, type RatingMode } from "../hooks/useRatingForm.ts";
-import { hapticTabTap } from "../haptics.ts";
+import { StarRating } from "@/components/StarRating.tsx";
+import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
+import { hapticTabTap } from "@/utils/haptics.ts";
 
 const RATE_CATEGORIES: Array<{ key: keyof DetailedScores; labelKey: string }> = [
   { key: "r1", labelKey: "addMovie.ratingR1" },

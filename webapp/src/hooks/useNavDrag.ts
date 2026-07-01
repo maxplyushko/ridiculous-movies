@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { hapticTabTap } from "../haptics.ts";
+import { hapticTabTap } from "@/utils/haptics.ts";
 
 const PADDING_PX = 12;
 const INDICATOR_PX = 50;

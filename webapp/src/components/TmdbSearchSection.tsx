@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader } from "lucide-react";
-import type { TmdbMovie } from "../types/TmdbMovie.ts";
-import { useTmdbSearch } from "../hooks/useTmdbSearch.ts";
+import type { TmdbMovie } from "@/types/TmdbMovie.ts";
+import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import TmdbMovieItem from "./TmdbMovieItem.tsx";
 
 type TmdbSearchSectionProps = {
