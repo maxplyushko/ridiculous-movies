@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import "../profile.css";
 import { LogOut, Settings } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { applyColorScheme } from "@/lib/telegram/telegramTheme.ts";
@@ -7,9 +8,8 @@ import { savePreferences } from "@/features/group/api/users.ts";
 import { tokenStore } from "@/api/client.ts";
 import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import i18n from "@/lib/i18n/index.ts";
-import { useTelegramBackButton } from "@/hooks/useTelegramButtons.ts";
+import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
-import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 
 type Props = { session: AuthResponse };
 
@@ -37,7 +37,7 @@ function ProfileView({ session, onSettings }: Readonly<{
     <section className="user-page">
       <div className="user-page__topbar">
         <button className="user-page__icon-btn" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
-          <Settings size={20} />
+          <Settings size={30} />
         </button>
       </div>
 
@@ -68,8 +68,6 @@ function ProfileView({ session, onSettings }: Readonly<{
 
 function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () => void }) {
   const { t } = useTranslation();
-  const isTg = isTelegramMiniApp();
-  useTelegramBackButton(onBack);
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
   const [persistedDark, setPersistedDark] = useState(() =>
     session.theme != null ? session.theme === "dark" : document.documentElement.dataset.colorScheme === "dark"
@@ -83,7 +81,8 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
 
   return (
     <section className="user-page">
-      <h2 className="user-page__topbar-title">{t('userPage.headingSettings')}</h2>
+      <PageBackButton onBack={onBack} />
+      <h2 className="page-title">{t('userPage.headingSettings')}</h2>
 
       <div className="user-page__section">
         <p className="user-page__section-title">{t('settings.sectionHomepage')}</p>
@@ -147,7 +146,6 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
       </div>
 
       <div className="add-movie__control">
-        {!isTg && <button type="button" onClick={() => { hapticTabTap(); onBack(); }}>{t('settings.btnBack')}</button>}
         {isDirty && (
           <button
             type="button"

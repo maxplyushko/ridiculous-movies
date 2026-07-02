@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import "../group.css";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
 import type { User } from "@/types/User.ts";
@@ -9,6 +10,7 @@ import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, editMovie, fetchMovieGroups } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
+import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { SearchInput } from "@/components/SearchInput.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
@@ -137,7 +139,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
     console.error(error);
-    return <p>Error: {error.message}</p>;
+    return <ErrorScreen error={error} />;
   }
 
   return (

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
-import { getTelegramWebApp, isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
+import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft } from "lucide-react";
 import { useAsync } from "@/hooks/useAsync.ts";
 import { fetchPersonalList } from "../api/personalList.ts";
 
@@ -14,32 +14,16 @@ type PersonalStatPageProps = {
 const PersonalStatPage = ({ active, onBack }: PersonalStatPageProps) => {
   const { t } = useTranslation();
   const [sectionEl, setSectionEl] = useState<HTMLElement | null>(null);
-  const onBackRef = useRef(onBack);
-  useEffect(() => { onBackRef.current = onBack; }, [onBack]);
   const state = useAsync(() => fetchPersonalList(), []);
 
-  useEffect(() => {
-    if (!active) return;
-    const btn = getTelegramWebApp()?.BackButton;
-    if (!btn) return;
-    const handler = () => onBackRef.current();
-    btn.show();
-    btn.onClick(handler);
-    return () => {
-      btn.offClick(handler);
-      btn.hide();
-    };
-  }, [active]);
-
   useSwipeBack(onBack, active ? sectionEl : null);
-
-  const isTg = isTelegramMiniApp();
 
   if (state.status === "loading") return <section className="stat-page" />;
   if (state.status === "error") {
     return (
       <section className="stat-page">
-        <p className="stat-page__error">Error: {state.error.message}</p>
+        <PageBackButton onBack={onBack} active={active} />
+        <ErrorScreen error={state.error} />
       </section>
     );
   }
@@ -50,12 +34,8 @@ const PersonalStatPage = ({ active, onBack }: PersonalStatPageProps) => {
 
   return (
     <section className="stat-page" ref={setSectionEl}>
-      {!isTg && (
-        <button type="button" className="stat-page__back" onClick={onBack}>
-          <ChevronLeft size={20} />
-          {t('nav.back')}
-        </button>
-      )}
+      <PageBackButton onBack={onBack} active={active} />
+      <h1 className="page-title">{t('groupList.labelStatistics')}</h1>
       <div className="personal-stat__grid">
         <div className="personal-stat__card">
           <span className="personal-stat__value">{toWatch}</span>

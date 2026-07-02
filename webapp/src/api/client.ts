@@ -13,7 +13,7 @@ type RequestOptions = {
 };
 
 function parseErrorMessage(text: string, status: number): string {
-  if (!text) return `HTTP ${status}`;
+  if (!text) return `Error: ${status}`;
   try {
     const json = JSON.parse(text) as { message?: string; error?: string };
     if (json.message) return json.message;

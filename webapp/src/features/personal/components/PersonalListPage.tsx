@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import "../personal.css";
 import confetti from "canvas-confetti";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
@@ -12,6 +13,7 @@ import { SearchInput } from "@/components/SearchInput.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
+import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
@@ -156,7 +158,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
     console.error(error);
-    return <p>Error: {error.message}</p>;
+    return <ErrorScreen error={error} />;
   }
 
   return (
@@ -273,7 +275,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
 
       {moviePicker.result && (
         <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
-          <div className="confirm-dialog" style={{ position: "relative", overflow: "visible" }} onClick={(e) => e.stopPropagation()}>
+          <div className="confirm-dialog confirm-dialog--fireworks" onClick={(e) => e.stopPropagation()}>
             <FireworkSparks key={moviePicker.result} />
             <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
             <p><strong>{moviePicker.result}</strong></p>

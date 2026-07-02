@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "title": "Oops! Mayday Mayday"
+  },
   "nav": {
     "stats": "Statistics",
     "groupList": "Group List",
@@ -10,12 +13,9 @@
     "headingEdit": "Edit Movie",
     "headingAdd": "Add Movie",
     "labelTitle": "Title",
-    "placeholderTitle": "Title",
     "labelDescription": "Description",
-    "placeholderDescription": "Description",
     "btnDismiss": "Dismiss",
     "btnUse": "Use",
-    "btnBack": "Back",
     "btnSave": "Save",
     "btnAdd": "Add",
     "sectionHost": "Host",
@@ -33,12 +33,9 @@
     "headingEdit": "Edit",
     "headingAdd": "Add to Personal List",
     "labelTitle": "Title",
-    "placeholderTitle": "Title",
     "labelDescription": "Description",
-    "placeholderDescription": "Description",
     "btnDismiss": "Dismiss",
     "btnUse": "Use",
-    "btnBack": "Back",
     "btnSave": "Save",
     "btnAdd": "Add",
     "sectionMyRating": "My Rating"
@@ -50,7 +47,6 @@
     "dialogRandomizerTitle": "Pick randomizer range",
     "labelPicking": "PICKING…",
     "labelYourNumber": "YOUR NUMBER",
-    "btnQuantumizing": "Quantumizing…",
     "btnGenerate": "Generate",
     "btnOk": "OK",
     "labelPickingHost": "Picking host…",
@@ -60,7 +56,7 @@
     "labelStatistics": "Statistics",
     "toggleByNumber": "By number",
     "toggleByHosts": "By hosts",
-    "btnPickHost": "Pick host",
+    "btnTryAgain": "Try again",
     "labelNextHost": "Next host",
     "btnAddMovie": "Add movie",
     "placeholderSearch": "Search movies…",
@@ -75,7 +71,6 @@
     "rateDialog": "Rate \"{{title}}\"",
     "btnSkip": "Skip",
     "btnSave": "Save",
-    "labelRating": "Rating",
     "labelToWatch": "To Watch",
     "labelWatched": "Watched",
     "btnAddMovie": "Add movie",
@@ -99,7 +94,6 @@
     "labelDarkMode": "Dark Mode",
     "btnSaving": "Saving…",
     "btnSave": "Save Changes",
-    "btnBack": "Back",
     "sectionLanguage": "Language"
   },
   "userPage": {

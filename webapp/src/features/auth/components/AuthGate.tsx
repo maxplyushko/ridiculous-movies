@@ -1,7 +1,9 @@
+import "../auth.css";
 import { checkAccess, telegramLogin, exchangeGoogleToken, type AuthResponse } from "../api/auth.ts";
 import { tokenStore } from "@/api/client.ts";
 import { isTelegramMiniApp, getTelegramWebApp } from "@/lib/telegram/telegram.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
+import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { SignInScreen } from "./SignInScreen.tsx";
 import { applySavedTheme, hasTelegramThemeContext } from "@/lib/telegram/telegramTheme.ts";
 import i18n from "@/lib/i18n/index.ts";
@@ -81,11 +83,7 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
   if (state.mode === "loading") return <MovieListSkeleton />;
 
   if (state.mode === "error") {
-    return (
-      <div className="access-denied">
-        <p>{state.message}</p>
-      </div>
-    );
+    return <ErrorScreen error={new Error(state.message)} fullScreen />;
   }
 
   if (state.mode === "signin") {

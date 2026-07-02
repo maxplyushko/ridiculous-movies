@@ -3,6 +3,8 @@ import { hapticTabTap } from "@/utils/haptics.ts";
 
 const PADDING_PX = 12;
 const INDICATOR_PX = 50;
+const INDICATOR_TRANSFORM = "translateY(-50%)";
+const INDICATOR_TRANSFORM_DRAGGING = "translateY(-50%) scale(1.15)";
 
 function calcLeft(nav: HTMLElement, idx: number, count: number): number {
   const step = (nav.offsetWidth - 2 * PADDING_PX) / count;
@@ -44,6 +46,7 @@ export function useNavDrag(
 
     const onStart = (e: TouchEvent) => {
       dragRef.current = { startX: e.touches[0].clientX, startIdx: currentIndexRef.current };
+      if (indicatorRef.current) indicatorRef.current.style.transform = INDICATOR_TRANSFORM_DRAGGING;
     };
 
     const onMove = (e: TouchEvent) => {
@@ -66,6 +69,7 @@ export function useNavDrag(
       dragRef.current = null;
       indicatorRef.current.style.transition = "left 0.3s cubic-bezier(0.34,1.56,0.64,1)";
       indicatorRef.current.style.left = `${calcLeft(navRef.current, target, tabCount)}px`;
+      indicatorRef.current.style.transform = INDICATOR_TRANSFORM;
       if (target !== s.startIdx) {
         hapticTabTap();
         onSwitchRef.current(target);

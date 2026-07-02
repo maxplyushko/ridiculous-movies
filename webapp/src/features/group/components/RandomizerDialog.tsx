@@ -139,7 +139,7 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
     <div className="confirm-dialog-overlay" onClick={onClose}>
       <div className="confirm-dialog mlp__number-picker" onClick={(e) => e.stopPropagation()}>
 
-        <div className="misc-page__default-page-row" style={{ padding: 0 }}>
+        <div className="misc-page__default-page-row">
           <button
             type="button"
             className={`misc-page__page-btn${mode === "number" ? " misc-page__page-btn--active" : ""}`}
@@ -156,78 +156,90 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
           </button>
         </div>
 
-        {mode === "number" && (
-          <>
-            <div className="mlp__picker-title">{t('groupList.dialogRandomizerTitle')}</div>
-            <div className="mlp__range-wrap">
-              <div className="mlp__range-labels">
-                <span className="mlp__range-value">{npMin}</span>
-                <span className="mlp__range-value">{npMax}</span>
-              </div>
-              <Slider.Root
-                className="mlp__range-root"
-                min={1}
-                max={sliderMax}
-                step={1}
-                value={[npMin, npMax]}
-                onValueChange={([min, max]) => { setNpMin(min); setNpMax(max); resetResult(); }}
-              >
-                <Slider.Track className="mlp__range-track">
-                  <Slider.Range className="mlp__range-range" />
-                </Slider.Track>
-                <Slider.Thumb className="mlp__range-thumb" />
-                <Slider.Thumb className="mlp__range-thumb" />
-              </Slider.Root>
-            </div>
-            {display !== null && (
-              <div className="misc-page__result misc-page__result--inline">
-                {!spinning && final !== null && <FireworkSparks key={resultKey} />}
-                <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
-                <span
-                  key={spinning ? `spin-${display}` : `result-${resultKey}`}
-                  className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
-                >
-                  {display}
-                </span>
-              </div>
-            )}
-            <div className="mlp__action-row" style={{ marginTop: display !== null ? 0 : "0.5rem" }}>
-              <button type="button" className="misc-page__generate" disabled={spinning} onClick={pick}>
-                {spinning ? t('groupList.btnQuantumizing') : t('groupList.btnGenerate')}
-              </button>
-              {final !== null && !spinning && (
-                <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+        <div className="mlp__picker-body">
+          {mode === "number" && (
+            <>
+              {display !== null && (
+                <div className="misc-page__result misc-page__result--inline">
+                  {!spinning && final !== null && <FireworkSparks key={resultKey} />}
+                  <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
+                  <span
+                    key={spinning ? `spin-${display}` : `result-${resultKey}`}
+                    className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
+                  >
+                    {display}
+                  </span>
+                </div>
               )}
-            </div>
-          </>
-        )}
 
-        {mode === "host" && (
-          <>
-            {hostDisplay !== null && (
-              <div className="misc-page__result misc-page__result--inline">
-                {!hostSpinning && hostFinal !== null && <FireworkSparks key={hostResultKey} />}
-                <span className="misc-page__result-label">
-                  {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.labelNextHost')}
-                </span>
-                <span
-                  key={hostSpinning ? `spin-${hostDisplay}` : `result-${hostResultKey}`}
-                  className={`misc-page__result-number misc-page__result-number--sm${hostSpinning ? " misc-page__result-number--spinning" : ""}`}
+              <div className="mlp__picker-title">{t('groupList.dialogRandomizerTitle')}</div>
+
+              <div className="mlp__range-wrap">
+                <div className="mlp__range-labels">
+                  <span className="mlp__range-value">{npMin}</span>
+                  <span className="mlp__range-value">{npMax}</span>
+                </div>
+                <Slider.Root
+                  className="mlp__range-root"
+                  min={1}
+                  max={sliderMax}
+                  step={1}
+                  value={[npMin, npMax]}
+                  onValueChange={([min, max]) => { setNpMin(min); setNpMax(max); resetResult(); }}
                 >
-                  {hostDisplay}
-                </span>
+                  <Slider.Track className="mlp__range-track">
+                    <Slider.Range className="mlp__range-range" />
+                  </Slider.Track>
+                  <Slider.Thumb className="mlp__range-thumb" />
+                  <Slider.Thumb className="mlp__range-thumb" />
+                </Slider.Root>
               </div>
-            )}
-            <div className="mlp__action-row" style={{ marginTop: hostDisplay !== null ? 0 : "0.5rem" }}>
-              <button type="button" className="misc-page__generate" disabled={hostSpinning} onClick={pickHost}>
-                {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.btnPickHost')}
-              </button>
-              {hostFinal !== null && !hostSpinning && (
-                <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+
+              {!spinning && final !== null && (
+                <div className="mlp__action-row mlp__action-row--split">
+                  <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={pick}>
+                    {t('groupList.btnTryAgain')}
+                  </button>
+                  <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+                </div>
               )}
-            </div>
-          </>
-        )}
+              {!spinning && final === null && (
+                <div className={`mlp__action-row${display === null ? " mlp__action-row--gap-top" : ""}`}>
+                  <button type="button" className="misc-page__generate" onClick={pick}>
+                    {t('groupList.btnGenerate')}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+
+          {mode === "host" && (
+            <>
+              {hostDisplay !== null && (
+                <div className="misc-page__result misc-page__result--inline">
+                  {!hostSpinning && hostFinal !== null && <FireworkSparks key={hostResultKey} />}
+                  <span className="misc-page__result-label">
+                    {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.labelNextHost')}
+                  </span>
+                  <span
+                    key={hostSpinning ? `spin-${hostDisplay}` : `result-${hostResultKey}`}
+                    className={`misc-page__result-number misc-page__result-number--sm${hostSpinning ? " misc-page__result-number--spinning" : ""}`}
+                  >
+                    {hostDisplay}
+                  </span>
+                </div>
+              )}
+              {!hostSpinning && hostFinal !== null && (
+                <div className="mlp__action-row mlp__action-row--split">
+                  <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={pickHost}>
+                    {t('groupList.btnTryAgain')}
+                  </button>
+                  <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

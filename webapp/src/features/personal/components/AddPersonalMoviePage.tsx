@@ -3,15 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "../api/personalList.ts";
-import { useTelegramBackButton, useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
+import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
+import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { RatingEditor } from "@/components/RatingEditor.tsx";
+import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
-
-const SCORE_MIN = 1;
-const SCORE_MAX = 10;
-const SCORE_STEP = 0.25;
-const TICK_LABELS = Array.from({ length: SCORE_MAX - SCORE_MIN + 1 }, (_, i) => i + SCORE_MIN);
+import { hapticTabTap } from "@/utils/haptics.ts";
 
 type AddPersonalMoviePageProps = {
   movie?: PersonalMovie;
@@ -23,8 +22,12 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
-  const [hasRating, setHasRating] = useState(movie?.rating != null);
-  const [rating, setRating] = useState<number>(movie?.rating ?? 5);
+  const initRating = movie?.rating != null && movie.rating > 0 ? Math.round(movie.rating) : null;
+  const [ratingMode, setRatingMode] = useState<RatingMode>("detailed");
+  const [detailedRating, setDetailedRating] = useState<DetailedScores>(
+    initRating ? { r1: initRating, r2: initRating, r3: initRating } : { r1: null, r2: null, r3: null }
+  );
+  const [classicRating, setClassicRating] = useState<number | null>(initRating);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -32,6 +35,19 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
 
   const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200 });
   const isTg = isTelegramMiniApp();
+  const rating = ratingMode === "detailed" ? calcDetailedScore(detailedRating) : classicRating;
+
+  const toggleRatingMode = () => {
+    hapticTabTap();
+    const next = ratingMode === "detailed" ? "classic" : "detailed";
+    if (next === "classic") {
+      const s = calcDetailedScore(detailedRating);
+      if (s !== null) setClassicRating(Math.round(s));
+    } else if (classicRating !== null) {
+      setDetailedRating({ r1: classicRating, r2: classicRating, r3: classicRating });
+    }
+    setRatingMode(next);
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -39,7 +55,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       const payload: PersonalMoviePayload = {
         title,
         description,
-        rating: hasRating ? rating : null,
+        rating: isEditMode ? rating : null,
       };
       if (movie) {
         await editPersonalMovie(movie.id, { ...payload, watched: movie.watched });
@@ -57,15 +73,14 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const isSubmitDisabled = isSubmitting || !title.trim();
   const submitLabel = isEditMode ? t('addPersonal.btnSave') : t('addPersonal.btnAdd');
 
-  useTelegramBackButton(onBack);
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
 
   return (
     <section className="add-movie">
+      <PageBackButton onBack={onBack} />
       <h1>{isEditMode ? t('addPersonal.headingEdit') : t('addPersonal.headingAdd')}</h1>
       <div className="add-movie__fields">
-        <div className="add-movie__item add-movie__item--autocomplete">
-          <label htmlFor="pl-movie-title">{t('addPersonal.labelTitle')}</label>
+        <div className="add-movie__item">
           <input
             id="pl-movie-title"
             type="text"
@@ -73,9 +88,10 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-            placeholder={t('addPersonal.placeholderTitle')}
+            placeholder=" "
             autoComplete="off"
           />
+          <label htmlFor="pl-movie-title">{t('addPersonal.labelTitle')}</label>
           {showSuggestions && suggestions.length > 0 && (
             <ul className="title-suggestions">
               {suggestions.map((s) => (
@@ -94,15 +110,15 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
           )}
         </div>
         <div className="add-movie__item">
-          <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
           <input
             id="pl-movie-desc"
             type="text"
             value={description}
             onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
             onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            placeholder={t('addPersonal.placeholderDescription')}
+            placeholder=" "
           />
+          <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
           {proposedOverview && (
             <div className="overview-proposal">
               <span className="overview-proposal__text">{proposedOverview}</span>
@@ -115,46 +131,25 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
         </div>
       </div>
 
-      <div className="add-movie__ratings">
-        <div className="personal-rating-toggle">
+      {isEditMode && (
+        <div className="add-movie__ratings">
           <p className="add-movie__ratings__title">{t('addPersonal.sectionMyRating')}</p>
-          <label className="theme-toggle" aria-label="Include rating">
-            <input
-              type="checkbox"
-              checked={hasRating}
-              onChange={(e) => setHasRating(e.target.checked)}
-            />
-            <span className="theme-toggle__track" />
-          </label>
-        </div>
-        {hasRating && (
           <div className="rating-card">
-            <div className="rating-card__slider-area">
-              <p className="rating-card__value">{rating.toFixed(2)}</p>
-              <input
-                type="range"
-                className="rating-card__slider"
-                min={SCORE_MIN}
-                max={SCORE_MAX}
-                step={SCORE_STEP}
-                value={rating}
-                onChange={(e) => setRating(Number.parseFloat(e.target.value))}
-                aria-label={t('personalList.labelRating')}
-              />
-              <div className="rating-card__ticks">
-                {TICK_LABELS.map((n) => (
-                  <span key={n}>{n}</span>
-                ))}
-              </div>
-            </div>
+            <RatingEditor
+              mode={ratingMode}
+              detailed={detailedRating}
+              classicValue={classicRating}
+              onToggleMode={toggleRatingMode}
+              onDetailedChange={(field, value) => setDetailedRating((prev) => ({ ...prev, [field]: value }))}
+              onClassicChange={setClassicRating}
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && <span className="add-movie__error">{error}</span>}
       {!isTg && (
         <div className="add-movie__control">
-          <button type="button" onClick={onBack}>{t('addPersonal.btnBack')}</button>
           <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
             {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
           </button>

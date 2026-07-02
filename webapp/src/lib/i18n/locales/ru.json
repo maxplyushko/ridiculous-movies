@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "title": "Упс! Что-то не так..."
+  },
   "nav": {
     "stats": "Статистика",
     "groupList": "Фильмы группы",
@@ -10,12 +13,9 @@
     "headingEdit": "Редактировать Фильм",
     "headingAdd": "ОК",
     "labelTitle": "Название",
-    "placeholderTitle": "Название",
     "labelDescription": "Описание",
-    "placeholderDescription": "Описание",
     "btnDismiss": "Отмена",
     "btnUse": "Применить",
-    "btnBack": "Назад",
     "btnSave": "Сохранить",
     "btnAdd": "ОК",
     "sectionHost": "Хост",
@@ -33,12 +33,9 @@
     "headingEdit": "Редактировать",
     "headingAdd": "Добавить в личное",
     "labelTitle": "Название",
-    "placeholderTitle": "Название",
     "labelDescription": "Описание",
-    "placeholderDescription": "Описание",
     "btnDismiss": "Отмена",
     "btnUse": "Применить",
-    "btnBack": "Назад",
     "btnSave": "Сохранить",
     "btnAdd": "ОК",
     "sectionMyRating": "Мой рейтинг"
@@ -50,7 +47,6 @@
     "dialogRandomizerTitle": "Выбери диапазон рандомайзера",
     "labelPicking": "ГЕНЕРИРУЮ",
     "labelYourNumber": "НОМЕР",
-    "btnQuantumizing": "Генерирую",
     "btnGenerate": "Сгенерировать",
     "btnOk": "ОК",
     "labelPickingHost": "Выбираю хоста...",
@@ -60,7 +56,7 @@
     "labelStatistics": "Статистика",
     "toggleByNumber": "По числу",
     "toggleByHosts": "По хостам",
-    "btnPickHost": "Выбрать хоста",
+    "btnTryAgain": "Попробовать снова",
     "labelNextHost": "Следующий хост",
     "btnAddMovie": "Добавить",
     "placeholderSearch": "Поиск",
@@ -75,7 +71,6 @@
     "rateDialog": "Оценить «{{title}}»",
     "btnSkip": "Пропустить",
     "btnSave": "Сохранить",
-    "labelRating": "Рейтинг",
     "labelToWatch": "К просмотру",
     "labelWatched": "Просмотрено",
     "btnAddMovie": "Добавить",
@@ -99,7 +94,6 @@
     "labelDarkMode": "Тёмная",
     "btnSaving": "Сохраняю...",
     "btnSave": "Сохранить",
-    "btnBack": "Назад",
     "sectionLanguage": "Язык"
   },
   "userPage": {
