@@ -13,5 +13,6 @@ public class AppUser {
   private String theme;
   private String defaultPage;
   private String lang;
+  private String tmdbLang;
   private String oauthSub;
 }

@@ -7,6 +7,7 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { SignInScreen } from "./SignInScreen.tsx";
 import { applySavedTheme, hasTelegramThemeContext } from "@/lib/telegram/telegramTheme.ts";
 import i18n from "@/lib/i18n/index.ts";
+import { setTmdbLang } from "@/utils/tmdbLang.ts";
 import * as React from "react";
 
 type AuthGateProps = {
@@ -57,6 +58,7 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
           i18n.changeLanguage(data.lang);
           localStorage.setItem("i18n-lang", data.lang);
         }
+        if (data.tmdbLang) setTmdbLang(data.tmdbLang);
         setState({ mode: "ok", data });
       }
     };

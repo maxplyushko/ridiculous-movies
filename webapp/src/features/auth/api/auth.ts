@@ -9,6 +9,7 @@ export type AuthResponse = {
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
   lang: string | null;
+  tmdbLang: "ru" | "en" | null;
 };
 
 export type OAuthLoginResponse = {
@@ -21,6 +22,7 @@ export type OAuthLoginResponse = {
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
   lang: string | null;
+  tmdbLang: "ru" | "en" | null;
 };
 
 export async function checkAccess(): Promise<AuthResponse> {

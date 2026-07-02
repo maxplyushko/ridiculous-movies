@@ -82,7 +82,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
 
   useEffect(() => {
     queueMicrotask(loadMovieGroups);
-  }, [loadMovieGroups]);
+    queueMicrotask(ensureUsers);
+  }, [loadMovieGroups]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeMovieForm = () => {
     setShowMovieForm(false);
@@ -204,6 +205,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
             maxRound={maxRound}
             currentUserId={currentUserId}
             movie={editingMovie}
+            users={users}
             onBack={closeMovieForm}
           />
         </div>

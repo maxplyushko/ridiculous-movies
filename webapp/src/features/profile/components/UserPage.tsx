@@ -10,6 +10,7 @@ import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import i18n from "@/lib/i18n/index.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
+import { setTmdbLang } from "@/utils/tmdbLang.ts";
 
 type Props = { session: AuthResponse };
 
@@ -76,8 +77,11 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   const [persistedDefaultPage, setPersistedDefaultPage] = useState<"list" | "watchlist">(session.defaultPage ?? "list");
   const [selectedLang, setSelectedLang] = useState(() => i18n.language);
   const [persistedLang, setPersistedLang] = useState(() => session.lang ?? i18n.language);
+  const [selectedTmdbLang, setSelectedTmdbLang] = useState<"ru" | "en">(session.tmdbLang ?? "ru");
+  const [persistedTmdbLang, setPersistedTmdbLang] = useState<"ru" | "en">(session.tmdbLang ?? "ru");
   const [isSaving, setIsSaving] = useState(false);
-  const isDirty = isDark !== persistedDark || defaultPage !== persistedDefaultPage || selectedLang !== persistedLang;
+  const isDirty = isDark !== persistedDark || defaultPage !== persistedDefaultPage
+    || selectedLang !== persistedLang || selectedTmdbLang !== persistedTmdbLang;
 
   return (
     <section className="user-page">
@@ -145,6 +149,26 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
         </div>
       </div>
 
+      <div className="user-page__section">
+        <p className="user-page__section-title">{t('settings.sectionTmdbLang')}</p>
+        <div className="user-page__card user-page__segmented-row">
+          <button
+            type="button"
+            className={`user-page__seg-btn${selectedTmdbLang === "en" ? " user-page__seg-btn--active" : ""}`}
+            onClick={() => { hapticTabTap(); setSelectedTmdbLang("en"); }}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            className={`user-page__seg-btn${selectedTmdbLang === "ru" ? " user-page__seg-btn--active" : ""}`}
+            onClick={() => { hapticTabTap(); setSelectedTmdbLang("ru"); }}
+          >
+            Русский
+          </button>
+        </div>
+      </div>
+
       <div className="add-movie__control">
         {isDirty && (
           <button
@@ -153,11 +177,13 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
             onClick={async () => {
               setIsSaving(true);
               try {
-                await savePreferences({ theme: isDark ? "dark" : "light", defaultPage, lang: selectedLang });
+                await savePreferences({ theme: isDark ? "dark" : "light", defaultPage, lang: selectedLang, tmdbLang: selectedTmdbLang });
                 localStorage.setItem("i18n-lang", selectedLang);
+                setTmdbLang(selectedTmdbLang);
                 setPersistedDark(isDark);
                 setPersistedDefaultPage(defaultPage);
                 setPersistedLang(selectedLang);
+                setPersistedTmdbLang(selectedTmdbLang);
               } finally {
                 setIsSaving(false);
               }

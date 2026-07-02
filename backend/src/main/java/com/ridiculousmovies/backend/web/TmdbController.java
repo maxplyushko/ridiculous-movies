@@ -19,11 +19,14 @@ public class TmdbController {
   private final TmdbClient tmdbClient;
 
   @GetMapping("/search")
-  public List<TmdbMovieResponse> search(@RequestParam String q) {
+  public List<TmdbMovieResponse> search(
+      @RequestParam String q,
+      @RequestParam(required = false) String lang
+  ) {
     if (q == null || q.trim().length() < 2) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "Query must be at least 2 characters");
     }
-    return tmdbClient.search(q.trim());
+    return tmdbClient.search(q.trim(), lang);
   }
 }

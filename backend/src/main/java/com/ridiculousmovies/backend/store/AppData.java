@@ -27,7 +27,7 @@ public class AppData {
   public void setGroupChatIds(Map<String, Long> v) { this.groupChatIds = v != null ? v : new LinkedHashMap<>(); }
 
   public record UserRecord(String id, String name, String group, String role, String theme, String defaultPage,
-                           String lang, String oauthSub) {}
+                           String lang, String tmdbLang, String oauthSub) {}
   public record RatingRecord(String id, String userId, BigDecimal score) {}
   public record MovieRecord(String id, String title, String description,
                             String ownerId, Integer round, Instant createdAt, Instant updatedAt,

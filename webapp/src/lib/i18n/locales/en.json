@@ -27,7 +27,7 @@
     "ratingR1": "ridiculousity",
     "ratingR2": "script",
     "ratingR3": "special effects",
-    "roundLabel": "Round {{r}}"
+    "roundLabel": "{{r}}"
   },
   "addPersonal": {
     "headingEdit": "Edit",
@@ -94,7 +94,8 @@
     "labelDarkMode": "Dark Mode",
     "btnSaving": "Saving…",
     "btnSave": "Save Changes",
-    "sectionLanguage": "Language"
+    "sectionLanguage": "Language",
+    "sectionTmdbLang": "TMDB Results"
   },
   "userPage": {
     "headingSettings": "Settings",

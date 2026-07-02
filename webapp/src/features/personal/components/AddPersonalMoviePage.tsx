@@ -109,7 +109,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             </ul>
           )}
         </div>
-        <div className="add-movie__item">
+        <div className={`add-movie__item${proposedOverview ? " add-movie__item--float-label" : ""}`}>
           <input
             id="pl-movie-desc"
             type="text"

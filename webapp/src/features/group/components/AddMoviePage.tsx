@@ -1,11 +1,10 @@
 import type { User } from "@/types/User.ts";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
-import { fetchUsers } from "../api/users.ts";
 import { useRatingForm, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
@@ -140,16 +139,16 @@ type AddMoviePageProps = {
   maxRound: number;
   currentUserId: string;
   movie?: Movie;
+  users: User[];
   onBack: () => void;
 };
 
-const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, onBack }: AddMoviePageProps) => {
+const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onBack }: AddMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
   const [ownerId, setOwnerId] = useState(movie?.owner.id ?? currentUserId);
   const [round, setRound] = useState(movie?.round ?? currentRound);
-  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -162,10 +161,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, onBack }: 
     () => [...users].sort((a, b) => a.name.localeCompare(b.name)),
     [users],
   );
-
-  useEffect(() => {
-    fetchUsers().then(setUsers).catch(console.error);
-  }, []);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -235,7 +230,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, onBack }: 
             </ul>
           )}
         </div>
-        <div className="add-movie__item">
+        <div className={`add-movie__item${proposedOverview ? " add-movie__item--float-label" : ""}`}>
           <input
             id="add-movie-desc"
             type="text"
@@ -256,14 +251,14 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, onBack }: 
           )}
         </div>
         <div className="add-movie__item">
-          <p className="add-movie__ratings__title">{t('groupList.labelRound')}</p>
+          <p className="add-movie__item-title">{t('groupList.labelRound')}</p>
           <RoundPicker value={round} maxRound={Math.max(maxRound, currentRound) + 1} onChange={setRound} />
         </div>
       </div>
 
       <div className="add-movie__ratings" aria-labelledby="add-movie-host-heading">
-        <p id="add-movie-host-heading" className="add-movie__ratings__title">{t('addMovie.sectionHost')}</p>
         <div className="add-movie__host-chips">
+          <p id="add-movie-host-heading" className="add-movie__item-title">{t('addMovie.sectionHost')}</p>
           <UserChipSelector
             users={sortedUsers}
             selectedId={ownerId}

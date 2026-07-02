@@ -27,7 +27,7 @@
     "ratingR1": "дурацкость",
     "ratingR2": "сценарий",
     "ratingR3": "картинка",
-    "roundLabel": "{{r}} раунд"
+    "roundLabel": "{{r}}"
   },
   "addPersonal": {
     "headingEdit": "Редактировать",
@@ -94,7 +94,8 @@
     "labelDarkMode": "Тёмная",
     "btnSaving": "Сохраняю...",
     "btnSave": "Сохранить",
-    "sectionLanguage": "Язык"
+    "sectionLanguage": "Язык",
+    "sectionTmdbLang": "Результаты TMDB"
   },
   "userPage": {
     "headingSettings": "Настройки",

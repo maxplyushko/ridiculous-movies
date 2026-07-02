@@ -659,7 +659,8 @@
 }
 
 .add-movie__item input:focus + label,
-.add-movie__item input:not(:placeholder-shown) + label {
+.add-movie__item input:not(:placeholder-shown) + label,
+.add-movie__item--float-label label {
   top: 0.4rem;
   transform: translateY(0);
   font-size: 0.6875rem;
@@ -711,6 +712,13 @@
   letter-spacing: 0.02em;
   color: var(--text-secondary);
   padding: 0 0.25rem 0.35rem;
+}
+
+.add-movie__item-title {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  padding: 0.4rem 1rem 0;
 }
 
 .rating-card {

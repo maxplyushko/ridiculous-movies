@@ -10,7 +10,8 @@ public record AuthResponse(
     String groupName,
     String theme,
     String defaultPage,
-    String lang
+    String lang,
+    String tmdbLang
 ) {
 
   public static AuthResponse from(AppUser user) {
@@ -22,7 +23,8 @@ public record AuthResponse(
         user.getUserGroup().getName(),
         user.getTheme(),
         user.getDefaultPage(),
-        user.getLang()
+        user.getLang(),
+        user.getTmdbLang()
     );
   }
 }
