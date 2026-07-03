@@ -178,7 +178,7 @@ public class TmdbClient {
                         m.id(),
                         isTv ? m.name() : m.title(),
                         m.overview(),
-                        m.voteAverage(),
+                        m.voteAverage() != null ? m.voteAverage() : 0.0,
                         extractYear(isTv ? m.firstAirDate() : m.releaseDate()),
                         m.posterPath() != null ? IMAGE_BASE + m.posterPath() : null,
                         m.mediaType()
