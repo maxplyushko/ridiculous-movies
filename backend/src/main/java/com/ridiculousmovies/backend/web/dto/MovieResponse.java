@@ -12,7 +12,8 @@ public record MovieResponse(
     UserRefDto owner,
     Integer round,
     Double averageRating,
-    List<RatingEntryDto> ratings
+    List<RatingEntryDto> ratings,
+    Long tmdbId
 ) {
 
 }

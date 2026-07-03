@@ -6,10 +6,9 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
 
 type PersonalMovieItemProps = {
   movie: PersonalMovie;
-  isExpanded: boolean;
   isSwipeOpen: boolean;
   isCelebrating?: boolean;
-  onToggle: () => void;
+  onOpen: (movie: PersonalMovie) => void;
   onEdit: (movie: PersonalMovie) => void;
   onDelete: (movie: PersonalMovie) => void;
   onToggleWatched: (movie: PersonalMovie) => void;
@@ -30,10 +29,9 @@ const formatDate = (utc: string) =>
 
 const PersonalMovieItem = ({
   movie,
-  isExpanded,
   isSwipeOpen,
   isCelebrating,
-  onToggle,
+  onOpen,
   onEdit,
   onDelete,
   onToggleWatched,
@@ -85,7 +83,7 @@ const PersonalMovieItem = ({
       return;
     }
     hapticTabTap();
-    onToggle();
+    onOpen(movie);
   };
 
   return (
@@ -111,11 +109,8 @@ const PersonalMovieItem = ({
       </div>
       <article
         tabIndex={-1}
-        className={`movie-item${isExpanded ? " personal-item--expanded" : ""}`}
+        className="movie-item"
         aria-label={movie.title}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget) && isExpanded) onToggle();
-        }}
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -137,7 +132,7 @@ const PersonalMovieItem = ({
               {movie.title}
             </span>
             {movie.description && (
-              <span className="movie-item-header__desc personal-item__desc">{movie.description}</span>
+              <span className="movie-item-header__desc">{movie.description}</span>
             )}
           </div>
           <div className="movie-item-header__right">

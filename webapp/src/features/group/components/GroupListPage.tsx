@@ -4,6 +4,7 @@ import "../group.css";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import type { Movie } from "../types/Movie.ts";
 import type { User } from "@/types/User.ts";
+import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { RoundSection } from "./RoundSection.tsx";
 import { RandomizerDialog } from "./RandomizerDialog.tsx";
 import AddMoviePage from "./AddMoviePage.tsx";
@@ -14,6 +15,7 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { SearchInput } from "@/components/SearchInput.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
+import { MoviePage } from "@/components/MoviePage.tsx";
 import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
 import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
@@ -26,7 +28,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   const [maxRound, setMaxRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
+  const [tmdbMovieToView, setTmdbMovieToView] = useState<TmdbMovie | null>(null);
   const [showMovieForm, setShowMovieForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
@@ -36,6 +39,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
+  const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [npOpen, setNpOpen] = useState(false);
   const [npSliderMax, setNpSliderMax] = useState(10);
@@ -92,6 +96,17 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   };
 
   useSwipeBack(closeMovieForm, addMovieEl);
+
+  const closeMovieView = () => {
+    setViewingMovieId(null);
+    setTmdbMovieToView(null);
+  };
+
+  useSwipeBack(closeMovieView, movieViewEl);
+
+  const viewingMovie = movieGroups
+    .flatMap((g) => g.movies)
+    .find((m) => m.id === viewingMovieId) ?? null;
 
   const handleEdit = (movie: Movie) => {
     setOpenSwipeId(null);
@@ -181,20 +196,17 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
           <RoundSection
             key={group.groupId}
             movieGroup={group}
-            expandedId={expandedId}
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
-            currentUserId={currentUserId}
-            onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
+            onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
             onEdit={handleEdit}
             onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
-            onRate={setRatingMovie}
             onSwipeOpen={(id) => setOpenSwipeId(id)}
             onSwipeClose={(id) => setOpenSwipeId((cur) => cur === id ? null : cur)}
             onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
           />
         ))}
-        {showTmdb && <TmdbSearchSection query={searchQuery} />}
+        {showTmdb && <TmdbSearchSection query={searchQuery} onOpenMovie={(m) => setTmdbMovieToView(m)} />}
       </div>
 
       {showMovieForm && (
@@ -208,6 +220,25 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
             users={users}
             onBack={closeMovieForm}
           />
+        </div>
+      )}
+
+      {(viewingMovie || tmdbMovieToView) && (
+        <div className="movie-list__add__movie" ref={setMovieViewEl}>
+          {viewingMovie && (
+            <MoviePage
+              source={{ kind: "group", movie: viewingMovie }}
+              currentUserId={currentUserId}
+              onBack={closeMovieView}
+              onRate={() => setRatingMovie(viewingMovie)}
+            />
+          )}
+          {tmdbMovieToView && (
+            <MoviePage
+              source={{ kind: "tmdb", movie: tmdbMovieToView }}
+              onBack={closeMovieView}
+            />
+          )}
         </div>
       )}
 
@@ -237,6 +268,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
               ownerId: ratingMovie.owner.id,
               round: ratingMovie.round,
               ratings: [...existingRatings, { userId: currentUserId, score }],
+              tmdbId: ratingMovie.tmdbId,
             });
             setRatingMovie(null);
             loadMovieGroups();

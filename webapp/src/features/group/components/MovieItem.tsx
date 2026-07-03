@@ -2,18 +2,14 @@ import type { Movie } from "../types/Movie";
 import { Calendar, Pencil, Star, Trash2, User } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
-import { useTranslation } from "react-i18next";
 
 type MovieItemProps = {
   movie: Movie;
-  isExpanded: boolean;
   isSwipeOpen: boolean;
   canDelete: boolean;
-  currentUserId: string;
-  onToggle: () => void;
+  onOpen: (movie: Movie) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
-  onRate: (movie: Movie) => void;
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
@@ -31,19 +27,15 @@ const formatDate = (utc: string) =>
 
 const MovieItem = ({
   movie,
-  isExpanded,
   isSwipeOpen,
   canDelete,
-  currentUserId,
-  onToggle,
+  onOpen,
   onEdit,
   onDelete,
-  onRate,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
 }: MovieItemProps) => {
-  const { t } = useTranslation();
   const {
     offsetX,
     isDragging,
@@ -62,8 +54,6 @@ const MovieItem = ({
     onBegin: onSwipeBegin,
   });
 
-  const hasRated = movie.ratings.some((r) => r.user.id === currentUserId);
-
   const handleHeaderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (suppressNextClickRef.current) {
@@ -75,7 +65,7 @@ const MovieItem = ({
       return;
     }
     hapticTabTap();
-    onToggle();
+    onOpen(movie);
   };
 
   return (
@@ -104,9 +94,6 @@ const MovieItem = ({
         tabIndex={-1}
         className="movie-item"
         aria-label={movie.title}
-        onBlur={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget) && isExpanded) onToggle();
-        }}
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -134,29 +121,6 @@ const MovieItem = ({
             </div>
           </div>
         </button>
-        <div className={`movie-item-details ${isExpanded ? "open" : ""}`} tabIndex={-1}>
-          <div className="movie-item-details__ratings">
-            {[...movie.ratings]
-              .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-              .map((r) => (
-                <span
-                  key={r.id}
-                  className={`movie-item-details__rating-item${r.isHostRating ? " movie-item-details__rating-item--host" : ""}`}
-                >
-                  <User size={16} /> {r.user.name}: {r.score.toFixed(1)}
-                </span>
-              ))}
-          </div>
-          {!hasRated && (
-            <button
-              type="button"
-              className="movie-item-details__rate-btn"
-              onClick={(e) => { e.stopPropagation(); hapticTabTap(); onRate(movie); }}
-            >
-              {t('groupList.btnRate')}
-            </button>
-          )}
-        </div>
       </article>
     </div>
   );

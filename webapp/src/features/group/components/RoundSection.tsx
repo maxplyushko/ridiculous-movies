@@ -5,14 +5,11 @@ import MovieItem from "./MovieItem.tsx";
 
 type RoundSectionProps = {
   movieGroup: MovieGroup;
-  expandedId: string | null;
   openSwipeId: string | null;
   isAdmin: boolean;
-  currentUserId: string;
-  onToggle: (id: string) => void;
+  onOpen: (movie: Movie) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
-  onRate: (movie: Movie) => void;
   onSwipeOpen: (id: string) => void;
   onSwipeClose: (id: string) => void;
   onSwipeBegin: (id: string) => void;
@@ -20,14 +17,11 @@ type RoundSectionProps = {
 
 export function RoundSection({
   movieGroup,
-  expandedId,
   openSwipeId,
   isAdmin,
-  currentUserId,
-  onToggle,
+  onOpen,
   onEdit,
   onDelete,
-  onRate,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
@@ -44,14 +38,11 @@ export function RoundSection({
         <MovieItem
           key={movie.id}
           movie={movie}
-          isExpanded={expandedId === movie.id}
           isSwipeOpen={openSwipeId === movie.id}
           canDelete={isAdmin}
-          currentUserId={currentUserId}
-          onToggle={() => onToggle(movie.id)}
+          onOpen={onOpen}
           onEdit={onEdit}
           onDelete={onDelete}
-          onRate={onRate}
           onSwipeOpen={() => onSwipeOpen(movie.id)}
           onSwipeClose={() => onSwipeClose(movie.id)}
           onSwipeBegin={() => onSwipeBegin(movie.id)}

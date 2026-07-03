@@ -5,7 +5,10 @@ import { searchTmdb } from "@/features/group/api/tmdb";
 const DEFAULT_DEBOUNCE_MS = 500;
 const DEFAULT_MIN_LEN = 3;
 
-export function useTmdbSearch(query: string, { minLen = DEFAULT_MIN_LEN, debounceMs = DEFAULT_DEBOUNCE_MS } = {}) {
+export function useTmdbSearch(
+  query: string,
+  { minLen = DEFAULT_MIN_LEN, debounceMs = DEFAULT_DEBOUNCE_MS, includeTv = false } = {}
+) {
   const [results, setResults] = useState<TmdbMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -29,7 +32,7 @@ export function useTmdbSearch(query: string, { minLen = DEFAULT_MIN_LEN, debounc
       const controller = new AbortController();
       abortRef.current = controller;
 
-      searchTmdb(trimmed, controller.signal)
+      searchTmdb(trimmed, controller.signal, includeTv)
         .then((data) => {
           setResults(data);
           setLoading(false);
@@ -45,7 +48,7 @@ export function useTmdbSearch(query: string, { minLen = DEFAULT_MIN_LEN, debounc
       if (timerRef.current) clearTimeout(timerRef.current);
       abortRef.current?.abort();
     };
-  }, [query, minLen, debounceMs]);
+  }, [query, minLen, debounceMs, includeTv]);
 
   return { results, loading };
 }

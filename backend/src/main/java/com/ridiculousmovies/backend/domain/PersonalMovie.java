@@ -16,4 +16,6 @@ public class PersonalMovie {
   private boolean watched;
   private Instant createdAt;
   private Instant updatedAt;
+  private Long tmdbId;
+  private String tmdbMediaType;
 }

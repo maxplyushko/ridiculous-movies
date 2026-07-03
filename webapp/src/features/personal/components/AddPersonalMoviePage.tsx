@@ -28,6 +28,8 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
     initRating ? { r1: initRating, r2: initRating, r3: initRating } : { r1: null, r2: null, r3: null }
   );
   const [classicRating, setClassicRating] = useState<number | null>(initRating);
+  const [tmdbId, setTmdbId] = useState<number | undefined>(movie?.tmdbId);
+  const [tmdbMediaType, setTmdbMediaType] = useState(movie?.tmdbMediaType);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -56,6 +58,8 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
         title,
         description,
         rating: isEditMode ? rating : null,
+        tmdbId,
+        tmdbMediaType,
       };
       if (movie) {
         await editPersonalMovie(movie.id, { ...payload, watched: movie.watched });
@@ -85,7 +89,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             id="pl-movie-title"
             type="text"
             value={title}
-            onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
+            onChange={(e) => { setTitle(e.target.value); setTmdbId(undefined); setTmdbMediaType(undefined); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
             placeholder=" "
@@ -99,7 +103,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { setTitle(s.title); if (s.overview) setProposedOverview(s.overview); setShowSuggestions(false); }}
+                    onClick={() => { setTitle(s.title); setTmdbId(s.id); setTmdbMediaType(s.mediaType); if (s.overview) setProposedOverview(s.overview); setShowSuggestions(false); }}
                   >
                     <span className="title-suggestions__title">{s.title}</span>
                     {s.releaseYear && <span className="title-suggestions__year">{s.releaseYear}</span>}

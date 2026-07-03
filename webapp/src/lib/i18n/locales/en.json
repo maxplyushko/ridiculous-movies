@@ -59,7 +59,7 @@
     "btnTryAgain": "Try again",
     "labelNextHost": "Next host",
     "btnAddMovie": "Add movie",
-    "placeholderSearch": "Search movies…",
+    "placeholderSearch": "Search...",
     "btnRate": "Rate the movie",
     "sectionInYourClub": "In your club",
     "noMatch": "No movies match"
@@ -74,7 +74,7 @@
     "labelToWatch": "To Watch",
     "labelWatched": "Watched",
     "btnAddMovie": "Add movie",
-    "placeholderSearch": "Search movies…",
+    "placeholderSearch": "Search…",
     "sectionToWatch": "To Watch",
     "sectionWatched": "Watched",
     "empty": "Your personal list is empty. Add something!",
@@ -116,6 +116,18 @@
   "tmdb": {
     "section": "On TMDB",
     "empty": "No TMDB results"
+  },
+  "moviePage": {
+    "director": "Director",
+    "creator": "Creator",
+    "cast": "Cast",
+    "overview": "Overview",
+    "ratings": "Ratings",
+    "you": "You",
+    "expand": "Show more",
+    "collapse": "Show less",
+    "btnRate": "Rate the movie",
+    "btnAddToPersonalList": "Add to personal list"
   },
   "signIn": {
     "heading": "Ridiculous Movies",

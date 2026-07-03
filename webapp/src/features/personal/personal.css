@@ -1,13 +1,3 @@
-.personal-item__desc {
-  overflow: hidden;
-  max-height: 2.7rem;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.personal-item--expanded .personal-item__desc {
-  max-height: 20rem;
-}
-
 .personal-stat__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

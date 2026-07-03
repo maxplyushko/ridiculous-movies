@@ -10,6 +10,7 @@ export type MovieFormPayload = {
   ownerId: string;
   round?: number;
   ratings: { userId: string; score: number }[];
+  tmdbId?: number | null;
 };
 
 export type MovieListParams = {

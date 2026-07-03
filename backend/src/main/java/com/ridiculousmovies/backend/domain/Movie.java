@@ -17,4 +17,5 @@ public class Movie {
   private Integer round;
   private Instant createdAt;
   private Instant updatedAt;
+  private Long tmdbId;
 }

@@ -1,3 +1,5 @@
+import type { TmdbMediaType } from "@/types/TmdbMovie";
+
 export interface PersonalMovie {
   id: string;
   title: string;
@@ -6,4 +8,6 @@ export interface PersonalMovie {
   watched: boolean;
   createdAt: string;
   updatedAt: string;
+  tmdbId?: number;
+  tmdbMediaType?: TmdbMediaType;
 }

@@ -6,5 +6,7 @@ public record UpdatePersonalMovieRequest(
     String title,
     String description,
     BigDecimal rating,
-    boolean watched
+    boolean watched,
+    Long tmdbId,
+    String tmdbMediaType
 ) {}

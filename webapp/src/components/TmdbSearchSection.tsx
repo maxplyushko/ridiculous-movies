@@ -7,15 +7,15 @@ import TmdbMovieItem from "./TmdbMovieItem.tsx";
 
 type TmdbSearchSectionProps = {
   query: string;
+  onOpenMovie?: (movie: TmdbMovie) => void;
   onAddToPersonalList?: (movie: TmdbMovie) => void;
 };
 
-const TmdbSearchSection = ({ query, onAddToPersonalList }: TmdbSearchSectionProps) => {
+const TmdbSearchSection = ({ query, onOpenMovie, onAddToPersonalList }: TmdbSearchSectionProps) => {
   const { t } = useTranslation();
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<number | null>(null);
 
-  const { results, loading } = useTmdbSearch(query);
+  const { results, loading } = useTmdbSearch(query, { includeTv: true });
 
   if (query.trim().length < 3) return null;
 
@@ -32,9 +32,8 @@ const TmdbSearchSection = ({ query, onAddToPersonalList }: TmdbSearchSectionProp
         <TmdbMovieItem
           key={m.id}
           movie={m}
-          isExpanded={expandedId === m.id}
           isSwipeOpen={openSwipeId === m.id}
-          onToggle={() => { setOpenSwipeId(null); setExpandedId(expandedId === m.id ? null : m.id); }}
+          onOpen={onOpenMovie ? () => onOpenMovie(m) : undefined}
           onSwipeOpen={() => setOpenSwipeId(m.id)}
           onSwipeClose={() => setOpenSwipeId((cur) => cur === m.id ? null : cur)}
           onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== m.id) setOpenSwipeId(null); }}

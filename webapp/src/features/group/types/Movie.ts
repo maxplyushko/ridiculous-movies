@@ -10,5 +10,6 @@ export type Movie = {
   owner: User;
   round: number;
   averageRating: number;
-  ratings: Rating[]
+  ratings: Rating[];
+  tmdbId?: number;
 };

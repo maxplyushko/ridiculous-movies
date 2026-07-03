@@ -103,6 +103,7 @@ public class DataStore implements AppRepository {
       m.setRound(r.round());
       m.setCreatedAt(r.createdAt());
       m.setUpdatedAt(r.updatedAt());
+      m.setTmdbId(r.tmdbId());
       List<Rating> ratings = new ArrayList<>();
       if (r.ratings() != null) {
         for (AppData.RatingRecord rr : r.ratings()) {
@@ -133,6 +134,8 @@ public class DataStore implements AppRepository {
         pm.setWatched(r.watched());
         pm.setCreatedAt(r.createdAt());
         pm.setUpdatedAt(r.updatedAt());
+        pm.setTmdbId(r.tmdbId());
+        pm.setTmdbMediaType(r.tmdbMediaType());
         personalMoviesById.put(pm.getId(), pm);
       }
     }
@@ -521,11 +524,13 @@ public class DataStore implements AppRepository {
             m.getOwner().getId(), m.getRound(), m.getCreatedAt(), m.getUpdatedAt(),
             m.getRatings().stream()
                 .map(r -> new AppData.RatingRecord(r.getId(), r.getUser().getId(), r.getScore()))
-                .toList()))
+                .toList(),
+            m.getTmdbId()))
         .toList());
     data.setPersonalMovies(personalMoviesById.values().stream()
         .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
-            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt()))
+            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt(),
+            pm.getTmdbId(), pm.getTmdbMediaType()))
         .toList());
     data.setGroupChatIds(new LinkedHashMap<>(groupChatIdsMap));
     return data;

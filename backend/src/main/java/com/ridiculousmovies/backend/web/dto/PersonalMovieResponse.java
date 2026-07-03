@@ -11,12 +11,15 @@ public record PersonalMovieResponse(
     BigDecimal rating,
     boolean watched,
     Instant createdAt,
-    Instant updatedAt
+    Instant updatedAt,
+    Long tmdbId,
+    String tmdbMediaType
 ) {
   public static PersonalMovieResponse from(PersonalMovie pm) {
     return new PersonalMovieResponse(
         pm.getId(), pm.getTitle(), pm.getDescription(),
-        pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt()
+        pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt(),
+        pm.getTmdbId(), pm.getTmdbMediaType()
     );
   }
 }

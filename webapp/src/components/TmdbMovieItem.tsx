@@ -5,9 +5,8 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
 
 type TmdbMovieItemProps = {
   movie: TmdbMovie;
-  isExpanded: boolean;
   isSwipeOpen: boolean;
-  onToggle: () => void;
+  onOpen?: () => void;
   onSwipeOpen: () => void;
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
@@ -19,9 +18,8 @@ const OPEN_THRESHOLD = 48;
 
 const TmdbMovieItem = ({
   movie,
-  isExpanded,
   isSwipeOpen,
-  onToggle,
+  onOpen,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
@@ -55,8 +53,9 @@ const TmdbMovieItem = ({
       closeSwipe();
       return;
     }
+    if (!onOpen) return;
     hapticTabTap();
-    onToggle();
+    onOpen();
   };
 
   return (
@@ -77,7 +76,7 @@ const TmdbMovieItem = ({
       )}
       <button
         type="button"
-        className={`tmdb-movie-item${isExpanded ? " tmdb-movie-item--expanded" : ""}`}
+        className="tmdb-movie-item"
         onClick={handleClick}
         {...(swipeable ? {
           style: {
@@ -89,7 +88,10 @@ const TmdbMovieItem = ({
         } : {})}
       >
         <div className="tmdb-movie-item__left">
-          <span className="tmdb-movie-item__title">{movie.title}</span>
+          <span className="tmdb-movie-item__title">
+            {movie.title}
+            {movie.mediaType === "tv" && <span className="tmdb-movie-item__badge">TV</span>}
+          </span>
           {movie.overview && (
             <span className="tmdb-movie-item__overview">{movie.overview}</span>
           )}

@@ -45,6 +45,8 @@ public class PersonalListController {
     pm.setDescription(req.description() != null ? req.description() : "");
     pm.setRating(req.rating());
     pm.setWatched(false);
+    pm.setTmdbId(req.tmdbId());
+    pm.setTmdbMediaType(req.tmdbMediaType());
     dataStore.savePersonalMovie(pm);
     return PersonalMovieResponse.from(pm);
   }
@@ -65,6 +67,8 @@ public class PersonalListController {
     pm.setDescription(req.description() != null ? req.description() : "");
     pm.setRating(req.rating());
     pm.setWatched(req.watched());
+    pm.setTmdbId(req.tmdbId());
+    pm.setTmdbMediaType(req.tmdbMediaType());
     dataStore.savePersonalMovie(pm);
     return PersonalMovieResponse.from(pm);
   }

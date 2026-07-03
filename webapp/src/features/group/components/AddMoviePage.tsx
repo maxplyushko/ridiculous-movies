@@ -149,6 +149,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
   const [description, setDescription] = useState(movie?.description ?? "");
   const [ownerId, setOwnerId] = useState(movie?.owner.id ?? currentUserId);
   const [round, setRound] = useState(movie?.round ?? currentRound);
+  const [tmdbId, setTmdbId] = useState<number | undefined>(movie?.tmdbId);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -171,6 +172,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
         ownerId,
         round,
         ratings: buildRatings(),
+        tmdbId,
       };
       if (movie) {
         await editMovie(movie.id, payload);
@@ -202,7 +204,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
             id="add-movie-title"
             type="text"
             value={title}
-            onChange={(e) => { setTitle(e.target.value); setShowSuggestions(true); }}
+            onChange={(e) => { setTitle(e.target.value); setTmdbId(undefined); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
             placeholder=" "
@@ -218,6 +220,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setTitle(s.title);
+                      setTmdbId(s.id);
                       if (s.overview) setProposedOverview(s.overview);
                       setShowSuggestions(false);
                     }}

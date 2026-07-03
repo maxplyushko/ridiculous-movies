@@ -59,7 +59,7 @@
     "btnTryAgain": "Попробовать снова",
     "labelNextHost": "Следующий хост",
     "btnAddMovie": "Добавить",
-    "placeholderSearch": "Поиск",
+    "placeholderSearch": "Поиск...",
     "btnRate": "Оценить фильм",
     "sectionInYourClub": "В твоей группе",
     "noMatch": "нет совпадений"
@@ -74,7 +74,7 @@
     "labelToWatch": "К просмотру",
     "labelWatched": "Просмотрено",
     "btnAddMovie": "Добавить",
-    "placeholderSearch": "Поиск",
+    "placeholderSearch": "Поиск...",
     "sectionToWatch": "К просмотру",
     "sectionWatched": "Просмотрено",
     "empty": "Список пуст. Добавь что-нибудь!",
@@ -116,6 +116,18 @@
   "tmdb": {
     "section": "TMDB",
     "empty": "нет результатов"
+  },
+  "moviePage": {
+    "director": "Режиссёр",
+    "creator": "Автор",
+    "cast": "В ролях",
+    "overview": "Описание",
+    "ratings": "Оценки",
+    "you": "Вы",
+    "expand": "Показать больше",
+    "collapse": "Свернуть",
+    "btnRate": "Оценить фильм",
+    "btnAddToPersonalList": "Добавить в личный список"
   },
   "signIn": {
     "heading": "Дурацкие фильмы",

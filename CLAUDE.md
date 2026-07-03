@@ -100,6 +100,7 @@ npm run lint         # ESLint
 | GET | `/api/users` | List users in caller's group |
 | PUT | `/api/users/me/preferences` | Update caller's preferences (theme, defaultPage, lang) |
 | GET | `/api/tmdb/search` | Search TMDB for movies |
+| GET | `/api/tmdb/movie/{id}` | Fetch full TMDB movie detail (poster, director, cast) |
 | POST | `/api/telegram/webhook` | Telegram bot webhook |
 
 ## Key env vars

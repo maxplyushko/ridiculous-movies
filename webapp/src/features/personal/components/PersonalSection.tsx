@@ -5,12 +5,11 @@ type PersonalSectionProps = {
   title: string;
   movies: PersonalMovie[];
   openSwipeId: string | null;
-  expandedId: string | null;
   celebratingId: string | null;
+  onOpen: (movie: PersonalMovie) => void;
   onEdit: (movie: PersonalMovie) => void;
   onDelete: (movie: PersonalMovie) => void;
   onToggleWatched: (movie: PersonalMovie) => void;
-  onToggle: (id: string) => void;
   onSwipeOpen: (id: string) => void;
   onSwipeClose: (id: string) => void;
   onSwipeBegin: (id: string) => void;
@@ -20,12 +19,11 @@ export function PersonalSection({
   title,
   movies,
   openSwipeId,
-  expandedId,
   celebratingId,
+  onOpen,
   onEdit,
   onDelete,
   onToggleWatched,
-  onToggle,
   onSwipeOpen,
   onSwipeClose,
   onSwipeBegin,
@@ -40,10 +38,9 @@ export function PersonalSection({
         <PersonalMovieItem
           key={movie.id}
           movie={movie}
-          isExpanded={expandedId === movie.id}
           isSwipeOpen={openSwipeId === movie.id}
           isCelebrating={celebratingId === movie.id}
-          onToggle={() => onToggle(movie.id)}
+          onOpen={onOpen}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggleWatched={onToggleWatched}

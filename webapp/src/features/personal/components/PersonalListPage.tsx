@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 import "../personal.css";
 import confetti from "canvas-confetti";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
+import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
 import { ChartLine, Dices, Loader, Plus } from "lucide-react";
 import { RatingModal } from "@/components/RatingModal.tsx";
+import { MoviePage } from "@/components/MoviePage.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { SearchInput } from "@/components/SearchInput.tsx";
@@ -37,11 +39,13 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
+  const [tmdbMovieToView, setTmdbMovieToView] = useState<TmdbMovie | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
+  const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
   const moviePicker = useSpinPicker<string>();
 
@@ -66,6 +70,15 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
   };
 
   useSwipeBack(closeForm, formEl);
+
+  const closeMovieView = () => {
+    setViewingMovieId(null);
+    setTmdbMovieToView(null);
+  };
+
+  useSwipeBack(closeMovieView, movieViewEl);
+
+  const viewingMovie = movies.find((m) => m.id === viewingMovieId) ?? null;
 
   useEffect(() => {
     if (openSwipeId === null) return;
@@ -112,6 +125,8 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
       description: movie.description,
       rating: rating !== undefined ? rating : movie.rating,
       watched: !movie.watched,
+      tmdbId: movie.tmdbId,
+      tmdbMediaType: movie.tmdbMediaType,
     };
     const version = (toggleVersionRef.current.get(movie.id) ?? 0) + 1;
     toggleVersionRef.current.set(movie.id, version);
@@ -123,6 +138,22 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
       if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
     } catch (err) {
       if (isCurrent()) setMovies((prev) => prev.map((m) => m.id === movie.id ? movie : m));
+      console.error(err);
+    }
+  };
+
+  const updateRating = async (movie: PersonalMovie, rating: number) => {
+    try {
+      const updated = await editPersonalMovie(movie.id, {
+        title: movie.title,
+        description: movie.description,
+        rating,
+        watched: movie.watched,
+        tmdbId: movie.tmdbId,
+        tmdbMediaType: movie.tmdbMediaType,
+      });
+      setMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+    } catch (err) {
       console.error(err);
     }
   };
@@ -220,8 +251,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          expandedId={expandedId}
-          onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
+          onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -234,8 +264,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          expandedId={expandedId}
-          onToggle={(id) => { setOpenSwipeId(null); setExpandedId(expandedId === id ? null : id); }}
+          onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -246,7 +275,8 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
         {showTmdb && (
           <TmdbSearchSection
             query={searchQuery}
-            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null }).then((added) => setMovies((prev) => [added, ...prev]))}
+            onOpenMovie={(m) => setTmdbMovieToView(m)}
+            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType }).then((added) => setMovies((prev) => [added, ...prev]))}
           />
         )}
       </div>
@@ -296,16 +326,45 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           onCancel={() => {
             const movie = ratingMovie;
             setRatingMovie(null);
-            applyToggle(movie);
-            celebrate(movie.id);
+            if (!movie.watched) {
+              applyToggle(movie);
+              celebrate(movie.id);
+            }
           }}
           onSave={async (rating) => {
             const movie = ratingMovie;
             setRatingMovie(null);
-            applyToggle(movie, rating);
-            celebrate(movie.id);
+            if (movie.watched) {
+              await updateRating(movie, rating);
+            } else {
+              applyToggle(movie, rating);
+              celebrate(movie.id);
+            }
           }}
         />
+      )}
+
+      {(viewingMovie || tmdbMovieToView) && (
+        <div className="movie-list__add__movie" ref={setMovieViewEl}>
+          {viewingMovie && (
+            <MoviePage
+              source={{ kind: "personal", movie: viewingMovie }}
+              onBack={closeMovieView}
+              onRate={() => setRatingMovie(viewingMovie)}
+            />
+          )}
+          {tmdbMovieToView && (
+            <MoviePage
+              source={{ kind: "tmdb", movie: tmdbMovieToView }}
+              onBack={closeMovieView}
+              onAddToPersonalList={() => {
+                const movie = tmdbMovieToView;
+                addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
+                  .then((added) => { setMovies((prev) => [added, ...prev]); setTmdbMovieToView(null); });
+              }}
+            />
+          )}
+        </div>
       )}
     </div>
   );

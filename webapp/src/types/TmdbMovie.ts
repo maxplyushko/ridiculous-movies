@@ -1,3 +1,5 @@
+export type TmdbMediaType = "movie" | "tv";
+
 export type TmdbMovie = {
   id: number;
   title: string;
@@ -5,4 +7,17 @@ export type TmdbMovie = {
   tmdbScore: number;
   releaseYear: string;
   posterUrl: string | null;
+  mediaType: TmdbMediaType;
+};
+
+export type TmdbCastMember = {
+  name: string;
+  character: string | null;
+  profileUrl: string | null;
+};
+
+export type TmdbMovieDetails = TmdbMovie & {
+  director: string | null;
+  tagline: string | null;
+  cast: TmdbCastMember[];
 };

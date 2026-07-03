@@ -1,10 +1,13 @@
 import { apiFetch } from "@/api/client";
 import type { PersonalMovie } from "../types/PersonalMovie";
+import type { TmdbMediaType } from "@/types/TmdbMovie";
 
 export interface PersonalMoviePayload {
   title: string;
   description: string;
   rating: number | null;
+  tmdbId?: number | null;
+  tmdbMediaType?: TmdbMediaType | null;
 }
 
 export interface UpdatePersonalMoviePayload extends PersonalMoviePayload {
