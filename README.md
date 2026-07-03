@@ -12,6 +12,7 @@ A Telegram Mini App for a private movie club. Members add films by round, rate e
 - [x] Add mode for personal movie list (not shared with the club)
 - [x] Introduce user page. Hide current settings innit.
 - [x] Add notification `Time to rate the movie` when movie is added to the list and user hasn't rated it yet
+- [ ] Introduce webapp haptic feedback (workaround)
 - [ ] Figure out how to handle user groups for newly added users (currently they are not assigned to any group)
 - [ ] Migrate BE to Kotlin + GraalVM for fast start and cleanup the BE code
 - [ ] Add possibility to see other user's personal movie lists (if they allow it). Add notification when I've added movie from some user's personal list.

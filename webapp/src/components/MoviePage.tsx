@@ -67,8 +67,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
 
   return (
     <div className="movie-page">
-      <PageBackButton onBack={onBack} />
       <div className="movie-page__poster-wrap">
+        <PageBackButton onBack={onBack} />
         <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${displayPosterUrl})` }} />
         <div className="movie-page__poster">
           <img src={displayPosterUrl} alt={title} decoding="async" />
@@ -87,6 +87,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
           )}
         </div>
       </div>
+      <div className="movie-page__divider" />
 
       {source.kind === "tmdb" ? (
         onAddToPersonalList && (

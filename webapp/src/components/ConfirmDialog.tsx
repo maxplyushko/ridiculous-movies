@@ -30,7 +30,7 @@ export function ConfirmDialog({
         <div className="confirm-dialog__actions">
           <button type="button" onClick={onCancel} disabled={isLoading}>{cancelLabel}</button>
           <button type="button" onClick={onConfirm} disabled={isLoading}>
-            {isLoading ? <Loader size={14} className="tmdb-section__spinner" /> : confirmLabel}
+            {isLoading ? <Loader size={14} className="confirm-dialog__spinner" /> : confirmLabel}
           </button>
         </div>
       </div>
