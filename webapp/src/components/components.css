@@ -540,7 +540,7 @@
 .movie-page--loading {
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: calc(100dvh - 2rem);
 }
 
 .movie-page__spinner {
@@ -734,6 +734,15 @@
   object-fit: cover;
   display: block;
 }
+
+.movie-page__cast-photo-img--hidden {
+  display: none;
+}
+
+.movie-page__cast-photo-spinner {
+  animation: page-loader-spin 0.8s linear infinite;
+}
+
 
 .movie-page__cast-name {
   font-size: 0.75rem;

@@ -8,6 +8,7 @@ import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
 import { useImagesPreload } from "@/hooks/useImagePreload.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
+import noPosterFallback from "@/assets/no-poster.png";
 
 export type MoviePageSource =
   | { kind: "group"; movie: Movie }
@@ -28,21 +29,23 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const mediaType = source.kind === "tmdb"
     ? source.movie.mediaType
     : (source.movie.tmdbMediaType ?? "movie");
-  const { details } = useTmdbMovieDetails(tmdbId, mediaType);
+  const { details, loading: detailsLoading } = useTmdbMovieDetails(tmdbId, mediaType);
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [descClamped, setDescClamped] = useState(false);
+  const [loadedCastPhotos, setLoadedCastPhotos] = useState<Record<string, boolean>>({});
 
   const title = source.movie.title;
   const description = source.kind === "tmdb" ? source.movie.overview : source.movie.description;
   const posterUrl = source.kind === "tmdb" ? source.movie.posterUrl : (details?.posterUrl ?? null);
+  const displayPosterUrl = posterUrl ?? noPosterFallback;
   const tmdbScore = source.kind === "tmdb" ? source.movie.tmdbScore : details?.tmdbScore;
   const releaseYear = source.kind === "tmdb" ? source.movie.releaseYear : details?.releaseYear;
   const groupRating = source.kind === "group" ? source.movie.averageRating : null;
   const tagline = details?.tagline ?? null;
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
-  const posterReady = useImagesPreload([posterUrl]);
+  const posterReady = useImagesPreload([displayPosterUrl]);
 
   const alreadyRated = source.kind === "group"
     ? source.movie.ratings.some((r) => r.user.id === currentUserId)
@@ -54,10 +57,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     setDescClamped(el.scrollHeight > el.clientHeight + 1);
   }, [description]);
 
-  if (!posterReady) {
+  if (detailsLoading || !posterReady) {
     return (
       <div className="movie-page movie-page--loading">
-        <PageBackButton onBack={onBack} />
         <Loader size={28} className="movie-page__spinner" />
       </div>
     );
@@ -66,14 +68,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   return (
     <div className="movie-page">
       <PageBackButton onBack={onBack} />
-      {posterUrl && (
-        <div className="movie-page__poster-wrap">
-          <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${posterUrl})` }} />
-          <div className="movie-page__poster">
-            <img src={posterUrl} alt={title} decoding="async" />
-          </div>
+      <div className="movie-page__poster-wrap">
+        <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${displayPosterUrl})` }} />
+        <div className="movie-page__poster">
+          <img src={displayPosterUrl} alt={title} decoding="async" />
         </div>
-      )}
+      </div>
       <div className="movie-page__header">
         <h1 className="movie-page__title">{title}</h1>
         <div className="movie-page__subhead">
@@ -175,17 +175,34 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
             <div>
               <p className="movie-page__section-title">{t('moviePage.cast')}</p>
               <div className="movie-page__cast-list">
-                {cast.map((c, i) => (
-                  <div className="movie-page__cast-item" key={`${c.name}-${i}`}>
+                {cast.map((c, i) => {
+                  const photoKey = `${c.name}-${i}`;
+                  const photoLoaded = loadedCastPhotos[photoKey];
+                  return (
+                  <div className="movie-page__cast-item" key={photoKey}>
                     <div className="movie-page__cast-photo">
                       {c.profileUrl
-                        ? <img src={c.profileUrl} alt={c.name} loading="lazy" decoding="async" />
+                        ? (
+                          <>
+                            {!photoLoaded && <Loader size={18} className="movie-page__cast-photo-spinner" />}
+                            <img
+                              src={c.profileUrl}
+                              alt={c.name}
+                              loading="lazy"
+                              decoding="async"
+                              className={photoLoaded ? "" : "movie-page__cast-photo-img--hidden"}
+                              onLoad={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
+                              onError={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
+                            />
+                          </>
+                        )
                         : <User size={24} />}
                     </div>
                     <span className="movie-page__cast-name">{c.name}</span>
                     {c.character && <span className="movie-page__cast-character">{c.character}</span>}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
