@@ -269,6 +269,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
               round: ratingMovie.round,
               ratings: [...existingRatings, { userId: currentUserId, score }],
               tmdbId: ratingMovie.tmdbId,
+              tmdbMediaType: ratingMovie.tmdbMediaType,
             });
             setRatingMovie(null);
             loadMovieGroups();

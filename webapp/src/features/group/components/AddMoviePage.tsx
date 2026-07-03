@@ -150,6 +150,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
   const [ownerId, setOwnerId] = useState(movie?.owner.id ?? currentUserId);
   const [round, setRound] = useState(movie?.round ?? currentRound);
   const [tmdbId, setTmdbId] = useState<number | undefined>(movie?.tmdbId);
+  const [tmdbMediaType, setTmdbMediaType] = useState(movie?.tmdbMediaType);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -173,6 +174,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
         round,
         ratings: buildRatings(),
         tmdbId,
+        tmdbMediaType,
       };
       if (movie) {
         await editMovie(movie.id, payload);
@@ -189,7 +191,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [proposedOverview, setProposedOverview] = useState<string | null>(null);
-  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200 });
+  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
 
   const isSubmitDisabled = isSubmitting || !title.trim();
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
@@ -204,7 +206,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
             id="add-movie-title"
             type="text"
             value={title}
-            onChange={(e) => { setTitle(e.target.value); setTmdbId(undefined); setShowSuggestions(true); }}
+            onChange={(e) => { setTitle(e.target.value); setTmdbId(undefined); setTmdbMediaType(undefined); setShowSuggestions(true); }}
             onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
             placeholder=" "
@@ -221,6 +223,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
                     onClick={() => {
                       setTitle(s.title);
                       setTmdbId(s.id);
+                      setTmdbMediaType(s.mediaType);
                       if (s.overview) setProposedOverview(s.overview);
                       setShowSuggestions(false);
                     }}

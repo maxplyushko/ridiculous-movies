@@ -31,9 +31,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
     ? source.movie.mediaType
-    : source.kind === "personal"
-      ? (source.movie.tmdbMediaType ?? "movie")
-      : "movie";
+    : (source.movie.tmdbMediaType ?? "movie");
   const { details } = useTmdbMovieDetails(tmdbId, mediaType);
   const posterRef = useRef<HTMLDivElement | null>(null);
   const descRef = useRef<HTMLParagraphElement | null>(null);
@@ -64,9 +62,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     const applyProgress = () => {
       ticking = false;
       const progress = Math.min(1, Math.max(0, scrollEl.scrollTop / POSTER_SCROLL_RANGE));
-      const widthPercent = POSTER_MIN_WIDTH_PERCENT
-        + (POSTER_MAX_WIDTH_PERCENT - POSTER_MIN_WIDTH_PERCENT) * progress;
-      posterEl.style.width = `${widthPercent}%`;
+      const scale = (POSTER_MIN_WIDTH_PERCENT
+        + (POSTER_MAX_WIDTH_PERCENT - POSTER_MIN_WIDTH_PERCENT) * progress) / 100;
+      posterEl.style.transform = `scale(${scale})`;
       posterEl.style.borderRadius = `${POSTER_MIN_RADIUS * (1 - progress)}px`;
     };
 
@@ -92,7 +90,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
       <PageBackButton onBack={onBack} />
       {posterUrl && (
         <div className="movie-page__poster" ref={posterRef}>
-          <img src={posterUrl} alt={title} loading="lazy" decoding="async" />
+          <img src={posterUrl} alt={title} decoding="async" />
         </div>
       )}
       <div className="movie-page__header">

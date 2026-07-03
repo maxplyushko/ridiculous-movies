@@ -38,7 +38,8 @@ public class MovieMapper {
         m.getRound(),
         avg,
         ratings,
-        m.getTmdbId()
+        m.getTmdbId(),
+        m.getTmdbMediaType()
     );
   }
 

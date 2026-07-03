@@ -538,13 +538,14 @@
 }
 
 .movie-page__poster {
-  width: 60%;
+  width: 100%;
   margin: 0 auto;
   aspect-ratio: 2 / 3;
   border-radius: 12px;
   overflow: hidden;
   background: var(--surface);
-  will-change: width, border-radius;
+  transform-origin: top center;
+  will-change: transform, border-radius;
 }
 
 .movie-page__poster img {

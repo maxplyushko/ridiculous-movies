@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import type { TmdbMediaType, TmdbMovieDetails } from "@/types/TmdbMovie";
 import { fetchTmdbMovieDetails } from "@/features/group/api/tmdb";
 
-export function useTmdbMovieDetails(tmdbId: number | undefined, mediaType: TmdbMediaType = "movie") {
+export function useTmdbMovieDetails(tmdbId: number | undefined | null, mediaType: TmdbMediaType = "movie") {
   const [details, setDetails] = useState<TmdbMovieDetails | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (tmdbId === undefined) {
+    if (tmdbId == null) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDetails(null);
       setLoading(false);

@@ -31,7 +31,7 @@ public class AppData {
   public record RatingRecord(String id, String userId, BigDecimal score) {}
   public record MovieRecord(String id, String title, String description,
                             String ownerId, Integer round, Instant createdAt, Instant updatedAt,
-                            List<RatingRecord> ratings, Long tmdbId) {}
+                            List<RatingRecord> ratings, Long tmdbId, String tmdbMediaType) {}
   public record PersonalMovieRecord(String id, String userId, String title, String description,
                                     BigDecimal rating, boolean watched, Instant createdAt, Instant updatedAt,
                                     Long tmdbId, String tmdbMediaType) {}

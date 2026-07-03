@@ -35,7 +35,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [proposedOverview, setProposedOverview] = useState<string | null>(null);
 
-  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200 });
+  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
   const isTg = isTelegramMiniApp();
   const rating = ratingMode === "detailed" ? calcDetailedScore(detailedRating) : classicRating;
 

@@ -1,6 +1,7 @@
 import type {Movie} from "../types/Movie";
 import type {MovieGroupsResponse} from "../types/MovieGroup";
 import {apiFetch} from "@/api/client";
+import type {TmdbMediaType} from "@/types/TmdbMovie";
 
 const BASE = "/api/movies";
 
@@ -11,6 +12,7 @@ export type MovieFormPayload = {
   round?: number;
   ratings: { userId: string; score: number }[];
   tmdbId?: number | null;
+  tmdbMediaType?: TmdbMediaType | null;
 };
 
 export type MovieListParams = {

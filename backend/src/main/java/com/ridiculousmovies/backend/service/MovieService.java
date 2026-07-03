@@ -98,6 +98,7 @@ public class MovieService {
     movie.setOwner(owner);
     movie.setRound(resolveCreateRound(groupId, req.round()));
     movie.setTmdbId(req.tmdbId());
+    movie.setTmdbMediaType(req.tmdbMediaType());
     movie.setRatings(new ArrayList<>());
     replaceRatings(groupId, movie, req.ratings());
 
@@ -121,6 +122,7 @@ public class MovieService {
       movie.setRound(Math.max(1, req.round()));
     }
     movie.setTmdbId(req.tmdbId());
+    movie.setTmdbMediaType(req.tmdbMediaType());
     replaceRatings(groupId, movie, req.ratings());
 
     dataStore.saveMovie(movie);

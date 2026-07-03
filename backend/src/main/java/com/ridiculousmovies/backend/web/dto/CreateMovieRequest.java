@@ -8,7 +8,8 @@ public record CreateMovieRequest(
     String ownerId,
     Integer round,
     List<RatingInputDto> ratings,
-    Long tmdbId
+    Long tmdbId,
+    String tmdbMediaType
 ) {
 
 }

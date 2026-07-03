@@ -104,6 +104,7 @@ public class DataStore implements AppRepository {
       m.setCreatedAt(r.createdAt());
       m.setUpdatedAt(r.updatedAt());
       m.setTmdbId(r.tmdbId());
+      m.setTmdbMediaType(r.tmdbMediaType());
       List<Rating> ratings = new ArrayList<>();
       if (r.ratings() != null) {
         for (AppData.RatingRecord rr : r.ratings()) {
@@ -525,7 +526,7 @@ public class DataStore implements AppRepository {
             m.getRatings().stream()
                 .map(r -> new AppData.RatingRecord(r.getId(), r.getUser().getId(), r.getScore()))
                 .toList(),
-            m.getTmdbId()))
+            m.getTmdbId(), m.getTmdbMediaType()))
         .toList());
     data.setPersonalMovies(personalMoviesById.values().stream()
         .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
