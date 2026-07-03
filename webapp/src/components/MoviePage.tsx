@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Loader, Star, User, UserStar } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Loader, Star, Tv, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
@@ -43,6 +43,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const releaseYear = source.kind === "tmdb" ? source.movie.releaseYear : details?.releaseYear;
   const groupRating = source.kind === "group" ? source.movie.averageRating : null;
   const tagline = details?.tagline ?? null;
+  const numberOfSeasons = details?.numberOfSeasons ?? null;
+  const genres = details?.genres ?? [];
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
   const posterReady = useImagesPreload([displayPosterUrl]);
@@ -50,6 +52,13 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const alreadyRated = source.kind === "group"
     ? source.movie.ratings.some((r) => r.user.id === currentUserId)
     : source.kind === "personal" && source.movie.rating != null;
+
+  const hasRatingsList = source.kind === "group"
+    ? source.movie.ratings.length > 0
+    : source.kind === "personal" && source.movie.rating != null;
+  const hasActionBlock = source.kind === "tmdb"
+    ? !!onAddToPersonalList
+    : hasRatingsList || (!!onRate && !alreadyRated);
 
   useLayoutEffect(() => {
     const el = descRef.current;
@@ -78,16 +87,22 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
         <h1 className="movie-page__title">{title}</h1>
         <div className="movie-page__subhead">
           {tagline && <p className="movie-item-header__desc">{tagline}</p>}
-          {(releaseYear || groupRating != null || !!tmdbScore) && (
-            <div className="movie-page__meta">
-              {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
-              {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}
-              {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
-            </div>
-          )}
+          {genres.length > 0 && <p className="movie-page__genres">{genres.join(" · ")}</p>}
+          <div className="movie-page__meta">
+            <span>
+              {mediaType === "tv" ? <Tv size={14} /> : <Clapperboard size={14} />}
+              {mediaType === "tv" ? t('moviePage.tvShow') : t('moviePage.movie')}
+            </span>
+            {mediaType === "tv" && numberOfSeasons != null && (
+              <span>{t('moviePage.seasons', { count: numberOfSeasons })}</span>
+            )}
+            {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
+            {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}
+            {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
+          </div>
         </div>
       </div>
-      <div className="movie-page__divider" />
+      {hasActionBlock && <div className="movie-page__divider" />}
 
       {source.kind === "tmdb" ? (
         onAddToPersonalList && (

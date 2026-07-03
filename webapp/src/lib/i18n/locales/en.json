@@ -118,6 +118,9 @@
     "empty": "No TMDB results"
   },
   "moviePage": {
+    "movie": "Movie",
+    "tvShow": "TV Show",
+    "seasons": "{{count}} seasons",
     "director": "Director",
     "creator": "Creator",
     "cast": "Cast",

@@ -12,5 +12,7 @@ record TmdbTvDetails(
     @JsonProperty("first_air_date") String firstAirDate,
     @JsonProperty("poster_path") String posterPath,
     @JsonProperty("created_by") List<TmdbCreatedBy> createdBy,
+    @JsonProperty("number_of_seasons") Integer numberOfSeasons,
+    List<TmdbGenre> genres,
     TmdbCredits credits
 ) {}

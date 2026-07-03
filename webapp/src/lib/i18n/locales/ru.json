@@ -118,6 +118,9 @@
     "empty": "нет результатов"
   },
   "moviePage": {
+    "movie": "Фильм",
+    "tvShow": "Сериал",
+    "seasons": "Сезонов: {{count}}",
     "director": "Режиссёр",
     "creator": "Автор",
     "cast": "В ролях",

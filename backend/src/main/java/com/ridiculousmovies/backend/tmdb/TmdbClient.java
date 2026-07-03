@@ -119,6 +119,8 @@ public class TmdbClient {
                 extractYear(result.releaseDate()),
                 result.posterPath() != null ? IMAGE_BASE + result.posterPath() : null,
                 director,
+                null,
+                mapGenres(result.genres()),
                 cast
             ));
         } catch (RestClientException e) {
@@ -151,11 +153,20 @@ public class TmdbClient {
                 extractYear(result.firstAirDate()),
                 result.posterPath() != null ? IMAGE_BASE + result.posterPath() : null,
                 creator,
+                result.numberOfSeasons(),
+                mapGenres(result.genres()),
                 cast
             ));
         } catch (RestClientException e) {
             return Optional.empty();
         }
+    }
+
+    private static List<String> mapGenres(List<TmdbGenre> genres) {
+        if (genres == null) {
+            return List.of();
+        }
+        return genres.stream().map(TmdbGenre::name).toList();
     }
 
     private static List<TmdbCastMemberResponse> mapCast(TmdbCredits credits) {
