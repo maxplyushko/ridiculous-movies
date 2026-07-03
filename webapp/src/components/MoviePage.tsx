@@ -64,7 +64,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     const el = descRef.current;
     if (!el) return;
     setDescClamped(el.scrollHeight > el.clientHeight + 1);
-  }, [description]);
+  }, [description, detailsLoading, posterReady]);
 
   if (detailsLoading || !posterReady) {
     return (
