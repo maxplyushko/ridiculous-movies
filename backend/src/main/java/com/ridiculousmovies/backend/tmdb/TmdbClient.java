@@ -3,20 +3,29 @@ package com.ridiculousmovies.backend.tmdb;
 import com.ridiculousmovies.backend.web.dto.TmdbCastMemberResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieDetailsResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 @Component
 public class TmdbClient {
 
     private static final String BASE_URL = "https://api.themoviedb.org/3";
-    private static final String IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
-    private static final String PROFILE_IMAGE_BASE = "https://image.tmdb.org/t/p/w185";
+    private static final String TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p";
+    private static final String IMAGE_BASE = "/api/tmdb/image/w200";
+    private static final String PROFILE_IMAGE_BASE = "/api/tmdb/image/w185";
+    private static final Set<String> ALLOWED_IMAGE_SIZES = Set.of("w200", "w185");
     private static final Map<String, String> LOCALES = Map.of("ru", "ru-RU", "en", "en-US");
     private static final String DEFAULT_LANG = "ru";
     private static final String MEDIA_TYPE_MOVIE = "movie";
@@ -24,8 +33,12 @@ public class TmdbClient {
     private static final int MAX_CAST = 5;
 
     private final RestClient restClient;
+    private final RestClient imageClient;
     private final ConcurrentHashMap<String, List<TmdbMovieResponse>> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Optional<TmdbMovieDetailsResponse>> detailsCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CachedImage> imageCache = new ConcurrentHashMap<>();
+
+    private record CachedImage(byte[] body, MediaType contentType) {}
 
     public TmdbClient(TmdbProperties props) {
         this.restClient = RestClient.builder()
@@ -33,6 +46,35 @@ public class TmdbClient {
             .defaultHeader("Authorization", "Bearer " + props.apiKey())
             .defaultHeader("Accept", "application/json")
             .build();
+        this.imageClient = RestClient.builder()
+            .baseUrl(TMDB_IMAGE_BASE)
+            .build();
+    }
+
+    public ResponseEntity<byte[]> fetchImage(String size, String filename) {
+        if (!ALLOWED_IMAGE_SIZES.contains(size)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid image size");
+        }
+        CachedImage cached = imageCache.computeIfAbsent(size + "|" + filename,
+            key -> fetchImageFromTmdb(size, filename));
+        return ResponseEntity.ok()
+            .contentType(cached.contentType())
+            .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+            .body(cached.body());
+    }
+
+    private CachedImage fetchImageFromTmdb(String size, String filename) {
+        try {
+            ResponseEntity<byte[]> upstream = imageClient.get()
+                .uri("/{size}/{filename}", size, filename)
+                .retrieve()
+                .toEntity(byte[].class);
+            MediaType contentType = upstream.getHeaders().getContentType() != null
+                ? upstream.getHeaders().getContentType() : MediaType.IMAGE_JPEG;
+            return new CachedImage(upstream.getBody(), contentType);
+        } catch (RestClientException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found");
+        }
     }
 
     public List<TmdbMovieResponse> search(String query, String lang, boolean includeTv) {

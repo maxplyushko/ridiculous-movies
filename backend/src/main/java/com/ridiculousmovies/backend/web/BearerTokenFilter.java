@@ -52,7 +52,7 @@ public class BearerTokenFilter extends OncePerRequestFilter {
   private static boolean isPublicPath(HttpServletRequest request) {
     String path = request.getRequestURI();
     return path.startsWith("/api/auth") || path.equals("/api/start")
-        || path.startsWith("/api/telegram/webhook");
+        || path.startsWith("/api/telegram/webhook") || path.startsWith("/api/tmdb/image/");
   }
 
   private static class UserIdInjectingWrapper extends HttpServletRequestWrapper {

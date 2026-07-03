@@ -6,6 +6,7 @@ import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,5 +42,10 @@ public class TmdbController {
   ) {
     return tmdbClient.getDetails(id, lang, mediaType)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TMDB movie not found"));
+  }
+
+  @GetMapping("/image/{size}/{filename:.+}")
+  public ResponseEntity<byte[]> image(@PathVariable String size, @PathVariable String filename) {
+    return tmdbClient.fetchImage(size, filename);
   }
 }

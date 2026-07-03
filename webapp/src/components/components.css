@@ -537,15 +537,42 @@
   gap: 0.75rem;
 }
 
-.movie-page__poster {
+.movie-page--loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.movie-page__spinner {
+  color: var(--text-secondary);
+  animation: page-loader-spin 0.8s linear infinite;
+}
+
+.movie-page__poster-wrap {
+  position: relative;
   width: 100%;
+  padding: 1.5rem 0;
+  overflow: hidden;
+}
+
+.movie-page__poster-backdrop {
+  position: absolute;
+  inset: -10%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(10px);
+  opacity: 0.7;
+  transform: scale(1.5);
+}
+
+.movie-page__poster {
+  position: relative;
+  width: 60%;
   margin: 0 auto;
   aspect-ratio: 2 / 3;
   border-radius: 12px;
   overflow: hidden;
   background: var(--surface);
-  transform-origin: top center;
-  will-change: transform, border-radius;
 }
 
 .movie-page__poster img {

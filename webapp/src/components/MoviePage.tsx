@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Star, User, UserStar } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Loader, Star, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
+import { useImagesPreload } from "@/hooks/useImagePreload.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
@@ -21,11 +22,6 @@ type MoviePageProps = {
   onAddToPersonalList?: () => void;
 };
 
-const POSTER_MIN_WIDTH_PERCENT = 60;
-const POSTER_MAX_WIDTH_PERCENT = 100;
-const POSTER_MIN_RADIUS = 12;
-const POSTER_SCROLL_RANGE = 240;
-
 export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPersonalList }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
@@ -33,7 +29,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     ? source.movie.mediaType
     : (source.movie.tmdbMediaType ?? "movie");
   const { details } = useTmdbMovieDetails(tmdbId, mediaType);
-  const posterRef = useRef<HTMLDivElement | null>(null);
   const descRef = useRef<HTMLParagraphElement | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const [descClamped, setDescClamped] = useState(false);
@@ -47,37 +42,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const tagline = details?.tagline ?? null;
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
+  const posterReady = useImagesPreload([posterUrl]);
 
   const alreadyRated = source.kind === "group"
     ? source.movie.ratings.some((r) => r.user.id === currentUserId)
     : source.kind === "personal" && source.movie.rating != null;
-
-  useEffect(() => {
-    const posterEl = posterRef.current;
-    if (!posterEl) return;
-    const scrollEl = posterEl.closest(".movie-list__add__movie");
-    if (!scrollEl) return;
-
-    let ticking = false;
-    const applyProgress = () => {
-      ticking = false;
-      const progress = Math.min(1, Math.max(0, scrollEl.scrollTop / POSTER_SCROLL_RANGE));
-      const scale = (POSTER_MIN_WIDTH_PERCENT
-        + (POSTER_MAX_WIDTH_PERCENT - POSTER_MIN_WIDTH_PERCENT) * progress) / 100;
-      posterEl.style.transform = `scale(${scale})`;
-      posterEl.style.borderRadius = `${POSTER_MIN_RADIUS * (1 - progress)}px`;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(applyProgress);
-    };
-
-    applyProgress();
-    scrollEl.addEventListener("scroll", onScroll, { passive: true });
-    return () => scrollEl.removeEventListener("scroll", onScroll);
-  }, [posterUrl]);
 
   useLayoutEffect(() => {
     const el = descRef.current;
@@ -85,12 +54,24 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     setDescClamped(el.scrollHeight > el.clientHeight + 1);
   }, [description]);
 
+  if (!posterReady) {
+    return (
+      <div className="movie-page movie-page--loading">
+        <PageBackButton onBack={onBack} />
+        <Loader size={28} className="movie-page__spinner" />
+      </div>
+    );
+  }
+
   return (
     <div className="movie-page">
       <PageBackButton onBack={onBack} />
       {posterUrl && (
-        <div className="movie-page__poster" ref={posterRef}>
-          <img src={posterUrl} alt={title} decoding="async" />
+        <div className="movie-page__poster-wrap">
+          <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${posterUrl})` }} />
+          <div className="movie-page__poster">
+            <img src={posterUrl} alt={title} decoding="async" />
+          </div>
         </div>
       )}
       <div className="movie-page__header">
