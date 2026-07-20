@@ -60,8 +60,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     setPosterErrored(false);
   }, [posterUrl]);
 
-  const showFallbackPoster = !posterUrl || posterErrored;
-  const displayPosterUrl = showFallbackPoster ? noPosterFallback : posterUrl;
+  const posterPending = source.kind !== "tmdb" && detailsLoading;
+  const showFallbackPoster = !posterPending && (!posterUrl || posterErrored);
+  const displayPosterUrl = showFallbackPoster ? noPosterFallback : (posterUrl ?? noPosterFallback);
   const posterReady = showFallbackPoster || posterLoaded;
 
   const alreadyRated = source.kind === "group"
