@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Loader, Star, Tv, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
@@ -43,7 +43,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const title = source.movie.title;
   const description = source.kind === "tmdb" ? source.movie.overview : source.movie.description;
   const posterUrl = source.kind === "tmdb" ? source.movie.posterUrl : (details?.posterUrl ?? null);
-  const displayPosterUrl = posterUrl ?? noPosterFallback;
   const tmdbScore = source.kind === "tmdb" ? source.movie.tmdbScore : details?.tmdbScore;
   const releaseYear = source.kind === "tmdb" ? source.movie.releaseYear : details?.releaseYear;
   const groupRating = source.kind === "group" ? source.movie.averageRating : null;
@@ -53,8 +52,17 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const genres = details?.genres ?? [];
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
-  const [loadedPosters, setLoadedPosters] = useState<Record<string, boolean>>({});
-  const posterLoaded = !!loadedPosters[displayPosterUrl];
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const [posterErrored, setPosterErrored] = useState(false);
+
+  useEffect(() => {
+    setPosterLoaded(false);
+    setPosterErrored(false);
+  }, [posterUrl]);
+
+  const showFallbackPoster = !posterUrl || posterErrored;
+  const displayPosterUrl = showFallbackPoster ? noPosterFallback : posterUrl;
+  const posterReady = showFallbackPoster || posterLoaded;
 
   const alreadyRated = source.kind === "group"
     ? source.movie.ratings.some((r) => r.user.id === currentUserId)
@@ -79,13 +87,14 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
         <PageBackButton onBack={onBack} />
         <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${displayPosterUrl})` }} />
         <div className="movie-page__poster">
+          {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}
           <img
             src={displayPosterUrl}
             alt={title}
             decoding="async"
-            className={posterLoaded ? "movie-page__poster-img--loaded" : ""}
-            onLoad={() => setLoadedPosters((prev) => ({ ...prev, [displayPosterUrl]: true }))}
-            onError={() => setLoadedPosters((prev) => ({ ...prev, [displayPosterUrl]: true }))}
+            className={posterReady ? "movie-page__poster-img--loaded" : ""}
+            onLoad={() => setPosterLoaded(true)}
+            onError={() => setPosterErrored(true)}
           />
         </div>
       </div>

@@ -592,6 +592,12 @@
   opacity: 1;
 }
 
+.movie-page__poster-skeleton {
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+}
+
 .movie-page__header {
   display: flex;
   flex-direction: column;
