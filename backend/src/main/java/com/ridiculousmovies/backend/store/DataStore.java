@@ -10,6 +10,8 @@ import com.ridiculousmovies.backend.domain.UserRole;
 import com.ridiculousmovies.backend.domain.PersonalMovie;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -40,14 +42,20 @@ public class DataStore implements AppRepository {
   private Map<String, PersonalMovie> personalMoviesById;
   private Map<String, Long> groupChatIdsMap = new LinkedHashMap<>();
 
+  private final Instant statsCutoffDate;
+
   public DataStore(
       ObjectMapper objectMapper,
       StorageClient driveClient,
-      @Value("${google.drive.file-id:}") String fileId
+      @Value("${google.drive.file-id:}") String fileId,
+      @Value("${stats.cutoff-date:}") String statsCutoffDate
   ) {
     this.objectMapper = objectMapper;
     this.driveClient = driveClient;
     this.fileId = fileId;
+    this.statsCutoffDate = statsCutoffDate == null || statsCutoffDate.isBlank()
+        ? null
+        : LocalDate.parse(statsCutoffDate).atStartOfDay(ZoneOffset.UTC).toInstant();
   }
 
   public void initialize(String json) {
@@ -167,6 +175,11 @@ public class DataStore implements AppRepository {
     }
   }
 
+  private boolean isAfterStatsCutoff(Movie m) {
+    return statsCutoffDate == null || m.getCreatedAt() == null
+        || !m.getCreatedAt().isBefore(statsCutoffDate);
+  }
+
   public List<Object[]> userStatsByGroup(String groupId, boolean ascending) {
     lock.readLock().lock();
     try {
@@ -174,6 +187,7 @@ public class DataStore implements AppRepository {
           .filter(u -> groupId.equals(u.getUserGroup().getId()))
           .map(u -> {
             List<BigDecimal> scores = moviesById.values().stream()
+                .filter(this::isAfterStatsCutoff)
                 .flatMap(m -> m.getRatings().stream())
                 .filter(r -> u.getId().equals(r.getUser().getId()))
                 .map(Rating::getScore)
@@ -304,6 +318,7 @@ public class DataStore implements AppRepository {
       if (best) cmp = cmp.reversed();
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
+          .filter(this::isAfterStatsCutoff)
           .filter(m -> !m.getRatings().isEmpty())
           .sorted(cmp.thenComparing(Movie::getCreatedAt,
               Comparator.nullsLast(Comparator.reverseOrder())))
@@ -325,6 +340,7 @@ public class DataStore implements AppRepository {
     try {
       List<Movie> groupMovies = moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
+          .filter(this::isAfterStatsCutoff)
           .toList();
 
       return usersById.values().stream()
