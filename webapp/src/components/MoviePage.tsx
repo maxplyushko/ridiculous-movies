@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Loader, Star, Tv, User, UserStar } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Loader, Star, Tv, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
@@ -23,6 +23,12 @@ type MoviePageProps = {
   onAddToPersonalList?: () => void;
 };
 
+function formatDuration(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPersonalList }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
@@ -44,6 +50,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const groupRating = source.kind === "group" ? source.movie.averageRating : null;
   const tagline = details?.tagline ?? null;
   const numberOfSeasons = details?.numberOfSeasons ?? null;
+  const durationMinutes = details?.durationMinutes ?? null;
   const genres = details?.genres ?? [];
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
@@ -95,6 +102,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
             </span>
             {mediaType === "tv" && numberOfSeasons != null && (
               <span>{t('moviePage.seasons', { count: numberOfSeasons })}</span>
+            )}
+            {durationMinutes != null && (
+              <span>
+                <Clock size={14} />
+                {mediaType === "tv" ? t('moviePage.episodeDuration', { count: durationMinutes }) : formatDuration(durationMinutes)}
+              </span>
             )}
             {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
             {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}

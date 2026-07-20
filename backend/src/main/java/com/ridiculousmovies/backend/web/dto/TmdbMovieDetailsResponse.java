@@ -12,6 +12,7 @@ public record TmdbMovieDetailsResponse(
     String posterUrl,
     String director,
     Integer numberOfSeasons,
+    Integer durationMinutes,
     List<String> genres,
     List<TmdbCastMemberResponse> cast
 ) {}

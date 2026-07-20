@@ -40,6 +40,8 @@ public interface AppRepository {
 
   void saveMovie(Movie movie);
 
+  Movie rateMovie(String movieId, String groupId, String raterId, java.math.BigDecimal score);
+
   void deleteMovieById(String id);
 
   List<PersonalMovie> findPersonalMoviesForUser(String userId);

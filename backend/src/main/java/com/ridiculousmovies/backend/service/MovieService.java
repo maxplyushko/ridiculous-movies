@@ -9,6 +9,7 @@ import com.ridiculousmovies.backend.web.dto.CreateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.MovieGroupResponse;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
 import com.ridiculousmovies.backend.web.dto.MovieResponse;
+import com.ridiculousmovies.backend.web.dto.RateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.RatingInputDto;
 import com.ridiculousmovies.backend.web.dto.UpdateMovieRequest;
 import java.math.BigDecimal;
@@ -126,6 +127,20 @@ public class MovieService {
     replaceRatings(groupId, movie, req.ratings());
 
     dataStore.saveMovie(movie);
+    return movieMapper.toResponse(movie, groupId);
+  }
+
+  public MovieResponse rateMovie(String userId, String movieId, RateMovieRequest req) {
+    AppUser actor = authService.requireUser(userId);
+    String groupId = actor.getUserGroup().getId();
+    BigDecimal score = req.score();
+    if (score == null || score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(MAX_SCORE) > 0) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "score must be between 0 and 10");
+    }
+    Movie movie = dataStore.rateMovie(movieId, groupId, userId, score);
+    if (movie == null) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found");
+    }
     return movieMapper.toResponse(movie, groupId);
   }
 

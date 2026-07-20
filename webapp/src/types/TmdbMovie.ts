@@ -20,6 +20,7 @@ export type TmdbMovieDetails = TmdbMovie & {
   director: string | null;
   tagline: string | null;
   numberOfSeasons: number | null;
+  durationMinutes: number | null;
   genres: string[];
   cast: TmdbCastMember[];
 };

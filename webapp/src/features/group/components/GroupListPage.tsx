@@ -8,7 +8,7 @@ import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { RoundSection } from "./RoundSection.tsx";
 import { RandomizerDialog } from "./RandomizerDialog.tsx";
 import AddMoviePage from "./AddMoviePage.tsx";
-import { deleteMovie, editMovie, fetchMovieGroups } from "../api/movies.ts";
+import { deleteMovie, fetchMovieGroups, rateMovie } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -261,16 +261,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
           saveLabel={t('personalList.btnSave')}
           onCancel={() => setRatingMovie(null)}
           onSave={async (score) => {
-            const existingRatings = ratingMovie.ratings.map((r) => ({ userId: r.user.id, score: r.score }));
-            await editMovie(ratingMovie.id, {
-              title: ratingMovie.title,
-              description: ratingMovie.description,
-              ownerId: ratingMovie.owner.id,
-              round: ratingMovie.round,
-              ratings: [...existingRatings, { userId: currentUserId, score }],
-              tmdbId: ratingMovie.tmdbId,
-              tmdbMediaType: ratingMovie.tmdbMediaType,
-            });
+            await rateMovie(ratingMovie.id, score);
             setRatingMovie(null);
             loadMovieGroups();
           }}

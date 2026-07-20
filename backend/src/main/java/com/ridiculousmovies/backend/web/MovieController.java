@@ -4,6 +4,7 @@ import com.ridiculousmovies.backend.service.MovieService;
 import com.ridiculousmovies.backend.web.dto.CreateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.MovieGroupsResponse;
 import com.ridiculousmovies.backend.web.dto.MovieResponse;
+import com.ridiculousmovies.backend.web.dto.RateMovieRequest;
 import com.ridiculousmovies.backend.web.dto.UpdateMovieRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +63,15 @@ public class MovieController {
       @RequestBody UpdateMovieRequest req
   ) {
     return movieService.updateMovie(userId, id, req);
+  }
+
+  @PutMapping("/{id}/rating")
+  public MovieResponse rate(
+      @RequestHeader("User-Id") String userId,
+      @PathVariable String id,
+      @RequestBody RateMovieRequest req
+  ) {
+    return movieService.rateMovie(userId, id, req);
   }
 
   @DeleteMapping("/{id}")

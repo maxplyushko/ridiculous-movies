@@ -121,6 +121,7 @@
     "movie": "Фильм",
     "tvShow": "Сериал",
     "seasons": "Сезонов: {{count}}",
+    "episodeDuration": "{{count}} мин",
     "director": "Режиссёр",
     "creator": "Автор",
     "cast": "В ролях",

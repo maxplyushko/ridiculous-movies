@@ -120,6 +120,7 @@ public class TmdbClient {
                 result.posterPath() != null ? IMAGE_BASE + result.posterPath() : null,
                 director,
                 null,
+                result.runtime(),
                 mapGenres(result.genres()),
                 cast
             ));
@@ -154,12 +155,20 @@ public class TmdbClient {
                 result.posterPath() != null ? IMAGE_BASE + result.posterPath() : null,
                 creator,
                 result.numberOfSeasons(),
+                averageEpisodeRuntime(result.episodeRunTime()),
                 mapGenres(result.genres()),
                 cast
             ));
         } catch (RestClientException e) {
             return Optional.empty();
         }
+    }
+
+    private static Integer averageEpisodeRuntime(List<Integer> episodeRunTime) {
+        if (episodeRunTime == null || episodeRunTime.isEmpty()) {
+            return null;
+        }
+        return (int) Math.round(episodeRunTime.stream().mapToInt(Integer::intValue).average().orElse(0));
     }
 
     private static List<String> mapGenres(List<TmdbGenre> genres) {

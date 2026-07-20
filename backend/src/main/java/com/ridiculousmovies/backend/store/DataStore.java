@@ -493,6 +493,37 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public Movie rateMovie(String movieId, String groupId, String raterId, BigDecimal score) {
+    lock.writeLock().lock();
+    try {
+      Movie movie = moviesById.get(movieId);
+      if (movie == null || !groupId.equals(movie.getOwner().getUserGroup().getId())) {
+        return null;
+      }
+      AppUser rater = usersById.get(raterId);
+      if (rater == null) {
+        return null;
+      }
+      Rating rating = movie.getRatings().stream()
+          .filter(r -> raterId.equals(r.getUser().getId()))
+          .findFirst()
+          .orElse(null);
+      if (rating == null) {
+        rating = new Rating();
+        rating.setId(UUID.randomUUID().toString());
+        rating.setMovie(movie);
+        rating.setUser(rater);
+        movie.getRatings().add(rating);
+      }
+      rating.setScore(score);
+      movie.setUpdatedAt(Instant.now());
+      persist();
+      return movie;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
   public void deleteMovieById(String id) {
     lock.writeLock().lock();
     try {

@@ -121,6 +121,7 @@
     "movie": "Movie",
     "tvShow": "TV Show",
     "seasons": "{{count}} seasons",
+    "episodeDuration": "{{count}} min",
     "director": "Director",
     "creator": "Creator",
     "cast": "Cast",

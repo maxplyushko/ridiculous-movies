@@ -46,3 +46,7 @@ export async function editMovie(movieId: string, data: MovieFormPayload): Promis
 export async function deleteMovie(movieId: string): Promise<void> {
   return apiFetch<void>(`${BASE}/${movieId}`, {method: "DELETE"});
 }
+
+export async function rateMovie(movieId: string, score: number): Promise<Movie> {
+  return apiFetch<Movie>(`${BASE}/${movieId}/rating`, {method: "PUT", body: {score}});
+}
