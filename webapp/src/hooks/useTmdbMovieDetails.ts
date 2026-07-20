@@ -12,7 +12,7 @@ function cacheKey(tmdbId: number, mediaType: TmdbMediaType): string {
 export function useTmdbMovieDetails(tmdbId: number | undefined | null, mediaType: TmdbMediaType = "movie") {
   const cached = tmdbId != null ? detailsCache.get(cacheKey(tmdbId, mediaType)) : undefined;
   const [details, setDetails] = useState<TmdbMovieDetails | null>(cached ?? null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(tmdbId != null && !cached);
 
   useEffect(() => {
     if (tmdbId == null) {
