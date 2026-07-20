@@ -1,4 +1,4 @@
-# CLAUDE.md
+/# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -17,6 +17,10 @@ All new features and UI/UX changes must be fully consistent with existing patter
 - **API layer**: all calls through `apiFetch` in `api/client.ts`; new modules follow pattern of `api/movies.ts`
 - **Backend**: new controllers/DTOs follow `MovieController`/`MovieResponse` pattern; storage via `DataStore` with read/write lock + `persist()`
 - **i18n**: all user-visible strings via `useTranslation()` hook; add keys to both `webapp/src/i18n/locales/en.json` and `ru.json`
+
+## Testing
+
+Don't start the backend or frontend dev servers to test changes — user tests UI/UX manually. Verify via build/lint/unit tests only (`npm run build`, `npm run lint`, `./mvnw test`).
 
 ## Commands
 
@@ -71,7 +75,7 @@ npm run lint         # ESLint
 
 **TMDB**: Movie search via TMDB API (`GET /api/tmdb/search?query=`). Proxied through backend to keep the API key server-side. Requires `TMDB_API_KEY` env var.
 
-**Ratings**: Submitted as part of create/update movie — `CreateMovieRequest` and `UpdateMovieRequest` both accept a `ratings` list. No separate ratings endpoint.
+**Ratings**: `CreateMovieRequest`/`UpdateMovieRequest` accept a full `ratings` list (used for movie creation and non-rating edits). Single-user rating submission goes through `PUT /api/movies/{id}/rating` (`RateMovieRequest{score}`) — a dedicated per-user upsert handled entirely inside `DataStore.rateMovie` under one write-lock acquisition, avoiding the lost-update race a full-list replace has under concurrent raters.
 
 **Deployment**: Hosted on Render (free tier). GitHub Actions workflow (`ping-render.yml`) hits the health endpoint every 5 minutes on Thursday evenings to keep the instance warm during movie club sessions.
 
@@ -91,6 +95,7 @@ npm run lint         # ESLint
 | GET | `/api/movies/groups` | List movies grouped by round |
 | POST | `/api/movies` | Create movie (with optional ratings) |
 | PUT | `/api/movies/{id}` | Update movie (with optional ratings) |
+| PUT | `/api/movies/{id}/rating` | Rate a movie (single-user upsert, concurrency-safe) |
 | DELETE | `/api/movies/{id}` | Delete movie (admin or owner) |
 | GET | `/api/personal-list` | List caller's personal watchlist |
 | POST | `/api/personal-list` | Add item to personal watchlist |

@@ -5,7 +5,6 @@ import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
-import { useImagesPreload } from "@/hooks/useImagePreload.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
@@ -54,7 +53,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const genres = details?.genres ?? [];
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
-  const posterReady = useImagesPreload([displayPosterUrl]);
+  const [loadedPosters, setLoadedPosters] = useState<Record<string, boolean>>({});
+  const posterLoaded = !!loadedPosters[displayPosterUrl];
 
   const alreadyRated = source.kind === "group"
     ? source.movie.ratings.some((r) => r.user.id === currentUserId)
@@ -71,15 +71,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     const el = descRef.current;
     if (!el) return;
     setDescClamped(el.scrollHeight > el.clientHeight + 1);
-  }, [description, detailsLoading, posterReady]);
-
-  if (detailsLoading || !posterReady) {
-    return (
-      <div className="movie-page movie-page--loading">
-        <Loader size={28} className="movie-page__spinner" />
-      </div>
-    );
-  }
+  }, [description]);
 
   return (
     <div className="movie-page">
@@ -87,32 +79,52 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
         <PageBackButton onBack={onBack} />
         <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${displayPosterUrl})` }} />
         <div className="movie-page__poster">
-          <img src={displayPosterUrl} alt={title} decoding="async" />
+          <img
+            src={displayPosterUrl}
+            alt={title}
+            decoding="async"
+            className={posterLoaded ? "movie-page__poster-img--loaded" : ""}
+            onLoad={() => setLoadedPosters((prev) => ({ ...prev, [displayPosterUrl]: true }))}
+            onError={() => setLoadedPosters((prev) => ({ ...prev, [displayPosterUrl]: true }))}
+          />
         </div>
       </div>
       <div className="movie-page__header">
         <h1 className="movie-page__title">{title}</h1>
         <div className="movie-page__subhead">
-          {tagline && <p className="movie-item-header__desc">{tagline}</p>}
-          {genres.length > 0 && <p className="movie-page__genres">{genres.join(" · ")}</p>}
-          <div className="movie-page__meta">
-            <span>
-              {mediaType === "tv" ? <Tv size={14} /> : <Clapperboard size={14} />}
-              {mediaType === "tv" ? t('moviePage.tvShow') : t('moviePage.movie')}
-            </span>
-            {mediaType === "tv" && numberOfSeasons != null && (
-              <span>{t('moviePage.seasons', { count: numberOfSeasons })}</span>
-            )}
-            {durationMinutes != null && (
-              <span>
-                <Clock size={14} />
-                {mediaType === "tv" ? t('moviePage.episodeDuration', { count: durationMinutes }) : formatDuration(durationMinutes)}
-              </span>
-            )}
-            {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
-            {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}
-            {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
-          </div>
+          {detailsLoading ? (
+            <div className="movie-page__meta-skeleton">
+              <div className="sk-line movie-page__sk-genres" />
+              <div className="movie-page__meta">
+                <div className="sk-line movie-page__sk-chip" />
+                <div className="sk-line movie-page__sk-chip" />
+                <div className="sk-line movie-page__sk-chip" />
+              </div>
+            </div>
+          ) : (
+            <>
+              {tagline && <p className="movie-item-header__desc">{tagline}</p>}
+              {genres.length > 0 && <p className="movie-page__genres">{genres.join(" · ")}</p>}
+              <div className="movie-page__meta">
+                <span>
+                  {mediaType === "tv" ? <Tv size={14} /> : <Clapperboard size={14} />}
+                  {mediaType === "tv" ? t('moviePage.tvShow') : t('moviePage.movie')}
+                </span>
+                {mediaType === "tv" && numberOfSeasons != null && (
+                  <span>{t('moviePage.seasons', { count: numberOfSeasons })}</span>
+                )}
+                {durationMinutes != null && (
+                  <span>
+                    <Clock size={14} />
+                    {mediaType === "tv" ? t('moviePage.episodeDuration', { count: durationMinutes }) : formatDuration(durationMinutes)}
+                  </span>
+                )}
+                {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
+                {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}
+                {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
+              </div>
+            </>
+          )}
         </div>
       </div>
       {hasActionBlock && <div className="movie-page__divider" />}
@@ -190,7 +202,22 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
           )}
         </div>
       )}
-      {(director || cast.length > 0) && (
+      {detailsLoading && (
+        <div className="movie-page__crew">
+          <div className="movie-page__director-row">
+            <div className="sk-line movie-page__sk-director" />
+          </div>
+          <div className="movie-page__cast-list">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div className="movie-page__cast-item" key={i}>
+                <div className="sk-line movie-page__sk-cast-photo" />
+                <div className="sk-line movie-page__sk-cast-name" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!detailsLoading && (director || cast.length > 0) && (
         <div className="movie-page__crew">
           {director && (
             <div className="movie-page__director-row">
