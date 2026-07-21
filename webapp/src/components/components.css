@@ -596,6 +596,14 @@
   position: absolute;
   inset: 0;
   border-radius: 0;
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    color-mix(in srgb, var(--text-primary) 16%, var(--surface)) 50%,
+    var(--surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.2s ease-in-out infinite;
 }
 
 .movie-page__header {

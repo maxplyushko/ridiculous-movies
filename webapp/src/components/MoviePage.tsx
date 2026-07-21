@@ -60,9 +60,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     setPosterErrored(false);
   }, [posterUrl]);
 
-  const posterPending = source.kind !== "tmdb" && detailsLoading;
-  const showFallbackPoster = !posterPending && (!posterUrl || posterErrored);
-  const displayPosterUrl = showFallbackPoster ? noPosterFallback : (posterUrl ?? noPosterFallback);
+  const posterKnown = source.kind === "tmdb" || !detailsLoading;
+  const showFallbackPoster = posterKnown && (!posterUrl || posterErrored);
+  const displayPosterUrl = showFallbackPoster ? noPosterFallback : posterUrl;
   const posterReady = showFallbackPoster || posterLoaded;
 
   const alreadyRated = source.kind === "group"
@@ -86,17 +86,19 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     <div className="movie-page">
       <div className="movie-page__poster-wrap">
         <PageBackButton onBack={onBack} />
-        <div className="movie-page__poster-backdrop" style={{ backgroundImage: `url(${displayPosterUrl})` }} />
+        <div className="movie-page__poster-backdrop" style={displayPosterUrl ? { backgroundImage: `url(${displayPosterUrl})` } : undefined} />
         <div className="movie-page__poster">
           {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}
-          <img
-            src={displayPosterUrl}
-            alt={title}
-            decoding="async"
-            className={posterReady ? "movie-page__poster-img--loaded" : ""}
-            onLoad={() => setPosterLoaded(true)}
-            onError={() => setPosterErrored(true)}
-          />
+          {displayPosterUrl && (
+            <img
+              src={displayPosterUrl}
+              alt={title}
+              decoding="async"
+              className={posterReady ? "movie-page__poster-img--loaded" : ""}
+              onLoad={() => setPosterLoaded(true)}
+              onError={() => setPosterErrored(true)}
+            />
+          )}
         </div>
       </div>
       <div className="movie-page__header">
