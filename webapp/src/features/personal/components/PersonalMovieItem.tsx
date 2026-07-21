@@ -8,6 +8,7 @@ type PersonalMovieItemProps = {
   movie: PersonalMovie;
   isSwipeOpen: boolean;
   isCelebrating?: boolean;
+  readOnly?: boolean;
   onOpen: (movie: PersonalMovie) => void;
   onEdit: (movie: PersonalMovie) => void;
   onDelete: (movie: PersonalMovie) => void;
@@ -31,6 +32,7 @@ const PersonalMovieItem = ({
   movie,
   isSwipeOpen,
   isCelebrating,
+  readOnly = false,
   onOpen,
   onEdit,
   onDelete,
@@ -91,42 +93,53 @@ const PersonalMovieItem = ({
       className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}${movie.watched ? " personal-item--watched" : ""}`}
       style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
     >
-      <div className="movie-item-management">
-        <button
-          type="button"
-          className="movie-item-management__edit"
-          onClick={() => { closeSwipe(); onEdit(movie); }}
-        >
-          <Pencil size={16} />
-        </button>
-        <button
-          type="button"
-          className="movie-item-management__delete"
-          onClick={() => { closeSwipe(); onDelete(movie); }}
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="movie-item-management">
+          <button
+            type="button"
+            className="movie-item-management__edit"
+            onClick={() => { closeSwipe(); onEdit(movie); }}
+          >
+            <Pencil size={16} />
+          </button>
+          <button
+            type="button"
+            className="movie-item-management__delete"
+            onClick={() => { closeSwipe(); onDelete(movie); }}
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      )}
       <article
         tabIndex={-1}
         className="movie-item"
         aria-label={movie.title}
-        style={{
+        style={readOnly ? undefined : {
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
-        onTransitionEnd={(e) => handleTransitionEnd(e.propertyName)}
-        {...touchHandlers}
+        onTransitionEnd={readOnly ? undefined : (e) => handleTransitionEnd(e.propertyName)}
+        {...(readOnly ? {} : touchHandlers)}
       >
         <div className="movie-item-header personal-item-header" onClick={handleHeaderClick}>
-          <button
-            type="button"
-            className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}${isCelebrating ? " personal-item__checkbox--pop" : ""}`}
-            onClick={handleCheckboxClick}
-            aria-label={movie.watched ? t('personalMovie.markUnwatched') : t('personalMovie.markWatched')}
-          >
-            {movie.watched && <Check size={14} strokeWidth={3} />}
-          </button>
+          {readOnly ? (
+            <span
+              className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}`}
+              aria-hidden="true"
+            >
+              {movie.watched && <Check size={14} strokeWidth={3} />}
+            </span>
+          ) : (
+            <button
+              type="button"
+              className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}${isCelebrating ? " personal-item__checkbox--pop" : ""}`}
+              onClick={handleCheckboxClick}
+              aria-label={movie.watched ? t('personalMovie.markUnwatched') : t('personalMovie.markWatched')}
+            >
+              {movie.watched && <Check size={14} strokeWidth={3} />}
+            </button>
+          )}
           <div className="movie-item-header__left">
             <span className={`movie-item-header__title${movie.watched ? " personal-item__title--watched" : ""}`}>
               {movie.title}

@@ -15,4 +15,5 @@ public class AppUser {
   private String lang;
   private String tmdbLang;
   private String oauthSub;
+  private Boolean personalListPublic;
 }

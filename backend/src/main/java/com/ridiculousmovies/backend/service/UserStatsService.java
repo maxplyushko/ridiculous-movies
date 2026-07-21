@@ -39,6 +39,8 @@ public class UserStatsService {
     String name = (String) row[1];
     Double avg = row[2] == null ? null : ((Number) row[2]).doubleValue();
     long count = ((Number) row[3]).longValue();
-    return new UserStatsResponse(id, name, avg, count);
+    boolean personalListPublic = (Boolean) row[4];
+    Double hostAvg = row[5] == null ? null : ((Number) row[5]).doubleValue();
+    return new UserStatsResponse(id, name, avg, count, personalListPublic, hostAvg);
   }
 }

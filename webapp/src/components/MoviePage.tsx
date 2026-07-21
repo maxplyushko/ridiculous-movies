@@ -6,6 +6,7 @@ import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { AsyncButton } from "@/components/AsyncButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -18,9 +19,11 @@ type MoviePageProps = {
   source: MoviePageSource;
   currentUserId?: string;
   onBack: () => void;
-  onRate?: () => void;
-  onAddToPersonalList?: () => void;
+  onRate?: () => void | Promise<unknown>;
+  onAddToPersonalList?: () => void | Promise<unknown>;
 };
+
+const POSTER_MAX_RETRIES = 2;
 
 function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -54,11 +57,22 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const cast = details?.cast ?? [];
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterErrored, setPosterErrored] = useState(false);
+  const [posterAttempt, setPosterAttempt] = useState(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosterLoaded(false);
     setPosterErrored(false);
+    setPosterAttempt(0);
   }, [posterUrl]);
+
+  const handlePosterError = () => {
+    setPosterAttempt((prev) => {
+      if (prev < POSTER_MAX_RETRIES) return prev + 1;
+      setPosterErrored(true);
+      return prev;
+    });
+  };
 
   const posterKnown = source.kind === "tmdb" || !detailsLoading;
   const showFallbackPoster = posterKnown && (!posterUrl || posterErrored);
@@ -91,12 +105,13 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
           {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}
           {displayPosterUrl && (
             <img
+              key={showFallbackPoster ? "fallback" : `poster-${posterAttempt}`}
               src={displayPosterUrl}
               alt={title}
               decoding="async"
               className={posterReady ? "movie-page__poster-img--loaded" : ""}
               onLoad={() => setPosterLoaded(true)}
-              onError={() => setPosterErrored(true)}
+              onError={handlePosterError}
             />
           )}
         </div>
@@ -143,14 +158,14 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
 
       {source.kind === "tmdb" ? (
         onAddToPersonalList && (
-          <button
+          <AsyncButton
             type="button"
             className="movie-page__add-btn"
-            onClick={() => { hapticTabTap(); onAddToPersonalList(); }}
+            onClick={onAddToPersonalList}
           >
             <Bookmark size={16} />
             {t('moviePage.btnAddToPersonalList')}
-          </button>
+          </AsyncButton>
         )
       ) : (
         <div className="movie-page__app-rating">

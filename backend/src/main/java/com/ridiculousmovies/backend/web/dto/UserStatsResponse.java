@@ -4,7 +4,9 @@ public record UserStatsResponse(
     String id,
     String name,
     Double averageRatingGiven,
-    long ratingCount
+    long ratingCount,
+    boolean personalListPublic,
+    Double averageRatingAsHost
 ) {
 
 }

@@ -1,6 +1,8 @@
 package com.ridiculousmovies.backend.web;
 
+import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.PersonalMovie;
+import com.ridiculousmovies.backend.service.AuthService;
 import com.ridiculousmovies.backend.store.AppRepository;
 import com.ridiculousmovies.backend.web.dto.CreatePersonalMovieRequest;
 import com.ridiculousmovies.backend.web.dto.UpdatePersonalMovieRequest;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,10 +28,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class PersonalListController {
 
   private final AppRepository dataStore;
+  private final AuthService authService;
 
   @GetMapping
   public List<PersonalMovieResponse> list(@RequestHeader("User-Id") String userId) {
     return dataStore.findPersonalMoviesForUser(userId).stream()
+        .map(PersonalMovieResponse::from)
+        .toList();
+  }
+
+  @GetMapping("/user/{targetId}")
+  public List<PersonalMovieResponse> listForUser(
+      @RequestHeader("User-Id") String userId,
+      @PathVariable String targetId
+  ) {
+    AppUser caller = authService.requireUser(userId);
+    authService.assertUserInGroup(targetId, caller.getUserGroup().getId());
+    AppUser target = authService.requireUser(targetId);
+    boolean isPublic = target.getPersonalListPublic() == null || target.getPersonalListPublic();
+    if (!isPublic && !userId.equals(targetId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This list is private");
+    }
+    return dataStore.findPersonalMoviesForUser(targetId).stream()
         .map(PersonalMovieResponse::from)
         .toList();
   }

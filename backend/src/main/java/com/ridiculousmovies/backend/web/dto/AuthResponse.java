@@ -11,7 +11,8 @@ public record AuthResponse(
     String theme,
     String defaultPage,
     String lang,
-    String tmdbLang
+    String tmdbLang,
+    boolean personalListPublic
 ) {
 
   public static AuthResponse from(AppUser user) {
@@ -24,7 +25,8 @@ public record AuthResponse(
         user.getTheme(),
         user.getDefaultPage(),
         user.getLang(),
-        user.getTmdbLang()
+        user.getTmdbLang(),
+        user.getPersonalListPublic() == null || user.getPersonalListPublic()
     );
   }
 }

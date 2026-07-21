@@ -33,14 +33,16 @@ public class UserController {
     return userStatsService.listUsers(userId, sort);
   }
 
-  public record PreferencesRequest(String theme, String defaultPage, String lang, String tmdbLang) {}
+  public record PreferencesRequest(String theme, String defaultPage, String lang, String tmdbLang,
+      Boolean personalListPublic) {}
 
   @PutMapping("/me/preferences")
   public ResponseEntity<Void> savePreferences(
       @RequestHeader("User-Id") String userId,
       @RequestBody PreferencesRequest body
   ) {
-    dataStore.saveUserPreferences(userId, body.theme(), body.defaultPage(), body.lang(), body.tmdbLang());
+    dataStore.saveUserPreferences(userId, body.theme(), body.defaultPage(), body.lang(), body.tmdbLang(),
+        body.personalListPublic());
     return ResponseEntity.noContent().build();
   }
 }

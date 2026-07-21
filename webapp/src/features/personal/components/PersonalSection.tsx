@@ -6,6 +6,7 @@ type PersonalSectionProps = {
   movies: PersonalMovie[];
   openSwipeId: string | null;
   celebratingId: string | null;
+  readOnly?: boolean;
   onOpen: (movie: PersonalMovie) => void;
   onEdit: (movie: PersonalMovie) => void;
   onDelete: (movie: PersonalMovie) => void;
@@ -20,6 +21,7 @@ export function PersonalSection({
   movies,
   openSwipeId,
   celebratingId,
+  readOnly,
   onOpen,
   onEdit,
   onDelete,
@@ -40,6 +42,7 @@ export function PersonalSection({
           movie={movie}
           isSwipeOpen={openSwipeId === movie.id}
           isCelebrating={celebratingId === movie.id}
+          readOnly={readOnly}
           onOpen={onOpen}
           onEdit={onEdit}
           onDelete={onDelete}

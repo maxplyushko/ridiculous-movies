@@ -58,7 +58,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
         <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage onShowStats={() => setCurrentPage("personalStat")} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
-        <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
+        <div hidden={currentPage !== "misc"}><UserPage session={session} onOpenPersonalTab={() => selectTab("personal")} /></div>
       </main>
       <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />

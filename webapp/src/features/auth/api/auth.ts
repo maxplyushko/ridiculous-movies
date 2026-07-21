@@ -10,6 +10,7 @@ export type AuthResponse = {
   defaultPage: "list" | "watchlist" | null;
   lang: string | null;
   tmdbLang: "ru" | "en" | null;
+  personalListPublic: boolean;
 };
 
 export type OAuthLoginResponse = {

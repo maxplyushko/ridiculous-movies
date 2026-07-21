@@ -359,7 +359,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
               onBack={closeMovieView}
               onAddToPersonalList={() => {
                 const movie = tmdbMovieToView;
-                addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
+                return addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
                   .then((added) => { setMovies((prev) => [added, ...prev]); setTmdbMovieToView(null); });
               }}
             />

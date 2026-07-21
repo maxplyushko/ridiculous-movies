@@ -95,18 +95,30 @@
     "btnSaving": "Saving…",
     "btnSave": "Save Changes",
     "sectionLanguage": "Language",
-    "sectionTmdbLang": "TMDB Results"
+    "sectionTmdbLang": "TMDB Results",
+    "sectionPrivacy": "Privacy",
+    "labelPublicList": "My movie list is public"
   },
   "userPage": {
     "headingSettings": "Settings",
     "badgeAdmin": "Admin",
     "badgeMember": "Member",
-    "btnSignOut": "Sign out"
+    "btnSignOut": "Sign out",
+    "sectionMembers": "Group Members",
+    "memberYou": "you",
+    "memberPrivate": "This member's list is private.",
+    "memberEmpty": "This list is empty.",
+    "viewingMember": "{{name}}'s list",
+    "sectionStats": "Group statistics",
+    "statMoviesRated": "Movies rated",
+    "statAvgGiven": "Avg rating given",
+    "statAvgAsHost": "Avg as host",
+    "statHostRank": "Host rank"
   },
   "stats": {
     "podiumBest": "Top 3 best",
     "podiumWorst": "Top 3 worst",
-    "hostsByRating": "Hosts by average rating",
+    "hostsByRating": "Hosts rating",
     "ratingTendencies": "Rating tendencies",
     "tableRater": "Rater",
     "tableAvg": "Avg",

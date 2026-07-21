@@ -18,6 +18,10 @@ export async function fetchPersonalList(): Promise<PersonalMovie[]> {
   return apiFetch<PersonalMovie[]>("/api/personal-list");
 }
 
+export async function fetchPersonalListForUser(userId: string): Promise<PersonalMovie[]> {
+  return apiFetch<PersonalMovie[]>(`/api/personal-list/user/${userId}`);
+}
+
 export async function addPersonalMovie(data: PersonalMoviePayload): Promise<PersonalMovie> {
   return apiFetch<PersonalMovie>("/api/personal-list", { method: "POST", body: data });
 }

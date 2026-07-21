@@ -96,6 +96,7 @@ public class DataStore implements AppRepository {
       u.setLang(r.lang());
       u.setTmdbLang(r.tmdbLang());
       u.setOauthSub(r.oauthSub());
+      u.setPersonalListPublic(r.personalListPublic() == null ? Boolean.TRUE : r.personalListPublic());
       usersById.put(u.getId(), u);
     }
 
@@ -194,7 +195,16 @@ public class DataStore implements AppRepository {
                 .toList();
             Double avg = scores.isEmpty() ? null
                 : scores.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0);
-            return new Object[]{u.getId(), u.getName(), avg, (long) scores.size()};
+            List<BigDecimal> hostScores = moviesById.values().stream()
+                .filter(this::isAfterStatsCutoff)
+                .filter(m -> m.getOwner() != null && u.getId().equals(m.getOwner().getId()))
+                .flatMap(m -> m.getRatings().stream())
+                .map(Rating::getScore)
+                .toList();
+            Double hostAvg = hostScores.isEmpty() ? null
+                : hostScores.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0);
+            return new Object[]{u.getId(), u.getName(), avg, (long) scores.size(),
+                u.getPersonalListPublic() == null ? Boolean.TRUE : u.getPersonalListPublic(), hostAvg};
           })
           .collect(Collectors.toList());
       Comparator<Object[]> cmp = Comparator.comparing(
@@ -432,7 +442,8 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public void saveUserPreferences(String userId, String theme, String defaultPage, String lang, String tmdbLang) {
+  public void saveUserPreferences(String userId, String theme, String defaultPage, String lang, String tmdbLang,
+      Boolean personalListPublic) {
     lock.writeLock().lock();
     try {
       AppUser u = usersById.get(userId);
@@ -441,6 +452,7 @@ public class DataStore implements AppRepository {
       if (defaultPage != null) u.setDefaultPage(defaultPage);
       if (lang != null) u.setLang(lang);
       if (tmdbLang != null) u.setTmdbLang(tmdbLang);
+      if (personalListPublic != null) u.setPersonalListPublic(personalListPublic);
       persist();
     } finally {
       lock.writeLock().unlock();
@@ -565,7 +577,7 @@ public class DataStore implements AppRepository {
     data.setUsers(usersById.values().stream()
         .map(u -> new AppData.UserRecord(u.getId(), u.getName(),
             u.getUserGroup().getName(), u.getRole().getName(), u.getTheme(), u.getDefaultPage(),
-            u.getLang(), u.getTmdbLang(), u.getOauthSub()))
+            u.getLang(), u.getTmdbLang(), u.getOauthSub(), u.getPersonalListPublic()))
         .toList());
     data.setMovies(moviesById.values().stream()
         .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(),

@@ -1575,6 +1575,10 @@
   animation: page-loader-spin 1s linear infinite;
 }
 
+.async-btn__spinner {
+  animation: page-loader-spin 0.8s linear infinite;
+}
+
 .tmdb-movie-item {
   all: unset;
   -webkit-tap-highlight-color: transparent;

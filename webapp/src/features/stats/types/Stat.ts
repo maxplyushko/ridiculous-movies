@@ -11,6 +11,7 @@ export type UserStats = {
   name: string;
   averageRatingGiven: number | null;
   ratingCount: number;
+  averageRatingAsHost: number | null;
 };
 
 export type UserHostPreference = {
