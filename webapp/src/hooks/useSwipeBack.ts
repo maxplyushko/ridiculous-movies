@@ -34,6 +34,7 @@ export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
       startY = touch.clientY;
       tracking = true;
       directionLocked = false;
+      e.stopPropagation();
     };
 
     const onTouchMove = (e: TouchEvent) => {

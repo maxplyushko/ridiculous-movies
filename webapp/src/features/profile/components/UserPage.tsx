@@ -13,6 +13,7 @@ import { AsyncButton } from "@/components/AsyncButton.tsx";
 import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import i18n from "@/lib/i18n/index.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
 import MemberListPage from "@/features/personal/components/MemberListPage.tsx";
@@ -43,12 +44,6 @@ function ProfileView({ session, onSettings, onOpenPersonalTab, onOpenMember }: R
         .findIndex((u) => u.id === session.userId) + 1
     : 0;
 
-  const handleLogout = () => {
-    hapticTabTap();
-    tokenStore.clear();
-    window.location.reload();
-  };
-
   return (
     <section className="user-page">
       <div className="user-page__hero">
@@ -61,10 +56,6 @@ function ProfileView({ session, onSettings, onOpenPersonalTab, onOpenMember }: R
         <div className="user-page__identity">
           <div className="user-page__identity-head">
             <h1 className="user-page__name">{session.userName}</h1>
-            <button type="button" className="user-page__logout-btn" onClick={handleLogout}>
-              <LogOut size={15} />
-              {t('userPage.btnSignOut')}
-            </button>
           </div>
           <p className="user-page__subtitle">
             <span className={`user-page__role-badge user-page__role-badge--${session.role}`}>
@@ -163,9 +154,35 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
     || selectedLang !== persistedLang || selectedTmdbLang !== persistedTmdbLang
     || isPublic !== persistedPublic;
 
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const handleLogout = () => {
+    hapticTabTap();
+    tokenStore.clear();
+    window.location.reload();
+  };
+
   return (
     <section className="user-page">
       <PageBackButton onBack={onBack} />
+      <button
+        type="button"
+        className="user-page__logout-btn user-page__logout-circle"
+        onClick={() => { hapticTabTap(); setConfirmingLogout(true); }}
+        aria-label={t('userPage.btnSignOut')}
+      >
+        <LogOut size={18} />
+      </button>
+      {confirmingLogout && (
+        <ConfirmDialog
+          message={t('userPage.confirmLogout')}
+          error={null}
+          isLoading={false}
+          cancelLabel={t('userPage.btnNo')}
+          confirmLabel={t('userPage.btnYes')}
+          onCancel={() => setConfirmingLogout(false)}
+          onConfirm={handleLogout}
+        />
+      )}
       <h2 className="page-title">{t('userPage.headingSettings')}</h2>
 
       <div className="user-page__section">
