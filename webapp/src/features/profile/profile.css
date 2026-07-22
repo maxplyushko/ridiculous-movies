@@ -455,26 +455,26 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   min-height: 2.5rem;
   margin-bottom: 0.25rem;
 }
 
 .user-page__settings-header .page-back-btn {
+  position: absolute;
+  left: 0;
   align-self: center;
 }
 
 .user-page__settings-header .page-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   margin: 0;
 }
 
 .user-page__settings-header .user-page__logout-circle {
-  position: static;
+  position: absolute;
   top: auto;
-  right: auto;
+  right: 0;
 }
 
 .user-page__field-label {

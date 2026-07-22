@@ -34,8 +34,10 @@ const PersonalStatPage = ({ active, onBack }: PersonalStatPageProps) => {
 
   return (
     <section className="stat-page" ref={setSectionEl}>
-      <PageBackButton onBack={onBack} active={active} />
-      <h1 className="page-title">{t('groupList.labelStatistics')}</h1>
+      <div className="page-header">
+        <PageBackButton onBack={onBack} active={active} />
+        <h1 className="page-title">{t('groupList.labelStatistics')}</h1>
+      </div>
       <div className="personal-stat__grid">
         <div className="personal-stat__card">
           <span className="personal-stat__value">{toWatch}</span>
