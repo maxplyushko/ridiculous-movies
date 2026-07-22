@@ -382,7 +382,7 @@
 }
 
 .user-page__member-row--tremble {
-  animation: user-page-row-tremble 0.1s linear 0s 10;
+  animation: user-page-row-tremble 0.1s linear 0s 6;
 }
 
 @keyframes user-page-row-tremble {

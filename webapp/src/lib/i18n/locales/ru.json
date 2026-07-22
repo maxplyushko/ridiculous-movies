@@ -149,10 +149,10 @@
     "expand": "Показать больше",
     "collapse": "Свернуть",
     "btnRate": "Оценить фильм",
-    "alsoInWatchlist_one": "Уже в списке у {{names}}",
-    "alsoInWatchlist_few": "Уже в списках у {{names}}",
-    "alsoInWatchlist_many": "Уже в списках у {{names}}",
-    "alsoInWatchlist_other": "Уже в списках у {{names}}",
+    "alsoInWatchlist_one": "Уже в списке у",
+    "alsoInWatchlist_few": "Уже в списках у",
+    "alsoInWatchlist_many": "Уже в списках у",
+    "alsoInWatchlist_other": "Уже в списках у",
     "btnAddToPersonalList": "Добавить в личный список"
   },
   "signIn": {

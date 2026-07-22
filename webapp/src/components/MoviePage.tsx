@@ -173,8 +173,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
           <>
             {addedByMembers.length > 0 && (
               <p className="movie-page__added-by">
-                <User size={16} />
-                {t('moviePage.alsoInWatchlist', { names: addedByMembers.join(", "), count: addedByMembers.length })}
+                <span>{t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}</span>
+                {addedByMembers.map((name, i) => (
+                  <span key={i} className="movie-page__added-by-name">
+                    <User size={14} />{name}{i < addedByMembers.length - 1 ? "," : ""}
+                  </span>
+                ))}
               </p>
             )}
             <AsyncButton

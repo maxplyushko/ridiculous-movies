@@ -150,8 +150,8 @@
     "expand": "Show more",
     "collapse": "Show less",
     "btnRate": "Rate the movie",
-    "alsoInWatchlist_one": "Already in {{names}}'s watchlist",
-    "alsoInWatchlist_other": "Already in the watchlist of {{names}}",
+    "alsoInWatchlist_one": "Already in the watchlist of",
+    "alsoInWatchlist_other": "Already in the watchlists of",
     "btnAddToPersonalList": "Add to personal list"
   },
   "signIn": {

@@ -29,7 +29,7 @@ export function MemberProfileView({ member, groupName, stats, onBack, onOpenList
     setTrembling(true);
     setShowRestricted(true);
     timers.current = [
-      window.setTimeout(() => setTrembling(false), 1000),
+      window.setTimeout(() => setTrembling(false), 600),
       window.setTimeout(() => setShowRestricted(false), 3000),
     ];
   };
