@@ -173,6 +173,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
           <>
             {addedByMembers.length > 0 && (
               <p className="movie-page__added-by">
+                <User size={16} />
                 {t('moviePage.alsoInWatchlist', { names: addedByMembers.join(", "), count: addedByMembers.length })}
               </p>
             )}
