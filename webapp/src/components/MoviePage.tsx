@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Loader, Star, Tv, User, UserStar } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Loader, Star, Trash2, Tv, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
@@ -22,6 +22,7 @@ type MoviePageProps = {
   onBack: () => void;
   onRate?: () => void | Promise<unknown>;
   onAddToPersonalList?: () => void | Promise<unknown>;
+  onDelete?: () => void | Promise<unknown>;
 };
 
 const POSTER_MAX_RETRIES = 2;
@@ -32,7 +33,7 @@ function formatDuration(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPersonalList }: Readonly<MoviePageProps>) {
+export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPersonalList, onDelete }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
@@ -221,13 +222,25 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
             )
           )}
           {onRate && !alreadyRated && (
-            <button
-              type="button"
-              className="movie-item-details__rate-btn"
-              onClick={() => { hapticTabTap(); onRate(); }}
-            >
-              {t('moviePage.btnRate')}
-            </button>
+            <div className="movie-page__rate-row">
+              <button
+                type="button"
+                className="movie-item-details__rate-btn"
+                onClick={() => { hapticTabTap(); onRate(); }}
+              >
+                {t('moviePage.btnRate')}
+              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  className="movie-page__delete-btn"
+                  aria-label={t('moviePage.btnRemoveFromList')}
+                  onClick={() => { hapticTabTap(); onDelete(); }}
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
+            </div>
           )}
           {onAddToPersonalList && (
             <AsyncButton

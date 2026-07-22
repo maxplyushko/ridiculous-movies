@@ -198,7 +198,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
             movieGroup={group}
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
-            onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
+            onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
             onEdit={handleEdit}
             onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
             onSwipeOpen={(id) => setOpenSwipeId(id)}

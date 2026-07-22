@@ -149,11 +149,13 @@
     "expand": "Показать больше",
     "collapse": "Свернуть",
     "btnRate": "Оценить фильм",
-    "alsoInWatchlist_one": "Уже в списке у",
-    "alsoInWatchlist_few": "Уже в списках у",
-    "alsoInWatchlist_many": "Уже в списках у",
-    "alsoInWatchlist_other": "Уже в списках у",
-    "btnAddToPersonalList": "Добавить в личный список"
+    "alsoInWatchlist_one": "В списке у",
+    "alsoInWatchlist_few": "В списках у",
+    "alsoInWatchlist_many": "В списках у",
+    "alsoInWatchlist_other": "В списках у",
+    "btnAddToPersonalList": "Добавить в личный список",
+    "btnRemoveFromList": "Убрать из списка",
+    "confirmRemove": "Убрать фильм из вашего списка?"
   },
   "signIn": {
     "heading": "Дурацкие фильмы",

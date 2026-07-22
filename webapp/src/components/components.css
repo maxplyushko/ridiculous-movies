@@ -501,6 +501,34 @@
   display: block;
 }
 
+.movie-page__rate-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.movie-page__rate-row .movie-item-details__rate-btn {
+  flex: 1;
+}
+
+.movie-page__delete-btn {
+  margin-top: 10px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.movie-page__delete-btn:active:not(:disabled) {
+  opacity: 0.8;
+}
+
 .movie-list__add__movie {
   position: absolute;
   inset: 0;

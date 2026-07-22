@@ -28,7 +28,7 @@ function fireWatchedCelebration() {
   confetti({ ...defaults, particleCount: 15, spread: 360, startVelocity: 36, ticks: 50, scalar: 0.55 });
 }
 
-const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>) => {
+const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; onShowStats: () => void }>) => {
   const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
@@ -36,6 +36,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
   const [showForm, setShowForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<PersonalMovie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
+  const [removeFromViewMovie, setRemoveFromViewMovie] = useState<PersonalMovie | null>(null);
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
@@ -62,6 +63,12 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
     queueMicrotask(loadMovies);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const wasActiveRef = useRef(active);
+  useEffect(() => {
+    if (active && !wasActiveRef.current) loadMovies(true);
+    wasActiveRef.current = active;
+  }, [active, loadMovies]);
 
   const closeForm = () => {
     setShowForm(false);
@@ -112,6 +119,23 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
       setMovieToDelete(null);
       setDeleteError(null);
       setIsDeleting(false);
+      loadMovies();
+    } catch (err) {
+      setIsDeleting(false);
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  const executeRemoveFromView = async () => {
+    if (!removeFromViewMovie) return;
+    hapticTabTap();
+    setIsDeleting(true);
+    try {
+      await deletePersonalMovie(removeFromViewMovie.id);
+      setRemoveFromViewMovie(null);
+      setDeleteError(null);
+      setIsDeleting(false);
+      closeMovieView();
       loadMovies();
     } catch (err) {
       setIsDeleting(false);
@@ -251,7 +275,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
+          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -264,7 +288,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { setOpenSwipeId(null); setViewingMovieId(movie.id); }}
+          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -300,6 +324,18 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           confirmLabel={t('personalList.btnDelete')}
           onCancel={cancelDelete}
           onConfirm={executeDelete}
+        />
+      )}
+
+      {removeFromViewMovie && (
+        <ConfirmDialog
+          message={t('moviePage.confirmRemove')}
+          error={deleteError}
+          isLoading={isDeleting}
+          cancelLabel={t('userPage.btnNo')}
+          confirmLabel={t('userPage.btnYes')}
+          onCancel={() => { setRemoveFromViewMovie(null); setDeleteError(null); }}
+          onConfirm={executeRemoveFromView}
         />
       )}
 
@@ -351,6 +387,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
               source={{ kind: "personal", movie: viewingMovie }}
               onBack={closeMovieView}
               onRate={() => setRatingMovie(viewingMovie)}
+              onDelete={() => setRemoveFromViewMovie(viewingMovie)}
             />
           )}
           {tmdbMovieToView && (
@@ -360,7 +397,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
               onAddToPersonalList={() => {
                 const movie = tmdbMovieToView;
                 return addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
-                  .then((added) => { setMovies((prev) => [added, ...prev]); setTmdbMovieToView(null); });
+                  .then((added) => { setMovies((prev) => [added, ...prev]); setViewingMovieId(added.id); setTmdbMovieToView(null); });
               }}
             />
           )}

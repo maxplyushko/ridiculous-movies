@@ -33,7 +33,7 @@ const TmdbSearchSection = ({ query, onOpenMovie, onAddToPersonalList }: TmdbSear
           key={m.id}
           movie={m}
           isSwipeOpen={openSwipeId === m.id}
-          onOpen={onOpenMovie ? () => onOpenMovie(m) : undefined}
+          onOpen={onOpenMovie ? () => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } onOpenMovie(m); } : undefined}
           onSwipeOpen={() => setOpenSwipeId(m.id)}
           onSwipeClose={() => setOpenSwipeId((cur) => cur === m.id ? null : cur)}
           onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== m.id) setOpenSwipeId(null); }}

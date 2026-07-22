@@ -37,12 +37,20 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
 
     const vv = window.visualViewport;
     let onResize: (() => void) | undefined;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
     if (vv) {
       let maxHeight = vv.height;
       onResize = () => {
         maxHeight = Math.max(maxHeight, vv.height);
-        if (vv.height < maxHeight - 100) setKeyboardOpen(true);
-        else if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
+        if (vv.height < maxHeight - 100) {
+          if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; }
+          setKeyboardOpen(true);
+        } else if (!isTextEntry(document.activeElement)) {
+          if (closeTimer) clearTimeout(closeTimer);
+          closeTimer = setTimeout(() => {
+            if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
+          }, 300);
+        }
       };
       vv.addEventListener('resize', onResize);
     }
@@ -50,6 +58,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
       if (vv && onResize) vv.removeEventListener('resize', onResize);
+      if (closeTimer) clearTimeout(closeTimer);
     };
   }, []);
 
@@ -70,7 +79,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
       <main className="app-main">
         <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
-        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage onShowStats={() => setCurrentPage("personalStat")} /></div>
+        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
         <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>

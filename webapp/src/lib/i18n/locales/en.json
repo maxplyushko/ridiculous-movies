@@ -150,9 +150,11 @@
     "expand": "Show more",
     "collapse": "Show less",
     "btnRate": "Rate the movie",
-    "alsoInWatchlist_one": "Already in the watchlist of",
-    "alsoInWatchlist_other": "Already in the watchlists of",
-    "btnAddToPersonalList": "Add to personal list"
+    "alsoInWatchlist_one": "In the watchlist of",
+    "alsoInWatchlist_other": "In the watchlists of",
+    "btnAddToPersonalList": "Add to personal list",
+    "btnRemoveFromList": "Remove from watchlist",
+    "confirmRemove": "Do you want to remove movie from your list?"
   },
   "signIn": {
     "heading": "Ridiculous Movies",
