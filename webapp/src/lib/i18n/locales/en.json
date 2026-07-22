@@ -112,6 +112,7 @@
     "memberPrivate": "This member's list is private.",
     "memberEmpty": "This list is empty.",
     "viewingMember": "{{name}}'s list",
+    "btnShowMovieList": "Show movie list",
     "sectionStats": "Group statistics",
     "statMoviesRated": "Movies rated",
     "statAvgGiven": "Avg rating given",

@@ -64,6 +64,49 @@
   background: linear-gradient(135deg, #5eb6ff 0%, #3390ec 55%, #2a7de1 100%);
 }
 
+.user-page__banner-name {
+  position: absolute;
+  top: 1rem;
+  left: 3.75rem;
+  right: 3.75rem;
+  margin: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.1;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+}
+
+.user-page__banner-firstname,
+.user-page__banner-lastname {
+  max-width: 100%;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-page__banner .page-back-btn {
+  position: absolute;
+  top: 0.875rem;
+  left: 0.875rem;
+  z-index: 2;
+  padding: 0.35rem 0.6rem 0.35rem 0.4rem;
+  border-radius: 100px;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.user-page__banner .page-back-btn:active {
+  background: rgba(0, 0, 0, 0.32);
+}
+
 .user-page__banner-avatar {
   color: rgba(255, 255, 255, 0.96);
   fill: rgba(255, 255, 255, 0.96);
@@ -97,72 +140,30 @@
 .user-page__identity {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.375rem;
   padding-top: 0.875rem;
-}
-
-.user-page__identity-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  width: 100%;
-}
-
-.user-page__name {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .user-page__subtitle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
   margin: 0;
 }
 
-.user-page__subtitle-group {
+.user-page__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.9375rem;
   color: var(--text-secondary);
 }
 
-.user-page__role-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.2rem 0.65rem;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-}
-
-.user-page__role-badge--user {
-  background: rgba(51, 144, 236, 0.12);
-  color: #3390ec;
-}
-
-.user-page__role-badge--admin {
-  background: rgba(236, 72, 153, 0.12);
+.user-page__meta--admin {
   color: #ec4899;
-}
-
-.user-page__role-badge--group {
-  background: rgba(161, 161, 170, 0.15);
-  color: var(--text-secondary);
-}
-
-.user-page__badges {
-  display: flex;
-  gap: 0.375rem;
-  align-items: center;
 }
 
 .user-page__stat-grid {
@@ -319,6 +320,48 @@
 
 .user-page__member-row:active {
   background: var(--border);
+}
+
+.user-page__member-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.user-page__member-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--active-highlight);
+}
+
+.user-page__member-row--self {
+  cursor: default;
+}
+
+.user-page__member-row--self:active {
+  background: none;
+}
+
+.user-page__member-row--locked {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.user-page__member-row--locked:active {
+  background: none;
+}
+
+.user-page__member-row .user-page__row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .user-page__member-note {

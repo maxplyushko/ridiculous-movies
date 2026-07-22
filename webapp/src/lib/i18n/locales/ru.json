@@ -112,6 +112,7 @@
     "memberPrivate": "Список этого участника приватный.",
     "memberEmpty": "Список пуст.",
     "viewingMember": "Список — {{name}}",
+    "btnShowMovieList": "Показать список фильмов",
     "sectionStats": "Статистика группы",
     "statMoviesRated": "Оценено фильмов",
     "statAvgGiven": "Средняя оценка",

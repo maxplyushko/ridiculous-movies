@@ -204,7 +204,8 @@ public class DataStore implements AppRepository {
             Double hostAvg = hostScores.isEmpty() ? null
                 : hostScores.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0);
             return new Object[]{u.getId(), u.getName(), avg, (long) scores.size(),
-                u.getPersonalListPublic() == null ? Boolean.TRUE : u.getPersonalListPublic(), hostAvg};
+                u.getPersonalListPublic() == null ? Boolean.TRUE : u.getPersonalListPublic(), hostAvg,
+                u.getRole().getName()};
           })
           .collect(Collectors.toList());
       Comparator<Object[]> cmp = Comparator.comparing(

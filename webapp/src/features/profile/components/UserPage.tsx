@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../profile.css";
-import { ChevronRight, Clapperboard, Lock, LogOut, Settings, Star, TrendingUp, Trophy, User as UserIcon } from "lucide-react";
+import { ChevronRight, Lock, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { applyColorScheme } from "@/lib/telegram/telegramTheme.ts";
 import { fetchUsers, savePreferences } from "@/features/group/api/users.ts";
@@ -17,115 +17,68 @@ import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
 import MemberListPage from "@/features/personal/components/MemberListPage.tsx";
+import { ProfileHero } from "./ProfileHero.tsx";
+import { ProfileStatGrid } from "./ProfileStatGrid.tsx";
+import { MemberProfileView } from "./MemberProfileView.tsx";
 
-type Props = { session: AuthResponse; onOpenPersonalTab: () => void };
+type Props = { session: AuthResponse };
 
-function ProfileView({ session, onSettings, onOpenPersonalTab, onOpenMember }: Readonly<{
+function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   session: AuthResponse;
+  stats: Stats | null;
   onSettings: () => void;
-  onOpenPersonalTab: () => void;
-  onOpenMember: (id: string, name: string) => void;
+  onOpenMember: (member: User) => void;
 }>) {
   const { t } = useTranslation();
   const [members, setMembers] = useState<User[]>([]);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [lockedNoticeId, setLockedNoticeId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers().then(setMembers).catch(() => setMembers([]));
-    fetchStats().then(setStats).catch(() => setStats(null));
   }, []);
-
-  const selfRating = stats?.usersByRating.find((u) => u.id === session.userId) ?? null;
-  const hostRank = stats && selfRating?.averageRatingAsHost != null
-    ? [...stats.usersByRating]
-        .filter((u) => u.averageRatingAsHost != null)
-        .sort((a, b) => (b.averageRatingAsHost ?? 0) - (a.averageRatingAsHost ?? 0))
-        .findIndex((u) => u.id === session.userId) + 1
-    : 0;
 
   return (
     <section className="user-page">
-      <div className="user-page__hero">
-        <div className="user-page__banner">
+      <ProfileHero
+        name={session.userName}
+        role={session.role}
+        groupName={session.groupName}
+        action={
           <button className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
             <Settings size={24} />
           </button>
-          <UserIcon size={190} strokeWidth={1.25} className="user-page__banner-avatar" />
-        </div>
-        <div className="user-page__identity">
-          <div className="user-page__identity-head">
-            <h1 className="user-page__name">{session.userName}</h1>
-          </div>
-          <p className="user-page__subtitle">
-            <span className={`user-page__role-badge user-page__role-badge--${session.role}`}>
-              {session.role === "admin" ? t('userPage.badgeAdmin') : t('userPage.badgeMember')}
-            </span>
-            <span className="user-page__subtitle-group">{session.groupName}</span>
-          </p>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="user-page__section">
-        <p className="user-page__section-title">{t('userPage.sectionStats')}</p>
-        <div className="user-page__stat-grid">
-          <div className="user-page__stat-tile">
-            <span className="user-page__stat-icon user-page__stat-icon--amber"><Star size={20} /></span>
-            <div className="user-page__stat-body">
-              <span className="user-page__stat-value">{selfRating ? selfRating.ratingCount : "—"}</span>
-              <span className="user-page__stat-label">{t('userPage.statMoviesRated')}</span>
-            </div>
-          </div>
-          <div className="user-page__stat-tile">
-            <span className="user-page__stat-icon user-page__stat-icon--green"><TrendingUp size={20} /></span>
-            <div className="user-page__stat-body">
-              <span className="user-page__stat-value">{selfRating?.averageRatingGiven != null ? selfRating.averageRatingGiven.toFixed(1) : "—"}</span>
-              <span className="user-page__stat-label">{t('userPage.statAvgGiven')}</span>
-            </div>
-          </div>
-          <div className="user-page__stat-tile">
-            <span className="user-page__stat-icon user-page__stat-icon--blue"><Clapperboard size={20} /></span>
-            <div className="user-page__stat-body">
-              <span className="user-page__stat-value">{selfRating?.averageRatingAsHost != null ? selfRating.averageRatingAsHost.toFixed(1) : "—"}</span>
-              <span className="user-page__stat-label">{t('userPage.statAvgAsHost')}</span>
-            </div>
-          </div>
-          <div className="user-page__stat-tile">
-            <span className="user-page__stat-icon user-page__stat-icon--purple"><Trophy size={20} /></span>
-            <div className="user-page__stat-body">
-              <span className="user-page__stat-value">{hostRank > 0 ? `#${hostRank}` : "—"}</span>
-              <span className="user-page__stat-label">{t('userPage.statHostRank')}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ProfileStatGrid userId={session.userId} stats={stats} />
 
       <div className="user-page__section">
         <p className="user-page__section-title">{t('userPage.sectionMembers')}</p>
         <div className="user-page__card">
           {members.map((m) => {
             const isSelf = m.id === session.userId;
-            const locked = !isSelf && !m.personalListPublic;
+            if (isSelf) {
+              return (
+                <div key={m.id} className="user-page__row user-page__member-row user-page__member-row--self">
+                  <span className="user-page__member-main">
+                    <span className="user-page__member-avatar"><UserIcon size={20} /></span>
+                    <span className="user-page__row-label">{m.name} ({t('userPage.memberYou')})</span>
+                  </span>
+                </div>
+              );
+            }
             return (
               <div key={m.id}>
                 <button
                   type="button"
                   className="user-page__row user-page__member-row"
-                  onClick={() => {
-                    hapticTabTap();
-                    if (isSelf) { onOpenPersonalTab(); return; }
-                    if (locked) { setLockedNoticeId((cur) => (cur === m.id ? null : m.id)); return; }
-                    onOpenMember(m.id, m.name);
-                  }}
+                  onClick={() => { hapticTabTap(); onOpenMember(m); }}
                 >
-                  <span className="user-page__row-label">
-                    {m.name}{isSelf ? ` (${t('userPage.memberYou')})` : ""}
+                  <span className="user-page__member-main">
+                    <span className="user-page__member-avatar"><UserIcon size={20} /></span>
+                    <span className="user-page__row-label">{m.name}</span>
                   </span>
-                  {locked ? <Lock size={16} /> : <ChevronRight size={16} />}
+                  {m.personalListPublic ? <ChevronRight size={16} /> : <Lock size={16} />}
                 </button>
-                {lockedNoticeId === m.id && (
-                  <p className="user-page__member-note">{t('userPage.memberPrivate')}</p>
-                )}
               </div>
             );
           })}
@@ -304,23 +257,32 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   );
 }
 
-const UserPage = ({ session, onOpenPersonalTab }: Props) => {
+const UserPage = ({ session }: Props) => {
   const [view, setView] = useState<"profile" | "settings">("profile");
   const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
-  const [viewingMember, setViewingMember] = useState<{ id: string; name: string } | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [viewingMember, setViewingMember] = useState<User | null>(null);
   const [memberOverlayEl, setMemberOverlayEl] = useState<HTMLDivElement | null>(null);
+  const [viewingList, setViewingList] = useState(false);
+  const [listOverlayEl, setListOverlayEl] = useState<HTMLDivElement | null>(null);
   const closeSettings = () => setView("profile");
   const closeMember = () => setViewingMember(null);
+  const closeList = () => setViewingList(false);
   useSwipeBack(closeSettings, overlayEl);
   useSwipeBack(closeMember, memberOverlayEl);
+  useSwipeBack(closeList, listOverlayEl);
+
+  useEffect(() => {
+    fetchStats().then(setStats).catch(() => setStats(null));
+  }, []);
 
   return (
     <>
       <ProfileView
         session={session}
+        stats={stats}
         onSettings={() => setView("settings")}
-        onOpenPersonalTab={onOpenPersonalTab}
-        onOpenMember={(id, name) => setViewingMember({ id, name })}
+        onOpenMember={(member) => { setViewingList(false); setViewingMember(member); }}
       />
       {view === "settings" && (
         <div className="user-page__settings-overlay" ref={setOverlayEl}>
@@ -329,10 +291,21 @@ const UserPage = ({ session, onOpenPersonalTab }: Props) => {
       )}
       {viewingMember && (
         <div className="user-page__settings-overlay" ref={setMemberOverlayEl}>
+          <MemberProfileView
+            member={viewingMember}
+            groupName={session.groupName}
+            stats={stats}
+            onBack={closeMember}
+            onOpenList={() => setViewingList(true)}
+          />
+        </div>
+      )}
+      {viewingMember && viewingList && (
+        <div className="user-page__settings-overlay" ref={setListOverlayEl}>
           <MemberListPage
             targetUserId={viewingMember.id}
             targetName={viewingMember.name}
-            onBack={closeMember}
+            onBack={closeList}
           />
         </div>
       )}

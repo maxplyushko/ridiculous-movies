@@ -6,7 +6,8 @@ public record UserStatsResponse(
     Double averageRatingGiven,
     long ratingCount,
     boolean personalListPublic,
-    Double averageRatingAsHost
+    Double averageRatingAsHost,
+    String role
 ) {
 
 }

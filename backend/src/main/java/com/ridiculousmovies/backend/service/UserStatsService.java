@@ -41,6 +41,7 @@ public class UserStatsService {
     long count = ((Number) row[3]).longValue();
     boolean personalListPublic = (Boolean) row[4];
     Double hostAvg = row[5] == null ? null : ((Number) row[5]).doubleValue();
-    return new UserStatsResponse(id, name, avg, count, personalListPublic, hostAvg);
+    String role = (String) row[6];
+    return new UserStatsResponse(id, name, avg, count, personalListPublic, hostAvg, role);
   }
 }
