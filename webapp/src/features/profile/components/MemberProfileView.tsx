@@ -1,6 +1,7 @@
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Clapperboard, Lock } from "lucide-react";
-import { hapticTabTap } from "@/utils/haptics.ts";
+import { hapticError, hapticTabTap } from "@/utils/haptics.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import type { Stats } from "@/features/stats/types/Stat.ts";
 import type { User } from "@/types/User.ts";
@@ -16,6 +17,22 @@ export function MemberProfileView({ member, groupName, stats, onBack, onOpenList
 }>) {
   const { t } = useTranslation();
   const locked = !member.personalListPublic;
+  const [trembling, setTrembling] = useState(false);
+  const [showRestricted, setShowRestricted] = useState(false);
+  const timers = useRef<number[]>([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+
+  const handleLockedClick = () => {
+    hapticError();
+    timers.current.forEach(clearTimeout);
+    setTrembling(true);
+    setShowRestricted(true);
+    timers.current = [
+      window.setTimeout(() => setTrembling(false), 1000),
+      window.setTimeout(() => setShowRestricted(false), 3000),
+    ];
+  };
 
   return (
     <section className="user-page">
@@ -31,17 +48,27 @@ export function MemberProfileView({ member, groupName, stats, onBack, onOpenList
           <button
             type="button"
             className={`user-page__member-row${locked ? " user-page__member-row--locked" : ""}`}
-            disabled={locked}
             onClick={() => {
-              if (locked) return;
+              if (locked) {
+                handleLockedClick();
+                return;
+              }
               hapticTabTap();
               onOpenList();
             }}
           >
             <span className="user-page__row-label">
-              <Clapperboard size={20} /> {t('userPage.btnShowMovieList')}
+              <Clapperboard size={20} />{" "}
+              <span
+                key={showRestricted ? "restricted" : "default"}
+                className="user-page__row-text user-page__row-text--fade"
+              >
+                {showRestricted ? t('userPage.listRestricted') : t('userPage.btnShowMovieList')}
+              </span>
             </span>
-            {locked ? <Lock size={16} /> : <ChevronRight size={16} />}
+            {locked
+              ? <Lock size={16} className={trembling ? "user-page__lock--tremble" : undefined} />
+              : <ChevronRight size={16} />}
           </button>
         </div>
       </div>

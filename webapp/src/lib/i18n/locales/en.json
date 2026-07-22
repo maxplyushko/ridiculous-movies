@@ -113,6 +113,7 @@
     "memberEmpty": "This list is empty.",
     "viewingMember": "{{name}}'s list",
     "btnShowMovieList": "Show movie list",
+    "listRestricted": "User restricted access to personal list",
     "sectionStats": "Group statistics",
     "statMoviesRated": "Movies rated",
     "statAvgGiven": "Avg rating given",

@@ -113,6 +113,7 @@
     "memberEmpty": "Список пуст.",
     "viewingMember": "Список — {{name}}",
     "btnShowMovieList": "Показать список фильмов",
+    "listRestricted": "Пользователь ограничил доступ к списку",
     "sectionStats": "Статистика группы",
     "statMoviesRated": "Оценено фильмов",
     "statAvgGiven": "Средняя оценка",

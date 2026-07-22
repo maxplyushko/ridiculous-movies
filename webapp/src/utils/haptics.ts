@@ -39,6 +39,9 @@ export const hapticBarGrowTick = () =>
 export const hapticTabTap = () =>
   haptic(() => telegramImpact("light"), () => navigator.vibrate(15));
 
+export const hapticError = () =>
+  haptic(() => telegramNotification("error"), () => navigator.vibrate([40, 30, 40, 30, 40]), triggerIosSwitchHaptic);
+
 export const hapticSpinReveal = () =>
   haptic(() => telegramNotification("success"), () => navigator.vibrate([100, 60, 150]), triggerIosSwitchHaptic);
 
