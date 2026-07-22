@@ -14,9 +14,9 @@ All new features and UI/UX changes must be fully consistent with existing patter
 - **Swipe actions**: reuse `useSwipeGesture` with same `ACTIONS_WIDTH`/`OPEN_THRESHOLD` constants; clicking outside open swipe must close it
 - **CSS**: reuse existing classes (`mlp__*`, `movie-item-*`, `rating-card__*`, etc.) before adding new ones
 - **Icons**: lucide-react only, consistent sizing (`size={30}` nav, `size={20}` cards, `size={16}` inline)
-- **API layer**: all calls through `apiFetch` in `api/client.ts`; new modules follow pattern of `api/movies.ts`
+- **API layer**: all calls through `apiFetch` in `webapp/src/api/client.ts`; feature API modules are colocated under `features/*/api/` (e.g. `features/group/api/movies.ts`) — mirror the nearest existing one
 - **Backend**: new controllers/DTOs follow `MovieController`/`MovieResponse` pattern; storage via `DataStore` with read/write lock + `persist()`
-- **i18n**: all user-visible strings via `useTranslation()` hook; add keys to both `webapp/src/i18n/locales/en.json` and `ru.json`
+- **i18n**: all user-visible strings via `useTranslation()` hook; add keys to both `webapp/src/lib/i18n/locales/en.json` and `ru.json`
 
 ## Testing
 
@@ -63,13 +63,13 @@ npm run lint         # ESLint
 - **Dev** (`@Profile("dev")`): `LocalFileStorageClient` reads/writes `scripts/data.json`
 - **Prod** (`@Profile("prod")`): `GoogleDriveClient` reads/writes a Google Drive file (ID from `GOOGLE_DRIVE_FILE_ID`)
 
-**Frontend API layer** (`webapp/src/api/`): `client.ts` wraps `fetch` — injects `Authorization: Bearer <token>` from localStorage. All API modules call through `apiFetch`. Vite proxies `/api` to the backend in dev.
+**Frontend API layer**: `webapp/src/api/client.ts` wraps `fetch` — injects `Authorization: Bearer <token>` from localStorage. Feature-scoped API modules live under `webapp/src/features/*/api/` and all call through `apiFetch`. Vite proxies `/api` to the backend in dev.
 
 **Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four tabs: Stats, Group List, Personal List, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
 
 **Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items have `watched` boolean and optional `rating`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies.
 
-**i18n**: `react-i18next`, locales in `webapp/src/i18n/locales/`. Language resolved from `AuthResponse.lang`, stored in `i18n-lang` localStorage key. Default `"en"`, fallback `"en"`.
+**i18n**: `react-i18next`, locales in `webapp/src/lib/i18n/locales/`. Language resolved from `AuthResponse.lang`, stored in `i18n-lang` localStorage key. Default `"en"`, fallback `"en"`.
 
 **Telegram bot**: Webhook at `/api/telegram/webhook` (secret-verified). Only handles `/start` — sends a Mini App launch button. Bot only activates when `telegram.bot.token` property is set (`@ConditionalOnProperty`).
 
