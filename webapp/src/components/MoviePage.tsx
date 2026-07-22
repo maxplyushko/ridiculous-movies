@@ -61,15 +61,25 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
 
-  const showAddToList = source.kind === "tmdb" && !!onAddToPersonalList;
   useEffect(() => {
-    if (!showAddToList) return;
+    if (tmdbId == null && !title) return;
     let cancelled = false;
     fetchGroupMembersWhoAdded(tmdbId, title)
       .then((names) => { if (!cancelled) setAddedByMembers(names); })
       .catch(() => { if (!cancelled) setAddedByMembers([]); });
     return () => { cancelled = true; };
-  }, [showAddToList, tmdbId, title]);
+  }, [tmdbId, title]);
+
+  const addedByHint = addedByMembers.length > 0 && (
+    <p className="movie-page__added-by">
+      <span>{t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}</span>
+      {addedByMembers.map((name, i) => (
+        <span key={i} className="movie-page__added-by-name">
+          <User size={14} />{name}{i < addedByMembers.length - 1 ? "," : ""}
+        </span>
+      ))}
+    </p>
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -171,16 +181,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
       {source.kind === "tmdb" ? (
         onAddToPersonalList && (
           <>
-            {addedByMembers.length > 0 && (
-              <p className="movie-page__added-by">
-                <span>{t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}</span>
-                {addedByMembers.map((name, i) => (
-                  <span key={i} className="movie-page__added-by-name">
-                    <User size={14} />{name}{i < addedByMembers.length - 1 ? "," : ""}
-                  </span>
-                ))}
-              </p>
-            )}
+            {addedByHint}
             <AsyncButton
               type="button"
               className="movie-page__add-btn"
@@ -193,6 +194,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
         )
       ) : (
         <div className="movie-page__app-rating">
+          {addedByHint}
           {(source.kind === "group" ? source.movie.ratings.length > 0 : source.movie.rating != null) && (
             <p className="movie-page__section-title">{t('moviePage.ratings')}</p>
           )}
