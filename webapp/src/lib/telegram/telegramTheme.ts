@@ -178,4 +178,7 @@ export function initTelegramWebApp(): void {
   webApp.onEvent?.("themeChanged", applyTelegramTheme);
   webApp.ready();
   webApp.expand();
+  if (webApp.isVersionAtLeast?.("7.7")) {
+    webApp.disableVerticalSwipes?.();
+  }
 }

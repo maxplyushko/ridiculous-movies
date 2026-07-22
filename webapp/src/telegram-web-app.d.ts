@@ -68,6 +68,7 @@ declare global {
 
   interface TelegramWebApp {
     initData?: string;
+    version?: string;
     colorScheme?: "light" | "dark";
     themeParams?: TelegramThemeParams;
     HapticFeedback?: TelegramWebAppHapticFeedback;
@@ -77,6 +78,9 @@ declare global {
 
     ready(): void;
     expand(): void;
+    disableVerticalSwipes?(): void;
+    enableVerticalSwipes?(): void;
+    isVersionAtLeast?(version: string): boolean;
     openLink?(url: string): void;
 
     onEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
