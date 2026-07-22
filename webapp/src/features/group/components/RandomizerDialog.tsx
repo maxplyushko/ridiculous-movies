@@ -163,12 +163,14 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
                 <div className="misc-page__result misc-page__result--inline">
                   {!spinning && final !== null && <FireworkSparks key={resultKey} />}
                   <span className="misc-page__result-label">{spinning ? t('groupList.labelPicking') : t('groupList.labelYourNumber')}</span>
-                  <span
-                    key={spinning ? `spin-${display}` : `result-${resultKey}`}
-                    className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
-                  >
-                    {display}
-                  </span>
+                  <div className={`mlp__reel${spinning ? " mlp__reel--spinning" : ""}`}>
+                    <span
+                      key={spinning ? `spin-${display}` : `result-${resultKey}`}
+                      className={`misc-page__result-number${spinning ? " misc-page__result-number--spinning" : ""}`}
+                    >
+                      {display}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -221,12 +223,14 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
                   <span className="misc-page__result-label">
                     {hostSpinning ? t('groupList.labelPickingHost') : t('groupList.labelNextHost')}
                   </span>
-                  <span
-                    key={hostSpinning ? `spin-${hostDisplay}` : `result-${hostResultKey}`}
-                    className={`misc-page__result-number misc-page__result-number--sm${hostSpinning ? " misc-page__result-number--spinning" : ""}`}
-                  >
-                    {hostDisplay}
-                  </span>
+                  <div className={`mlp__reel mlp__reel--sm${hostSpinning ? " mlp__reel--spinning" : ""}`}>
+                    <span
+                      key={hostSpinning ? `spin-${hostDisplay}` : `result-${hostResultKey}`}
+                      className={`misc-page__result-number misc-page__result-number--sm${hostSpinning ? " misc-page__result-number--spinning" : ""}`}
+                    >
+                      {hostDisplay}
+                    </span>
+                  </div>
                 </div>
               )}
               {!hostSpinning && hostFinal !== null && (
