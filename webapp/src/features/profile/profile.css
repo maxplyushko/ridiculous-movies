@@ -56,7 +56,7 @@
 .user-page__banner {
   position: relative;
   margin: -0.75rem -1rem 0;
-  height: 15rem;
+  height: 12.5rem;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -66,18 +66,20 @@
 
 .user-page__banner-name {
   position: absolute;
-  top: 1rem;
+  top: 0.875rem;
   left: 3.75rem;
   right: 3.75rem;
+  min-height: 2.5rem;
   margin: 0;
   z-index: 1;
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  column-gap: 0.5rem;
+  justify-content: center;
   align-items: center;
   text-align: center;
   line-height: 1.1;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
 }
 
 .user-page__banner-firstname,
@@ -195,6 +197,8 @@
 .user-page__stat-icon--green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
 .user-page__stat-icon--blue { background: rgba(51, 144, 236, 0.15); color: #3390ec; }
 .user-page__stat-icon--purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+.user-page__stat-icon--pink { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+.user-page__stat-icon--gray { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
 
 .user-page__stat-body {
   display: flex;
@@ -208,6 +212,13 @@
   font-weight: 800;
   line-height: 1.1;
   color: var(--text-primary);
+}
+
+.user-page__stat-value--name {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-page__stat-label {
@@ -420,11 +431,43 @@
   border-radius: 50%;
 }
 
+.user-page__settings-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.user-page__settings-header .page-back-btn {
+  align-self: center;
+}
+
+.user-page__settings-header .page-title {
+  flex: 1;
+  margin: 0;
+}
+
+.user-page__settings-header .user-page__logout-circle {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
 .user-page__field-label {
   margin: 0;
   padding: 0.625rem 0.75rem 0;
   font-size: 0.8125rem;
   color: var(--text-secondary);
+}
+
+.user-page__card .user-page__field-label:not(:first-child) {
+  border-top: 1px solid var(--separator);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+:root[data-color-scheme="dark"] .user-page__card .user-page__field-label:not(:first-child) {
+  border-top-color: rgba(255, 255, 255, 0.15);
 }
 
 .user-page__segmented-row {

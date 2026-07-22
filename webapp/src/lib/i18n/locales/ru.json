@@ -117,13 +117,14 @@
     "statMoviesRated": "Оценено фильмов",
     "statAvgGiven": "Средняя оценка",
     "statAvgAsHost": "Средняя как ведущий",
-    "statHostRank": "Ранг ведущего"
+    "statHostRank": "Ранг ведущего",
+    "statFavHost": "Любимый ведущий",
+    "statLeastFavHost": "Нелюбимый ведущий"
   },
   "stats": {
     "podiumBest": "Топ-3 лучших",
     "podiumWorst": "Топ-3 худших",
-    "hostsByRating": "Рейтинг хостов",
-    "ratingTendencies": "Тенденции рейтинга",
+    "hostsByRating": "Средний рейтинг хостов",
     "tableRater": "Оценщик",
     "tableAvg": "СРД",
     "tableMostLoved": "ТОП",

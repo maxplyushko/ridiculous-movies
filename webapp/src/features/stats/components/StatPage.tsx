@@ -4,7 +4,6 @@ import { StatPageSkeleton } from "./StatPageSkeleton.tsx";
 import { fetchStats } from "../api/stats.ts";
 import { MoviePodium } from "./MoviePodium.tsx";
 import { UsersRatingChart } from "./UsersRatingChart.tsx";
-import { UserHostPreferenceChart } from "./UserHostPreferenceChart.tsx";
 import { useAsync } from "@/hooks/useAsync.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
@@ -33,7 +32,7 @@ const StatPage = ({ active, onBack }: StatPageProps) => {
     );
   }
 
-  const { bestMovies, worstMovies, usersByRating, userHostPreferences } = state.data;
+  const { bestMovies, worstMovies, usersByRating } = state.data;
   return (
     <section className="stat-page" ref={setSectionEl}>
       <PageBackButton onBack={onBack} active={active} />
@@ -41,7 +40,6 @@ const StatPage = ({ active, onBack }: StatPageProps) => {
       <MoviePodium title={t('stats.podiumBest')} movies={bestMovies} variant="best" active={active} />
       <MoviePodium title={t('stats.podiumWorst')} movies={worstMovies} variant="worst" active={active} />
       <UsersRatingChart users={usersByRating} active={active} />
-      <UserHostPreferenceChart preferences={userHostPreferences} />
     </section>
   );
 };

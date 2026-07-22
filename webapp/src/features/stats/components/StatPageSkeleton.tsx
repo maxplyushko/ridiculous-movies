@@ -24,18 +24,6 @@ export function StatPageSkeleton() {
           ))}
         </div>
       </div>
-      {/* host preference */}
-      <div className="sk-block">
-        <div className="sk-line sk-line--heading" />
-        <div className="sk-bars">
-          {[70, 50, 60, 40].map((w, i) => (
-            <div key={i} className="sk-bar-row">
-              <div className="sk-line sk-line--bar-label" />
-              <div className="sk-bar" style={{ width: `${w}%` }} />
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

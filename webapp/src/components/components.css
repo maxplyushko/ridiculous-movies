@@ -1420,6 +1420,10 @@
   transition: background 0.2s ease;
 }
 
+:root[data-color-scheme="dark"] .theme-toggle__track {
+  background: rgba(255, 255, 255, 0.22);
+}
+
 .theme-toggle__track::after {
   content: '';
   position: absolute;

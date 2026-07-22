@@ -32,7 +32,7 @@ public class GoogleOAuthFlowService {
   private final ConcurrentHashMap<String, Instant> pendingStates = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<String, PendingAuth> pendingTokens = new ConcurrentHashMap<>();
 
-  private record PendingAuth(OAuthVerifier.UserInfo userInfo, Instant expiry) {}
+  private record PendingAuth(OAuthVerifier.UserInfo userInfo, Instant expiry, boolean web) {}
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record TokenResponse(@JsonProperty("id_token") String idToken) {}
@@ -56,11 +56,11 @@ public class GoogleOAuthFlowService {
     return !clientId.isBlank() && !clientSecret.isBlank() && !redirectUri.isBlank();
   }
 
-  public String generateAuthUrl() {
+  public String generateAuthUrl(boolean web) {
     if (!isConfigured()) {
       throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Google OAuth not configured");
     }
-    String state = UUID.randomUUID().toString();
+    String state = (web ? "web-" : "tg-") + UUID.randomUUID();
     pendingStates.put(state, Instant.now().plus(10, ChronoUnit.MINUTES));
     cleanupExpired();
     return UriComponentsBuilder.fromUriString("https://accounts.google.com/o/oauth2/v2/auth")
@@ -98,8 +98,9 @@ public class GoogleOAuthFlowService {
 
     OAuthVerifier.UserInfo userInfo = oAuthVerifier.verify(tokenResponse.idToken());
 
+    boolean web = state.startsWith("web-");
     String token = "gauth_" + UUID.randomUUID().toString().replace("-", "");
-    pendingTokens.put(token, new PendingAuth(userInfo, Instant.now().plus(5, ChronoUnit.MINUTES)));
+    pendingTokens.put(token, new PendingAuth(userInfo, Instant.now().plus(5, ChronoUnit.MINUTES), web));
     cleanupExpired();
     return token;
   }
@@ -113,11 +114,17 @@ public class GoogleOAuthFlowService {
   }
 
   public String buildRedirectUrl(String token) {
-    String botUsername = telegramBotClient.map(TelegramBotClient::getBotUsername).orElse(null);
-    if (botUsername != null && !botUsername.isBlank()) {
-      return "https://t.me/" + botUsername + "?startapp=" + token;
+    PendingAuth auth = pendingTokens.get(token);
+    boolean web = auth != null && auth.web();
+    if (!web) {
+      String botUsername = telegramBotClient.map(TelegramBotClient::getBotUsername).orElse(null);
+      if (botUsername != null && !botUsername.isBlank()) {
+        return "https://t.me/" + botUsername + "?startapp=" + token;
+      }
     }
-    return fallbackUrl();
+    return UriComponentsBuilder.fromUriString(fallbackUrl())
+        .queryParam("token", token)
+        .toUriString();
   }
 
   public String fallbackUrl() {

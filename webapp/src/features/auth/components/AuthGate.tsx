@@ -30,6 +30,20 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
     setState({ mode: "loading" });
 
     const run = async () => {
+      const urlToken = new URLSearchParams(window.location.search).get("token");
+      if (urlToken?.startsWith("gauth_") && !tokenStore.get()) {
+        try {
+          const res = await exchangeGoogleToken(urlToken);
+          tokenStore.set(res.accessToken);
+        } catch {
+          // consumed or expired — fall through to normal flow
+        } finally {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("token");
+          window.history.replaceState({}, "", url.toString());
+        }
+      }
+
       const startParam = getTelegramWebApp()?.initDataUnsafe?.start_param;
       if (startParam?.startsWith("gauth_") && !tokenStore.get()) {
         try {

@@ -117,12 +117,14 @@
     "statMoviesRated": "Movies rated",
     "statAvgGiven": "Avg rating given",
     "statAvgAsHost": "Avg as host",
-    "statHostRank": "Host rank"
+    "statHostRank": "Host rank",
+    "statFavHost": "Fav host",
+    "statLeastFavHost": "Least fav host"
   },
   "stats": {
     "podiumBest": "Top 3 best",
     "podiumWorst": "Top 3 worst",
-    "hostsByRating": "Hosts rating",
+    "hostsByRating": "Hosts avg rating",
     "ratingTendencies": "Rating tendencies",
     "tableRater": "Rater",
     "tableAvg": "Avg",

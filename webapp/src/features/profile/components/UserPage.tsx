@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../profile.css";
-import { ChevronRight, Lock, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { ChevronRight, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { applyColorScheme } from "@/lib/telegram/telegramTheme.ts";
 import { fetchUsers, savePreferences } from "@/features/group/api/users.ts";
@@ -33,7 +33,9 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   const [members, setMembers] = useState<User[]>([]);
 
   useEffect(() => {
-    fetchUsers().then(setMembers).catch(() => setMembers([]));
+    fetchUsers()
+      .then((u) => setMembers([...u].sort((a, b) => a.name.localeCompare(b.name))))
+      .catch(() => setMembers([]));
   }, []);
 
   return (
@@ -77,7 +79,7 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
                     <span className="user-page__member-avatar"><UserIcon size={20} /></span>
                     <span className="user-page__row-label">{m.name}</span>
                   </span>
-                  {m.personalListPublic ? <ChevronRight size={16} /> : <Lock size={16} />}
+                  <ChevronRight size={16} />
                 </button>
               </div>
             );
@@ -116,15 +118,18 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
 
   return (
     <section className="user-page">
-      <PageBackButton onBack={onBack} />
-      <button
-        type="button"
-        className="user-page__logout-btn user-page__logout-circle"
-        onClick={() => { hapticTabTap(); setConfirmingLogout(true); }}
-        aria-label={t('userPage.btnSignOut')}
-      >
-        <LogOut size={18} />
-      </button>
+      <div className="user-page__settings-header">
+        <PageBackButton onBack={onBack} />
+        <h2 className="page-title">{t('userPage.headingSettings')}</h2>
+        <button
+          type="button"
+          className="user-page__logout-btn user-page__logout-circle"
+          onClick={() => { hapticTabTap(); setConfirmingLogout(true); }}
+          aria-label={t('userPage.btnSignOut')}
+        >
+          <LogOut size={18} />
+        </button>
+      </div>
       {confirmingLogout && (
         <ConfirmDialog
           message={t('userPage.confirmLogout')}
@@ -136,7 +141,6 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
           onConfirm={handleLogout}
         />
       )}
-      <h2 className="page-title">{t('userPage.headingSettings')}</h2>
 
       <div className="user-page__section">
         <p className="user-page__section-title">{t('settings.sectionHomepage')}</p>
@@ -176,8 +180,6 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
               <span className="theme-toggle__track" />
             </label>
           </div>
-        </div>
-        <div className="user-page__card">
           <p className="user-page__field-label">{t('settings.sectionLanguage')}</p>
           <div className="user-page__segmented-row">
             <button
@@ -195,8 +197,6 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
               Русский
             </button>
           </div>
-        </div>
-        <div className="user-page__card">
           <p className="user-page__field-label">{t('settings.sectionTmdbLang')}</p>
           <div className="user-page__segmented-row">
             <button

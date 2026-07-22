@@ -80,8 +80,8 @@ public class AuthController {
   }
 
   @GetMapping("/google/url")
-  public Map<String, String> googleAuthUrl() {
-    return Map.of("url", googleOAuthFlowService.generateAuthUrl());
+  public Map<String, String> googleAuthUrl(@RequestParam(defaultValue = "false") boolean web) {
+    return Map.of("url", googleOAuthFlowService.generateAuthUrl(web));
   }
 
   @GetMapping("/google/callback")

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Clapperboard, Star, TrendingUp, Trophy } from "lucide-react";
+import { Clapperboard, Star, ThumbsDown, ThumbsUp, TrendingUp, Trophy } from "lucide-react";
 import type { Stats } from "@/features/stats/types/Stat.ts";
 
 export function ProfileStatGrid({ userId, stats }: Readonly<{ userId: string; stats: Stats | null }>) {
@@ -11,6 +11,7 @@ export function ProfileStatGrid({ userId, stats }: Readonly<{ userId: string; st
         .sort((a, b) => (b.averageRatingAsHost ?? 0) - (a.averageRatingAsHost ?? 0))
         .findIndex((u) => u.id === userId) + 1
     : 0;
+  const hostPref = stats?.userHostPreferences.find((u) => u.userId === userId) ?? null;
 
   return (
     <div className="user-page__section">
@@ -42,6 +43,24 @@ export function ProfileStatGrid({ userId, stats }: Readonly<{ userId: string; st
           <div className="user-page__stat-body">
             <span className="user-page__stat-value">{hostRank > 0 ? `#${hostRank}` : "—"}</span>
             <span className="user-page__stat-label">{t('userPage.statHostRank')}</span>
+          </div>
+        </div>
+        <div className="user-page__stat-tile">
+          <span className="user-page__stat-icon user-page__stat-icon--pink"><ThumbsUp size={20} /></span>
+          <div className="user-page__stat-body">
+            <span className="user-page__stat-value user-page__stat-value--name">{hostPref?.mostFavHostName ?? "—"}</span>
+            <span className="user-page__stat-label">
+              {t('userPage.statFavHost')}{hostPref?.mostFavHostAvg != null ? ` · ${hostPref.mostFavHostAvg.toFixed(1)}` : ""}
+            </span>
+          </div>
+        </div>
+        <div className="user-page__stat-tile">
+          <span className="user-page__stat-icon user-page__stat-icon--gray"><ThumbsDown size={20} /></span>
+          <div className="user-page__stat-body">
+            <span className="user-page__stat-value user-page__stat-value--name">{hostPref?.leastFavHostName ?? "—"}</span>
+            <span className="user-page__stat-label">
+              {t('userPage.statLeastFavHost')}{hostPref?.leastFavHostAvg != null ? ` · ${hostPref.leastFavHostAvg.toFixed(1)}` : ""}
+            </span>
           </div>
         </div>
       </div>

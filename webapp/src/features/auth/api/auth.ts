@@ -42,8 +42,8 @@ export async function guestLogin(): Promise<OAuthLoginResponse> {
   return apiFetch<OAuthLoginResponse>("/api/auth/guest", { method: "POST" });
 }
 
-export async function getGoogleAuthUrl(): Promise<string> {
-  const res = await apiFetch<{ url: string }>("/api/auth/google/url");
+export async function getGoogleAuthUrl(web = false): Promise<string> {
+  const res = await apiFetch<{ url: string }>(`/api/auth/google/url${web ? "?web=true" : ""}`);
   return res.url;
 }
 
