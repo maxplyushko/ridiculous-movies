@@ -384,15 +384,14 @@
   to { opacity: 1; }
 }
 
-.user-page__lock--tremble {
-  animation: user-page-lock-tremble 0.1s linear 0s 10;
-  transform-origin: center;
+.user-page__member-row--tremble {
+  animation: user-page-row-tremble 0.1s linear 0s 10;
 }
 
-@keyframes user-page-lock-tremble {
-  0%, 100% { transform: translateX(0) rotate(0); }
-  25% { transform: translateX(-1.5px) rotate(-8deg); }
-  75% { transform: translateX(1.5px) rotate(8deg); }
+@keyframes user-page-row-tremble {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
 }
 
 .user-page__member-note {

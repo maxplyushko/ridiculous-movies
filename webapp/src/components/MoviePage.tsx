@@ -88,7 +88,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     : source.kind === "personal" && source.movie.rating != null;
   const hasActionBlock = source.kind === "tmdb"
     ? !!onAddToPersonalList
-    : hasRatingsList || (!!onRate && !alreadyRated);
+    : hasRatingsList || (!!onRate && !alreadyRated) || !!onAddToPersonalList;
 
   useLayoutEffect(() => {
     const el = descRef.current;
@@ -202,6 +202,16 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
             >
               {t('moviePage.btnRate')}
             </button>
+          )}
+          {onAddToPersonalList && (
+            <AsyncButton
+              type="button"
+              className="movie-page__add-btn"
+              onClick={onAddToPersonalList}
+            >
+              <Bookmark size={16} />
+              {t('moviePage.btnAddToPersonalList')}
+            </AsyncButton>
           )}
         </div>
       )}

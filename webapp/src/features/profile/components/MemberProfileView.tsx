@@ -47,7 +47,7 @@ export function MemberProfileView({ member, groupName, stats, onBack, onOpenList
         <div className="user-page__card">
           <button
             type="button"
-            className={`user-page__member-row${locked ? " user-page__member-row--locked" : ""}`}
+            className={`user-page__member-row${locked ? " user-page__member-row--locked" : ""}${trembling ? " user-page__member-row--tremble" : ""}`}
             onClick={() => {
               if (locked) {
                 handleLockedClick();
@@ -67,7 +67,7 @@ export function MemberProfileView({ member, groupName, stats, onBack, onOpenList
               </span>
             </span>
             {locked
-              ? <Lock size={16} className={trembling ? "user-page__lock--tremble" : undefined} />
+              ? <Lock size={16} />
               : <ChevronRight size={16} />}
           </button>
         </div>
