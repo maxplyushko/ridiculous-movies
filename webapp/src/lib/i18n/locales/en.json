@@ -65,6 +65,7 @@
     "noMatch": "No movies match"
   },
   "personalList": {
+    "alreadyAddedToast": "Guess what? {{user}} added this movie to their list too",
     "btnCancel": "Cancel",
     "btnDelete": "Delete",
     "confirmDelete": "Delete \"{{title}}\"?",

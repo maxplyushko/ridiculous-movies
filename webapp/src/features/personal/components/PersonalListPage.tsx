@@ -19,6 +19,7 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
+import { useToast } from "@/components/toastContext.ts";
 
 const CELEBRATION_COLORS = ["#ffd60a", "#ff9f0a", "#30d158", "#3390ec", "#ff375f", "#bf5af2"];
 
@@ -30,6 +31,7 @@ function fireWatchedCelebration() {
 
 const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>) => {
   const { t } = useTranslation();
+  const { showGroupAddToast } = useToast();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -276,7 +278,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
           <TmdbSearchSection
             query={searchQuery}
             onOpenMovie={(m) => setTmdbMovieToView(m)}
-            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType }).then((added) => setMovies((prev) => [added, ...prev]))}
+            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType }).then((added) => { setMovies((prev) => [added, ...prev]); if (added.alreadyAddedBy) showGroupAddToast(added.alreadyAddedBy); })}
           />
         )}
       </div>
@@ -360,7 +362,7 @@ const PersonalListPage = ({ onShowStats }: Readonly<{ onShowStats: () => void }>
               onAddToPersonalList={() => {
                 const movie = tmdbMovieToView;
                 return addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
-                  .then((added) => { setMovies((prev) => [added, ...prev]); setTmdbMovieToView(null); });
+                  .then((added) => { setMovies((prev) => [added, ...prev]); setTmdbMovieToView(null); if (added.alreadyAddedBy) showGroupAddToast(added.alreadyAddedBy); });
               }}
             />
           )}

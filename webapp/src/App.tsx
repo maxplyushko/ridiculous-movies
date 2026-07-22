@@ -10,6 +10,7 @@ import { CircleUser, Film, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
+import { ToastProvider } from "@/components/ToastProvider.tsx";
 
 type Tab = "group" | "personal" | "misc";
 type Page = Tab | "stat" | "personalStat";
@@ -52,6 +53,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   };
 
   return (
+    <ToastProvider>
     <div className="app-shell">
       <main className="app-main">
         <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
@@ -75,6 +77,7 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         ))}
       </nav>
     </div>
+    </ToastProvider>
   );
 }
 

@@ -69,7 +69,10 @@ public class PersonalListController {
     pm.setTmdbId(req.tmdbId());
     pm.setTmdbMediaType(req.tmdbMediaType());
     dataStore.savePersonalMovie(pm);
-    return PersonalMovieResponse.from(pm);
+    String alreadyAddedBy = dataStore
+        .findGroupMemberWhoAdded(userId, pm.getTmdbId(), pm.getTitle())
+        .orElse(null);
+    return PersonalMovieResponse.from(pm, alreadyAddedBy);
   }
 
   @PutMapping("/{id}")

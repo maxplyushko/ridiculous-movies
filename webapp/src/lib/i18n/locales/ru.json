@@ -65,6 +65,7 @@
     "noMatch": "нет совпадений"
   },
   "personalList": {
+    "alreadyAddedToast": "Прикинь? {{user}} тоже добавил этот фильм в свой список",
     "btnCancel": "Отмена",
     "btnDelete": "Удалить",
     "confirmDelete": "Удалить «{{title}}»?",

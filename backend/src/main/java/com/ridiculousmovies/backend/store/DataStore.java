@@ -473,6 +473,39 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public Optional<String> findGroupMemberWhoAdded(String callerId, Long tmdbId, String title) {
+    lock.readLock().lock();
+    try {
+      AppUser caller = usersById.get(callerId);
+      if (caller == null || caller.getUserGroup() == null) {
+        return Optional.empty();
+      }
+      String groupId = caller.getUserGroup().getId();
+      String normTitle = title == null ? null : title.trim().toLowerCase();
+      return personalMoviesById.values().stream()
+          .filter(pm -> !callerId.equals(pm.getUserId()))
+          .filter(pm -> {
+            AppUser owner = usersById.get(pm.getUserId());
+            return owner != null && owner.getUserGroup() != null
+                && groupId.equals(owner.getUserGroup().getId());
+          })
+          .filter(pm -> {
+            boolean tmdbMatch = tmdbId != null && tmdbId.equals(pm.getTmdbId());
+            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
+                && pm.getTitle() != null && normTitle.equals(pm.getTitle().trim().toLowerCase());
+            return tmdbMatch || titleMatch;
+          })
+          .max(Comparator.comparing(PersonalMovie::getCreatedAt,
+              Comparator.nullsFirst(Comparator.naturalOrder())))
+          .map(pm -> {
+            AppUser owner = usersById.get(pm.getUserId());
+            return owner != null ? owner.getName() : null;
+          });
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
   public void savePersonalMovie(PersonalMovie movie) {
     lock.writeLock().lock();
     try {
