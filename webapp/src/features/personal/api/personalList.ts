@@ -30,6 +30,13 @@ export async function editPersonalMovie(id: string, data: UpdatePersonalMoviePay
   return apiFetch<PersonalMovie>(`/api/personal-list/${id}`, { method: "PUT", body: data });
 }
 
+export async function fetchGroupMembersWhoAdded(tmdbId?: number | null, title?: string): Promise<string[]> {
+  const params = new URLSearchParams();
+  if (tmdbId != null) params.set("tmdbId", String(tmdbId));
+  if (title) params.set("title", title);
+  return apiFetch<string[]>(`/api/personal-list/added-by?${params.toString()}`);
+}
+
 export async function deletePersonalMovie(id: string): Promise<void> {
   await apiFetch<void>(`/api/personal-list/${id}`, { method: "DELETE" });
 }

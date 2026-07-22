@@ -5,6 +5,7 @@ import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
+import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { AsyncButton } from "@/components/AsyncButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
@@ -58,6 +59,17 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterErrored, setPosterErrored] = useState(false);
   const [posterAttempt, setPosterAttempt] = useState(0);
+  const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
+
+  const showAddToList = source.kind === "tmdb" && !!onAddToPersonalList;
+  useEffect(() => {
+    if (!showAddToList) return;
+    let cancelled = false;
+    fetchGroupMembersWhoAdded(tmdbId, title)
+      .then((names) => { if (!cancelled) setAddedByMembers(names); })
+      .catch(() => { if (!cancelled) setAddedByMembers([]); });
+    return () => { cancelled = true; };
+  }, [showAddToList, tmdbId, title]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -158,14 +170,21 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
 
       {source.kind === "tmdb" ? (
         onAddToPersonalList && (
-          <AsyncButton
-            type="button"
-            className="movie-page__add-btn"
-            onClick={onAddToPersonalList}
-          >
-            <Bookmark size={16} />
-            {t('moviePage.btnAddToPersonalList')}
-          </AsyncButton>
+          <>
+            {addedByMembers.length > 0 && (
+              <p className="movie-page__added-by">
+                {t('moviePage.alsoInWatchlist', { names: addedByMembers.join(", "), count: addedByMembers.length })}
+              </p>
+            )}
+            <AsyncButton
+              type="button"
+              className="movie-page__add-btn"
+              onClick={onAddToPersonalList}
+            >
+              <Bookmark size={16} />
+              {t('moviePage.btnAddToPersonalList')}
+            </AsyncButton>
+          </>
         )
       ) : (
         <div className="movie-page__app-rating">

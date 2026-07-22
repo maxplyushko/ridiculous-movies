@@ -181,6 +181,7 @@
   padding: 0.875rem;
   background: var(--surface);
   border-radius: 16px;
+  min-width: 0;
 }
 
 .user-page__stat-icon {
@@ -216,18 +217,14 @@
 
 .user-page__stat-value--name {
   font-size: 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .user-page__stat-label {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .user-page__taste-label {

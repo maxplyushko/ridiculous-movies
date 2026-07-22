@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
@@ -44,25 +43,25 @@ class DataStoreGroupMatchTest {
 
   @Test
   void matchesGroupMemberByTmdbId() {
-    Optional<String> result = store.findGroupMemberWhoAdded("u1", 100L, "Heat");
-    assertEquals(Optional.of("Bob"), result);
+    List<String> result = store.findGroupMembersWhoAdded("u1", 100L, "Heat");
+    assertEquals(List.of("Bob"), result);
   }
 
   @Test
   void matchesByTitleWhenNoTmdbId() {
-    Optional<String> result = store.findGroupMemberWhoAdded("u1", null, "heat");
-    assertEquals(Optional.of("Bob"), result);
+    List<String> result = store.findGroupMembersWhoAdded("u1", null, "heat");
+    assertEquals(List.of("Bob"), result);
   }
 
   @Test
   void excludesOtherGroups() {
-    Optional<String> result = store.findGroupMemberWhoAdded("u1", 999L, "Nonexistent");
+    List<String> result = store.findGroupMembersWhoAdded("u1", 999L, "Nonexistent");
     assertTrue(result.isEmpty());
   }
 
   @Test
   void excludesCallerSelf() {
-    Optional<String> result = store.findGroupMemberWhoAdded("u2", 100L, "Heat");
+    List<String> result = store.findGroupMembersWhoAdded("u2", 100L, "Heat");
     assertTrue(result.isEmpty());
   }
 }

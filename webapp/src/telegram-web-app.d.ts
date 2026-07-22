@@ -69,6 +69,8 @@ declare global {
   interface TelegramWebApp {
     initData?: string;
     version?: string;
+    viewportHeight?: number;
+    viewportStableHeight?: number;
     colorScheme?: "light" | "dark";
     themeParams?: TelegramThemeParams;
     HapticFeedback?: TelegramWebAppHapticFeedback;

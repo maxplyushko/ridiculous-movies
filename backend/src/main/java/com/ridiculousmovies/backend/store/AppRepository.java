@@ -49,7 +49,7 @@ public interface AppRepository {
 
   void savePersonalMovie(PersonalMovie movie);
 
-  Optional<String> findGroupMemberWhoAdded(String callerId, Long tmdbId, String title);
+  List<String> findGroupMembersWhoAdded(String callerId, Long tmdbId, String title);
 
   void deletePersonalMovieById(String id, String userId);
 

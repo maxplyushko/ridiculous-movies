@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -69,10 +70,16 @@ public class PersonalListController {
     pm.setTmdbId(req.tmdbId());
     pm.setTmdbMediaType(req.tmdbMediaType());
     dataStore.savePersonalMovie(pm);
-    String alreadyAddedBy = dataStore
-        .findGroupMemberWhoAdded(userId, pm.getTmdbId(), pm.getTitle())
-        .orElse(null);
-    return PersonalMovieResponse.from(pm, alreadyAddedBy);
+    return PersonalMovieResponse.from(pm);
+  }
+
+  @GetMapping("/added-by")
+  public List<String> addedBy(
+      @RequestHeader("User-Id") String userId,
+      @RequestParam(required = false) Long tmdbId,
+      @RequestParam(required = false) String title
+  ) {
+    return dataStore.findGroupMembersWhoAdded(userId, tmdbId, title);
   }
 
   @PutMapping("/{id}")

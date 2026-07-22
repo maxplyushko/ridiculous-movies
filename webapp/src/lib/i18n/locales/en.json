@@ -65,7 +65,6 @@
     "noMatch": "No movies match"
   },
   "personalList": {
-    "alreadyAddedToast": "Guess what? {{user}} added this movie to their list too",
     "btnCancel": "Cancel",
     "btnDelete": "Delete",
     "confirmDelete": "Delete \"{{title}}\"?",
@@ -151,6 +150,8 @@
     "expand": "Show more",
     "collapse": "Show less",
     "btnRate": "Rate the movie",
+    "alsoInWatchlist_one": "Already in {{names}}'s watchlist",
+    "alsoInWatchlist_other": "Already in the watchlist of {{names}}",
     "btnAddToPersonalList": "Add to personal list"
   },
   "signIn": {

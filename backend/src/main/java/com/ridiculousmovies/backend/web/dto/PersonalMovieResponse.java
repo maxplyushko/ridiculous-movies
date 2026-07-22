@@ -13,18 +13,13 @@ public record PersonalMovieResponse(
     Instant createdAt,
     Instant updatedAt,
     Long tmdbId,
-    String tmdbMediaType,
-    String alreadyAddedBy
+    String tmdbMediaType
 ) {
   public static PersonalMovieResponse from(PersonalMovie pm) {
-    return from(pm, null);
-  }
-
-  public static PersonalMovieResponse from(PersonalMovie pm, String alreadyAddedBy) {
     return new PersonalMovieResponse(
         pm.getId(), pm.getTitle(), pm.getDescription(),
         pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt(),
-        pm.getTmdbId(), pm.getTmdbMediaType(), alreadyAddedBy
+        pm.getTmdbId(), pm.getTmdbMediaType()
     );
   }
 }

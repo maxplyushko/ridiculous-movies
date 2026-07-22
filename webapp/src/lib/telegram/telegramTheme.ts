@@ -176,9 +176,19 @@ export function initTelegramWebApp(): void {
 
   applyTelegramTheme();
   webApp.onEvent?.("themeChanged", applyTelegramTheme);
+  syncViewportHeight();
+  webApp.onEvent?.("viewportChanged", syncViewportHeight);
   webApp.ready();
   webApp.expand();
   if (webApp.isVersionAtLeast?.("7.7")) {
     webApp.disableVerticalSwipes?.();
+  }
+}
+
+function syncViewportHeight(): void {
+  const webApp = getTelegramWebApp();
+  const height = webApp?.viewportStableHeight ?? webApp?.viewportHeight;
+  if (height) {
+    document.documentElement.style.setProperty("--tg-viewport-stable-height", `${height}px`);
   }
 }

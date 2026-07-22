@@ -10,7 +10,6 @@ import { CircleUser, Film, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
-import { ToastProvider } from "@/components/ToastProvider.tsx";
 
 type Tab = "group" | "personal" | "misc";
 type Page = Tab | "stat" | "personalStat";
@@ -29,15 +28,29 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   const isAdmin = session.role === "admin";
 
   useEffect(() => {
+    const isTextEntry = (el: EventTarget | null) =>
+      el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    const onFocusIn = (e: FocusEvent) => { if (isTextEntry(e.target)) setKeyboardOpen(true); };
+    const onFocusOut = (e: FocusEvent) => { if (isTextEntry(e.target)) setKeyboardOpen(false); };
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+
     const vv = window.visualViewport;
-    if (!vv) return;
-    let maxHeight = vv.height;
-    const onResize = () => {
-      maxHeight = Math.max(maxHeight, vv.height);
-      setKeyboardOpen(vv.height < maxHeight - 100);
+    let onResize: (() => void) | undefined;
+    if (vv) {
+      let maxHeight = vv.height;
+      onResize = () => {
+        maxHeight = Math.max(maxHeight, vv.height);
+        if (vv.height < maxHeight - 100) setKeyboardOpen(true);
+        else if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
+      };
+      vv.addEventListener('resize', onResize);
+    }
+    return () => {
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+      if (vv && onResize) vv.removeEventListener('resize', onResize);
     };
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
   }, []);
 
   const rawTabIndex = TABS.findIndex((tab) => tab.id === (currentPage as Tab));
@@ -53,7 +66,6 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
   };
 
   return (
-    <ToastProvider>
     <div className="app-shell">
       <main className="app-main">
         <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
@@ -77,7 +89,6 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
         ))}
       </nav>
     </div>
-    </ToastProvider>
   );
 }
 

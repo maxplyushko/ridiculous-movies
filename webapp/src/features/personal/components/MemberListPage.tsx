@@ -9,7 +9,6 @@ import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
-import { useToast } from "@/components/toastContext.ts";
 
 type Props = {
   targetUserId: string;
@@ -21,7 +20,6 @@ const noop = () => {};
 
 const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) => {
   const { t } = useTranslation();
-  const { showGroupAddToast } = useToast();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -99,7 +97,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
             source={{ kind: "personal", movie: viewingMovie }}
             onBack={closeMovieView}
             onAddToPersonalList={addedIds.has(viewingMovie.id) ? undefined : async () => {
-              const added = await addPersonalMovie({
+              await addPersonalMovie({
                 title: viewingMovie.title,
                 description: viewingMovie.description,
                 rating: null,
@@ -107,7 +105,6 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
                 tmdbMediaType: viewingMovie.tmdbMediaType ?? null,
               });
               setAddedIds((prev) => new Set(prev).add(viewingMovie.id));
-              if (added.alreadyAddedBy) showGroupAddToast(added.alreadyAddedBy);
             }}
           />
         </div>

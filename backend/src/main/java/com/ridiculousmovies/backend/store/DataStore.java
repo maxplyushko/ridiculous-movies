@@ -473,12 +473,12 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public Optional<String> findGroupMemberWhoAdded(String callerId, Long tmdbId, String title) {
+  public List<String> findGroupMembersWhoAdded(String callerId, Long tmdbId, String title) {
     lock.readLock().lock();
     try {
       AppUser caller = usersById.get(callerId);
       if (caller == null || caller.getUserGroup() == null) {
-        return Optional.empty();
+        return List.of();
       }
       String groupId = caller.getUserGroup().getId();
       String normTitle = title == null ? null : title.trim().toLowerCase();
@@ -495,12 +495,15 @@ public class DataStore implements AppRepository {
                 && pm.getTitle() != null && normTitle.equals(pm.getTitle().trim().toLowerCase());
             return tmdbMatch || titleMatch;
           })
-          .max(Comparator.comparing(PersonalMovie::getCreatedAt,
+          .sorted(Comparator.comparing(PersonalMovie::getCreatedAt,
               Comparator.nullsFirst(Comparator.naturalOrder())))
           .map(pm -> {
             AppUser owner = usersById.get(pm.getUserId());
             return owner != null ? owner.getName() : null;
-          });
+          })
+          .filter(Objects::nonNull)
+          .distinct()
+          .toList();
     } finally {
       lock.readLock().unlock();
     }

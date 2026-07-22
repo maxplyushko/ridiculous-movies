@@ -65,7 +65,6 @@
     "noMatch": "нет совпадений"
   },
   "personalList": {
-    "alreadyAddedToast": "Прикинь? {{user}} тоже добавил этот фильм в свой список",
     "btnCancel": "Отмена",
     "btnDelete": "Удалить",
     "confirmDelete": "Удалить «{{title}}»?",
@@ -118,10 +117,10 @@
     "sectionStats": "Статистика группы",
     "statMoviesRated": "Оценено фильмов",
     "statAvgGiven": "Средняя оценка",
-    "statAvgAsHost": "Средняя как ведущий",
-    "statHostRank": "Ранг ведущего",
-    "statFavHost": "Любимый ведущий",
-    "statLeastFavHost": "Нелюбимый ведущий"
+    "statAvgAsHost": "Средняя оценка в качестве хоста",
+    "statHostRank": "Ранг хоста",
+    "statFavHost": "Любимый хост",
+    "statLeastFavHost": "Нелюбимый хост"
   },
   "stats": {
     "podiumBest": "Топ-3 лучших",
@@ -150,6 +149,10 @@
     "expand": "Показать больше",
     "collapse": "Свернуть",
     "btnRate": "Оценить фильм",
+    "alsoInWatchlist_one": "Уже в списке у {{names}}",
+    "alsoInWatchlist_few": "Уже в списках у {{names}}",
+    "alsoInWatchlist_many": "Уже в списках у {{names}}",
+    "alsoInWatchlist_other": "Уже в списках у {{names}}",
     "btnAddToPersonalList": "Добавить в личный список"
   },
   "signIn": {

@@ -10,5 +10,4 @@ export interface PersonalMovie {
   updatedAt: string;
   tmdbId?: number;
   tmdbMediaType?: TmdbMediaType;
-  alreadyAddedBy?: string | null;
 }

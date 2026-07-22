@@ -11,7 +11,6 @@ import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
-import { useToast } from "@/components/toastContext.ts";
 
 type AddPersonalMoviePageProps = {
   movie?: PersonalMovie;
@@ -20,7 +19,6 @@ type AddPersonalMoviePageProps = {
 
 const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const { t } = useTranslation();
-  const { showGroupAddToast } = useToast();
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
@@ -66,8 +64,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       if (movie) {
         await editPersonalMovie(movie.id, { ...payload, watched: movie.watched });
       } else {
-        const added = await addPersonalMovie(payload);
-        if (added.alreadyAddedBy) showGroupAddToast(added.alreadyAddedBy);
+        await addPersonalMovie(payload);
       }
       onBack();
     } catch (e) {
