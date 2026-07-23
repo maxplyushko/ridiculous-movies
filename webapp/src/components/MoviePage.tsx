@@ -24,6 +24,7 @@ type MoviePageProps = {
 };
 
 const POSTER_MAX_RETRIES = 2;
+const POSTER_TIMEOUT_MS = 8000;
 
 function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
