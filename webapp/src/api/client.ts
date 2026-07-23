@@ -1,9 +1,18 @@
 const TOKEN_KEY = "rm_access_token";
+const LOGGED_OUT_KEY = "rm_logged_out";
 
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
-  set: (token: string) => localStorage.setItem(TOKEN_KEY, token),
+  set: (token: string) => {
+    localStorage.removeItem(LOGGED_OUT_KEY);
+    localStorage.setItem(TOKEN_KEY, token);
+  },
   clear: () => localStorage.removeItem(TOKEN_KEY),
+  markLoggedOut: () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.setItem(LOGGED_OUT_KEY, "1");
+  },
+  isLoggedOut: () => localStorage.getItem(LOGGED_OUT_KEY) === "1",
 };
 
 type RequestOptions = {

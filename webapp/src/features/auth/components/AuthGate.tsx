@@ -30,6 +30,10 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
     setState({ mode: "loading" });
 
     const run = async () => {
+      if (tokenStore.isLoggedOut()) {
+        if (!cancelled) setState({ mode: "signin" });
+        return;
+      }
       const urlToken = new URLSearchParams(window.location.search).get("token");
       if (urlToken?.startsWith("gauth_") && !tokenStore.get()) {
         try {

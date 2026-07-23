@@ -112,7 +112,7 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const handleLogout = () => {
     hapticTabTap();
-    tokenStore.clear();
+    tokenStore.markLoggedOut();
     window.location.reload();
   };
 
