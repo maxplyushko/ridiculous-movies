@@ -123,13 +123,9 @@
     "statLeastFavHost": "Нелюбимый хост"
   },
   "stats": {
-    "podiumBest": "Топ-3 лучших",
-    "podiumWorst": "Топ-3 худших",
-    "hostsByRating": "Средний рейтинг хостов",
-    "tableRater": "Оценщик",
-    "tableAvg": "СРД",
-    "tableMostLoved": "ТОП",
-    "tableLeastLoved": "НЕ ТОП"
+    "podiumBest": "Топ-3 лучших фильмов",
+    "podiumWorst": "Топ-3 худших фильмов",
+    "hostsByRating": "Топ-3 хостов"
   },
   "tmdb": {
     "section": "TMDB",
@@ -149,8 +145,8 @@
     "actionRate": "Оценить",
     "actionToWatch": "В список",
     "actionInList": "В списке",
-    "actionWatched": "Просмотрено",
-    "actionNotWatched": "Не просмотрено",
+    "actionWatched": "Просмотрен",
+    "actionNotWatched": "Незнаком",
     "expand": "Показать больше",
     "collapse": "Свернуть",
     "btnRate": "Оценить фильм",

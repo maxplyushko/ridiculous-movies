@@ -5,7 +5,8 @@ import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
-import { fetchGroupMembersWhoAdded, fetchMyStatus, setPersonalState } from "@/features/personal/api/personalList.ts";
+import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
+import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
@@ -60,11 +61,14 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [posterErrored, setPosterErrored] = useState(false);
   const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
-  const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
-  const [statusLoading, setStatusLoading] = useState(true);
   const [groupExpanded, setGroupExpanded] = useState(false);
-  const confirmedStateRef = useRef({ inList: false, watched: false });
-  const stateSendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { selfStatus, statusLoading, setInList, setWatched } = usePersonalStateSync({
+    tmdbId,
+    title,
+    description,
+    tmdbMediaType: mediaType,
+    onChange: onPersonalStateChange,
+  });
 
   useEffect(() => {
     if (tmdbId == null && !title) return;
@@ -74,25 +78,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
       .catch(() => { if (!cancelled) setAddedByMembers([]); });
     return () => { cancelled = true; };
   }, [tmdbId, title]);
-
-  useEffect(() => {
-    if (tmdbId == null && !title) return;
-    let cancelled = false;
-    setStatusLoading(true);
-    fetchMyStatus(tmdbId, title)
-      .then((s) => {
-        if (cancelled) return;
-        setSelfStatus(s);
-        confirmedStateRef.current = { inList: s?.inList ?? false, watched: s?.watched ?? false };
-      })
-      .catch(() => { if (!cancelled) setSelfStatus(null); })
-      .finally(() => { if (!cancelled) setStatusLoading(false); });
-    return () => { cancelled = true; };
-  }, [tmdbId, title]);
-
-  useEffect(() => () => {
-    if (stateSendTimerRef.current) clearTimeout(stateSendTimerRef.current);
-  }, []);
 
   const inList = selfStatus?.inList ?? false;
   const watched = selfStatus?.watched ?? false;
@@ -104,59 +89,14 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const groupRatings = source.kind === "group" ? source.movie.ratings : [];
   const hasGroupRatings = groupRatings.length > 0;
 
-  const STATE_SEND_DELAY_MS = 600;
-
-  const scheduleStateSend = (patch: { inList?: boolean; watched?: boolean }) => {
-    setSelfStatus((prev) => ({
-      ...(prev ?? {
-        id: "", title, description: description ?? "", rating: null, watched: false, inList: false,
-        createdAt: "", updatedAt: "", tmdbId: tmdbId ?? undefined, tmdbMediaType: mediaType,
-      }),
-      ...patch,
-    }));
-
-    if (stateSendTimerRef.current) clearTimeout(stateSendTimerRef.current);
-    stateSendTimerRef.current = setTimeout(async () => {
-      stateSendTimerRef.current = null;
-      const desired = {
-        inList: patch.inList ?? inList,
-        watched: patch.watched ?? watched,
-      };
-      if (
-        desired.inList === confirmedStateRef.current.inList
-        && desired.watched === confirmedStateRef.current.watched
-      ) {
-        return;
-      }
-      try {
-        const next = await setPersonalState({
-          tmdbId,
-          title,
-          description: description ?? "",
-          tmdbMediaType: mediaType,
-          inList: desired.inList,
-          watched: desired.watched,
-        });
-        confirmedStateRef.current = { inList: next?.inList ?? false, watched: next?.watched ?? false };
-        setSelfStatus(next);
-        onPersonalStateChange?.();
-      } catch {
-        setSelfStatus((prev) => ({
-          ...(prev ?? { id: "", title, description: description ?? "", rating: null, watched: false, inList: false, createdAt: "", updatedAt: "", tmdbId: tmdbId ?? undefined, tmdbMediaType: mediaType }),
-          ...confirmedStateRef.current,
-        }));
-      }
-    }, STATE_SEND_DELAY_MS);
-  };
-
   const toggleInList = () => {
     hapticTabTap();
-    scheduleStateSend({ inList: !inList });
+    setInList(!inList);
   };
 
   const toggleWatched = () => {
     hapticTabTap();
-    scheduleStateSend({ watched: !watched });
+    setWatched(!watched);
   };
 
   const addedByHint = addedByMembers.length > 0 && (
