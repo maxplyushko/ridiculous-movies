@@ -6,6 +6,7 @@ export interface PersonalMovie {
   description: string;
   rating: number | null;
   watched: boolean;
+  inList: boolean;
   createdAt: string;
   updatedAt: string;
   tmdbId?: number;

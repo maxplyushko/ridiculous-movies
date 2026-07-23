@@ -36,7 +36,6 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
   const [showForm, setShowForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<PersonalMovie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
-  const [removeFromViewMovie, setRemoveFromViewMovie] = useState<PersonalMovie | null>(null);
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
@@ -126,23 +125,6 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
     }
   };
 
-  const executeRemoveFromView = async () => {
-    if (!removeFromViewMovie) return;
-    hapticTabTap();
-    setIsDeleting(true);
-    try {
-      await deletePersonalMovie(removeFromViewMovie.id);
-      setRemoveFromViewMovie(null);
-      setDeleteError(null);
-      setIsDeleting(false);
-      closeMovieView();
-      loadMovies();
-    } catch (err) {
-      setIsDeleting(false);
-      setDeleteError(err instanceof Error ? err.message : "Failed to delete");
-    }
-  };
-
   const applyToggle = async (movie: PersonalMovie, rating?: number) => {
     const payload = {
       title: movie.title,
@@ -207,7 +189,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
       )
     : movies;
 
-  const toWatch = filtered.filter((m) => !m.watched);
+  const toWatch = filtered.filter((m) => m.inList && !m.watched);
   const watched = filtered.filter((m) => m.watched);
 
   if (isLoading) return <MovieListSkeleton />;
@@ -327,18 +309,6 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
         />
       )}
 
-      {removeFromViewMovie && (
-        <ConfirmDialog
-          message={t('moviePage.confirmRemove')}
-          error={deleteError}
-          isLoading={isDeleting}
-          cancelLabel={t('userPage.btnNo')}
-          confirmLabel={t('userPage.btnYes')}
-          onCancel={() => { setRemoveFromViewMovie(null); setDeleteError(null); }}
-          onConfirm={executeRemoveFromView}
-        />
-      )}
-
       {moviePicker.result && (
         <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
           <div className="confirm-dialog confirm-dialog--fireworks" onClick={(e) => e.stopPropagation()}>
@@ -387,18 +357,14 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
               source={{ kind: "personal", movie: viewingMovie }}
               onBack={closeMovieView}
               onRate={() => setRatingMovie(viewingMovie)}
-              onDelete={() => setRemoveFromViewMovie(viewingMovie)}
+              onPersonalStateChange={() => loadMovies(true)}
             />
           )}
           {tmdbMovieToView && (
             <MoviePage
               source={{ kind: "tmdb", movie: tmdbMovieToView }}
               onBack={closeMovieView}
-              onAddToPersonalList={() => {
-                const movie = tmdbMovieToView;
-                return addPersonalMovie({ title: movie.title, description: movie.overview ?? "", rating: null, tmdbId: movie.id, tmdbMediaType: movie.mediaType })
-                  .then((added) => { setMovies((prev) => [added, ...prev]); setViewingMovieId(added.id); setTmdbMovieToView(null); });
-              }}
+              onPersonalStateChange={() => loadMovies(true)}
             />
           )}
         </div>

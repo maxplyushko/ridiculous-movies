@@ -14,6 +14,7 @@ public class PersonalMovie {
   private String description;
   private BigDecimal rating;
   private boolean watched;
+  private Boolean inList;
   private Instant createdAt;
   private Instant updatedAt;
   private Long tmdbId;

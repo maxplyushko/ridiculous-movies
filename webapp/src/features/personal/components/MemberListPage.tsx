@@ -4,7 +4,7 @@ import "../personal.css";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
-import { addPersonalMovie, fetchPersonalListForUser } from "../api/personalList.ts";
+import { fetchPersonalListForUser } from "../api/personalList.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
@@ -25,7 +25,6 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
   const [error, setError] = useState<Error | null>(null);
   const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
   const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   const loadMovies = useCallback(() => {
     setLoading(true);
@@ -45,7 +44,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
   useSwipeBack(closeMovieView, movieViewEl);
 
   const viewingMovie = movies.find((m) => m.id === viewingMovieId) ?? null;
-  const toWatch = movies.filter((m) => !m.watched);
+  const toWatch = movies.filter((m) => m.inList && !m.watched);
   const watched = movies.filter((m) => m.watched);
 
   return (
@@ -96,16 +95,6 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
           <MoviePage
             source={{ kind: "personal", movie: viewingMovie }}
             onBack={closeMovieView}
-            onAddToPersonalList={addedIds.has(viewingMovie.id) ? undefined : async () => {
-              await addPersonalMovie({
-                title: viewingMovie.title,
-                description: viewingMovie.description,
-                rating: null,
-                tmdbId: viewingMovie.tmdbId ?? null,
-                tmdbMediaType: viewingMovie.tmdbMediaType ?? null,
-              });
-              setAddedIds((prev) => new Set(prev).add(viewingMovie.id));
-            }}
           />
         </div>
       )}

@@ -10,6 +10,7 @@ public record PersonalMovieResponse(
     String description,
     BigDecimal rating,
     boolean watched,
+    boolean inList,
     Instant createdAt,
     Instant updatedAt,
     Long tmdbId,
@@ -18,7 +19,8 @@ public record PersonalMovieResponse(
   public static PersonalMovieResponse from(PersonalMovie pm) {
     return new PersonalMovieResponse(
         pm.getId(), pm.getTitle(), pm.getDescription(),
-        pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt(),
+        pm.getRating(), pm.isWatched(), pm.getInList() == null || pm.getInList(),
+        pm.getCreatedAt(), pm.getUpdatedAt(),
         pm.getTmdbId(), pm.getTmdbMediaType()
     );
   }

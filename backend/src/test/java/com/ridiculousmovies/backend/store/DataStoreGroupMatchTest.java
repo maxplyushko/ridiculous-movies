@@ -20,7 +20,7 @@ class DataStoreGroupMatchTest {
   }
 
   private AppData.PersonalMovieRecord pm(String id, String userId, String title, Long tmdbId, Instant createdAt) {
-    return new AppData.PersonalMovieRecord(id, userId, title, "", BigDecimal.ZERO, false, createdAt, createdAt,
+    return new AppData.PersonalMovieRecord(id, userId, title, "", BigDecimal.ZERO, false, true, createdAt, createdAt,
         tmdbId, "movie");
   }
 
@@ -63,5 +63,17 @@ class DataStoreGroupMatchTest {
   void excludesCallerSelf() {
     List<String> result = store.findGroupMembersWhoAdded("u2", 100L, "Heat");
     assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void findsCallerOwnRecordByTmdbId() {
+    var pm = store.findPersonalMovieForCaller("u2", 100L, "Heat");
+    org.junit.jupiter.api.Assertions.assertNotNull(pm);
+    assertEquals("pm1", pm.getId());
+  }
+
+  @Test
+  void callerOwnRecordAbsentReturnsNull() {
+    org.junit.jupiter.api.Assertions.assertNull(store.findPersonalMovieForCaller("u1", 100L, "Heat"));
   }
 }

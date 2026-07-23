@@ -2,12 +2,12 @@ package com.ridiculousmovies.backend.web.dto;
 
 import java.math.BigDecimal;
 
-public record UpdatePersonalMovieRequest(
+public record PersonalMovieStateRequest(
+    Long tmdbId,
     String title,
     String description,
-    BigDecimal rating,
-    boolean watched,
+    String tmdbMediaType,
     Boolean inList,
-    Long tmdbId,
-    String tmdbMediaType
+    Boolean watched,
+    BigDecimal rating
 ) {}

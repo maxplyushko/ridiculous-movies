@@ -1,13 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Loader, Star, Trash2, Tv, User, UserStar } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Info, Loader, Star, Tv, User, UserStar } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
-import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
+import { fetchGroupMembersWhoAdded, fetchMyStatus, setPersonalState } from "@/features/personal/api/personalList.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
-import { AsyncButton } from "@/components/AsyncButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -21,8 +20,7 @@ type MoviePageProps = {
   currentUserId?: string;
   onBack: () => void;
   onRate?: () => void | Promise<unknown>;
-  onAddToPersonalList?: () => void | Promise<unknown>;
-  onDelete?: () => void | Promise<unknown>;
+  onPersonalStateChange?: () => void;
 };
 
 const POSTER_MAX_RETRIES = 2;
@@ -33,7 +31,7 @@ function formatDuration(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPersonalList, onDelete }: Readonly<MoviePageProps>) {
+export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalStateChange }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
@@ -61,6 +59,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const [posterErrored, setPosterErrored] = useState(false);
   const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
+  const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
+  const [groupExpanded, setGroupExpanded] = useState(false);
 
   useEffect(() => {
     if (tmdbId == null && !title) return;
@@ -71,15 +71,46 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
     return () => { cancelled = true; };
   }, [tmdbId, title]);
 
+  useEffect(() => {
+    if (tmdbId == null && !title) return;
+    let cancelled = false;
+    fetchMyStatus(tmdbId, title)
+      .then((s) => { if (!cancelled) setSelfStatus(s); })
+      .catch(() => { if (!cancelled) setSelfStatus(null); });
+    return () => { cancelled = true; };
+  }, [tmdbId, title]);
+
+  const inList = selfStatus?.inList ?? false;
+  const watched = selfStatus?.watched ?? false;
+  const ownRating = source.kind === "group"
+    ? (source.movie.ratings.find((r) => r.user.id === currentUserId)?.score ?? null)
+    : source.kind === "personal"
+      ? source.movie.rating
+      : (selfStatus?.rating ?? null);
+  const groupRatings = source.kind === "group" ? source.movie.ratings : [];
+  const hasGroupRatings = groupRatings.length > 0;
+
+  const applyState = async (patch: { inList?: boolean; watched?: boolean }) => {
+    hapticTabTap();
+    const next = await setPersonalState({
+      tmdbId,
+      title,
+      description: description ?? "",
+      tmdbMediaType: mediaType,
+      inList: patch.inList ?? inList,
+      watched: patch.watched ?? watched,
+    });
+    setSelfStatus(next);
+    onPersonalStateChange?.();
+  };
+
   const addedByHint = addedByMembers.length > 0 && (
-    <p className="movie-page__added-by">
-      <span>{t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}</span>
-      {addedByMembers.map((name, i) => (
-        <span key={i} className="movie-page__added-by-name">
-          <User size={14} />{name}{i < addedByMembers.length - 1 ? "," : ""}
-        </span>
-      ))}
-    </p>
+    <div className="movie-page__watchlist-bar">
+      <Info size={16} />
+      <span>
+        {t('moviePage.alsoInWatchlist', { count: addedByMembers.length })} {addedByMembers.join(", ")}
+      </span>
+    </div>
   );
 
   useEffect(() => {
@@ -101,17 +132,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
   const showFallbackPoster = posterKnown && (!posterUrl || posterErrored);
   const displayPosterUrl = showFallbackPoster ? noPosterFallback : posterUrl;
   const posterReady = showFallbackPoster || posterLoaded;
-
-  const alreadyRated = source.kind === "group"
-    ? source.movie.ratings.some((r) => r.user.id === currentUserId)
-    : source.kind === "personal" && source.movie.rating != null;
-
-  const hasRatingsList = source.kind === "group"
-    ? source.movie.ratings.length > 0
-    : source.kind === "personal" && source.movie.rating != null;
-  const hasActionBlock = source.kind === "tmdb"
-    ? !!onAddToPersonalList
-    : hasRatingsList || (!!onRate && !alreadyRated) || !!onAddToPersonalList;
 
   useLayoutEffect(() => {
     const el = descRef.current;
@@ -170,88 +190,71 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onAddToPerson
                   </span>
                 )}
                 {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
-                {groupRating != null && <span><UserStar size={14} />{groupRating.toFixed(1)}</span>}
                 {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
               </div>
             </>
           )}
         </div>
       </div>
-      {hasActionBlock && <div className="movie-page__divider" />}
+      <div className="movie-page__divider" />
 
-      {source.kind === "tmdb" ? (
-        onAddToPersonalList && (
-          <>
-            {addedByHint}
-            <AsyncButton
-              type="button"
-              className="movie-page__add-btn"
-              onClick={onAddToPersonalList}
-            >
-              <Bookmark size={16} />
-              {t('moviePage.btnAddToPersonalList')}
-            </AsyncButton>
-          </>
-        )
-      ) : (
-        <div className="movie-page__app-rating">
-          {addedByHint}
-          {(source.kind === "group" ? source.movie.ratings.length > 0 : source.movie.rating != null) && (
-            <p className="movie-page__section-title">{t('moviePage.ratings')}</p>
-          )}
-          {source.kind === "group" ? (
-            <div className="movie-item-details__ratings">
-              {[...source.movie.ratings]
-                .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                .map((r) => (
-                  <span
-                    key={r.id}
-                    className={`movie-item-details__rating-item${r.isHostRating ? " movie-item-details__rating-item--host" : ""}`}
-                  >
-                    <User size={16} /> {r.user.name}: {r.score.toFixed(1)}
-                  </span>
-                ))}
-            </div>
-          ) : (
-            source.movie.rating != null && (
-              <div className="movie-item-details__ratings">
-                <span className="movie-item-details__rating-item">
-                  <User size={16} /> {t('moviePage.you')}: {source.movie.rating.toFixed(1)}
-                </span>
-              </div>
-            )
-          )}
-          {onRate && !alreadyRated && (
-            <div className="movie-page__rate-row">
-              <button
-                type="button"
-                className="movie-item-details__rate-btn"
-                onClick={() => { hapticTabTap(); onRate(); }}
-              >
-                {t('moviePage.btnRate')}
-              </button>
-              {onDelete && (
-                <button
-                  type="button"
-                  className="movie-page__delete-btn"
-                  aria-label={t('moviePage.btnRemoveFromList')}
-                  onClick={() => { hapticTabTap(); onDelete(); }}
+      <div className="movie-page__actions">
+        {onRate && (
+          <button
+            type="button"
+            className={`movie-page__action${ownRating != null ? " movie-page__action--rated" : ""}`}
+            onClick={() => { hapticTabTap(); onRate(); }}
+          >
+            <Star size={30} fill={ownRating != null ? "currentColor" : "none"} />
+            <span className="movie-page__action-label">
+              {ownRating != null ? ownRating.toFixed(1) : t('moviePage.actionRate')}
+            </span>
+          </button>
+        )}
+        {hasGroupRatings && groupRating != null && (
+          <button
+            type="button"
+            className={`movie-page__action movie-page__action--groupbadge${groupExpanded ? " movie-page__action--group-open" : ""}`}
+            onClick={() => { hapticTabTap(); setGroupExpanded((v) => !v); }}
+          >
+            <UserStar size={30} />
+            <span className="movie-page__action-label">{groupRating.toFixed(1)}</span>
+          </button>
+        )}
+        <button
+          type="button"
+          className={`movie-page__action${inList ? " movie-page__action--listed" : ""}`}
+          onClick={() => applyState({ inList: !inList })}
+        >
+          <Bookmark size={30} fill={inList ? "currentColor" : "none"} />
+          <span className="movie-page__action-label">{inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}</span>
+        </button>
+        <button
+          type="button"
+          className={`movie-page__action${watched ? " movie-page__action--watched" : ""}`}
+          onClick={() => applyState({ watched: !watched })}
+        >
+          <Eye size={30} />
+          <span className="movie-page__action-label">{t('moviePage.actionWatched')}</span>
+        </button>
+      </div>
+
+      {addedByHint}
+
+      {hasGroupRatings && (
+        <div className={`movie-page__ratings-reveal${groupExpanded ? " movie-page__ratings-reveal--open" : ""}`}>
+          <div className="movie-item-details__ratings">
+            {[...groupRatings]
+              .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+              .map((r) => (
+                <span
+                  key={r.id}
+                  className={`movie-item-details__rating-item${r.isHostRating ? " movie-item-details__rating-item--host" : ""}`}
                 >
-                  <Trash2 size={18} />
-                </button>
-              )}
-            </div>
-          )}
-          {onAddToPersonalList && (
-            <AsyncButton
-              type="button"
-              className="movie-page__add-btn"
-              onClick={onAddToPersonalList}
-            >
-              <Bookmark size={16} />
-              {t('moviePage.btnAddToPersonalList')}
-            </AsyncButton>
-          )}
+                  <User size={16} /> {r.user.name}: {r.score.toFixed(1)}
+                </span>
+              ))}
+          </div>
         </div>
       )}
 

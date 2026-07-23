@@ -51,6 +51,8 @@ public interface AppRepository {
 
   List<String> findGroupMembersWhoAdded(String callerId, Long tmdbId, String title);
 
+  PersonalMovie findPersonalMovieForCaller(String callerId, Long tmdbId, String title);
+
   void deletePersonalMovieById(String id, String userId);
 
   void setGroupChatId(String groupId, Long chatId);

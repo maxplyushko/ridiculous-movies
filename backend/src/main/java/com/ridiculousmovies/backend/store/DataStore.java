@@ -142,6 +142,7 @@ public class DataStore implements AppRepository {
         pm.setDescription(r.description() != null ? r.description() : "");
         pm.setRating(r.rating());
         pm.setWatched(r.watched());
+        pm.setInList(r.inList());
         pm.setCreatedAt(r.createdAt());
         pm.setUpdatedAt(r.updatedAt());
         pm.setTmdbId(r.tmdbId());
@@ -509,6 +510,25 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public PersonalMovie findPersonalMovieForCaller(String callerId, Long tmdbId, String title) {
+    lock.readLock().lock();
+    try {
+      String normTitle = title == null ? null : title.trim().toLowerCase();
+      return personalMoviesById.values().stream()
+          .filter(pm -> callerId.equals(pm.getUserId()))
+          .filter(pm -> {
+            boolean tmdbMatch = tmdbId != null && tmdbId.equals(pm.getTmdbId());
+            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
+                && pm.getTitle() != null && normTitle.equals(pm.getTitle().trim().toLowerCase());
+            return tmdbMatch || titleMatch;
+          })
+          .findFirst()
+          .orElse(null);
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
   public void savePersonalMovie(PersonalMovie movie) {
     lock.writeLock().lock();
     try {
@@ -626,7 +646,8 @@ public class DataStore implements AppRepository {
         .toList());
     data.setPersonalMovies(personalMoviesById.values().stream()
         .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
-            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getCreatedAt(), pm.getUpdatedAt(),
+            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getInList(),
+            pm.getCreatedAt(), pm.getUpdatedAt(),
             pm.getTmdbId(), pm.getTmdbMediaType()))
         .toList());
     data.setGroupChatIds(new LinkedHashMap<>(groupChatIdsMap));

@@ -12,6 +12,17 @@ export interface PersonalMoviePayload {
 
 export interface UpdatePersonalMoviePayload extends PersonalMoviePayload {
   watched: boolean;
+  inList?: boolean;
+}
+
+export interface PersonalStatePayload {
+  tmdbId?: number | null;
+  title: string;
+  description?: string;
+  tmdbMediaType?: TmdbMediaType | null;
+  inList?: boolean;
+  watched?: boolean;
+  rating?: number | null;
 }
 
 export async function fetchPersonalList(): Promise<PersonalMovie[]> {
@@ -39,4 +50,17 @@ export async function fetchGroupMembersWhoAdded(tmdbId?: number | null, title?: 
 
 export async function deletePersonalMovie(id: string): Promise<void> {
   await apiFetch<void>(`/api/personal-list/${id}`, { method: "DELETE" });
+}
+
+export async function fetchMyStatus(tmdbId?: number | null, title?: string): Promise<PersonalMovie | null> {
+  const params = new URLSearchParams();
+  if (tmdbId != null) params.set("tmdbId", String(tmdbId));
+  if (title) params.set("title", title);
+  const res = await apiFetch<PersonalMovie | undefined>(`/api/personal-list/status?${params.toString()}`);
+  return res ?? null;
+}
+
+export async function setPersonalState(payload: PersonalStatePayload): Promise<PersonalMovie | null> {
+  const res = await apiFetch<PersonalMovie | undefined>("/api/personal-list/state", { method: "PUT", body: payload });
+  return res ?? null;
 }

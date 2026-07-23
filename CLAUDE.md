@@ -67,7 +67,7 @@ npm run lint         # ESLint
 
 **Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four tabs: Stats, Group List, Personal List, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
 
-**Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items have `watched` boolean and optional `rating`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies.
+**Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items carry two **independent** booleans — `inList` (in the "to watch" list) and `watched` — plus an optional `rating`. A movie can be watched without being listed, and vice-versa; a record is deleted once both flags are false and no rating remains. `inList` is nullable in storage: legacy records (no field) deserialize as `null` and are treated as `true`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies. `MovieDetail` (`MoviePage.tsx`) surfaces these as a shared icon action row (rate star, group-rating badge, bookmark=`inList`, eye=`watched`) that acts on the **caller's own** record via `GET /status` + `PUT /state`, consistent across every source (group / personal / TMDB / member).
 
 **i18n**: `react-i18next`, locales in `webapp/src/lib/i18n/locales/`. Language resolved from `AuthResponse.lang`, stored in `i18n-lang` localStorage key. Default `"en"`, fallback `"en"`.
 
@@ -101,6 +101,10 @@ npm run lint         # ESLint
 | POST | `/api/personal-list` | Add item to personal watchlist |
 | PUT | `/api/personal-list/{id}` | Update personal watchlist item |
 | DELETE | `/api/personal-list/{id}` | Remove personal watchlist item |
+| GET | `/api/personal-list/status` | Caller's own record for a movie (by `tmdbId`/`title`), `204` if none |
+| PUT | `/api/personal-list/state` | Upsert caller's `inList`/`watched`/`rating` for a movie; deletes record when all cleared |
+| GET | `/api/personal-list/added-by` | Group members who have a movie in their watchlist |
+| GET | `/api/personal-list/user/{targetId}` | List another member's watchlist (if public) |
 | GET | `/api/stats` | Group stats |
 | GET | `/api/users` | List users in caller's group |
 | PUT | `/api/users/me/preferences` | Update caller's preferences (theme, defaultPage, lang) |
