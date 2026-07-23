@@ -85,7 +85,12 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
 
   useSwipeBack(closeMovieView, movieViewEl);
 
-  const viewingMovie = movies.find((m) => m.id === viewingMovieId) ?? null;
+  const viewingMovieFromList = movies.find((m) => m.id === viewingMovieId) ?? null;
+  const lastViewingMovieRef = useRef<PersonalMovie | null>(null);
+  useEffect(() => {
+    if (viewingMovieFromList) lastViewingMovieRef.current = viewingMovieFromList;
+  }, [viewingMovieFromList]);
+  const viewingMovie = viewingMovieId ? (viewingMovieFromList ?? lastViewingMovieRef.current) : null;
 
   useEffect(() => {
     if (openSwipeId === null) return;

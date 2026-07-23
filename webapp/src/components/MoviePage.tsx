@@ -62,9 +62,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
-  const [pendingInList, setPendingInList] = useState(false);
-  const [pendingWatched, setPendingWatched] = useState(false);
   const [groupExpanded, setGroupExpanded] = useState(false);
+  const confirmedStateRef = useRef({ inList: false, watched: false });
+  const stateSendTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (tmdbId == null && !title) return;
@@ -80,11 +80,19 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
     let cancelled = false;
     setStatusLoading(true);
     fetchMyStatus(tmdbId, title)
-      .then((s) => { if (!cancelled) setSelfStatus(s); })
+      .then((s) => {
+        if (cancelled) return;
+        setSelfStatus(s);
+        confirmedStateRef.current = { inList: s?.inList ?? false, watched: s?.watched ?? false };
+      })
       .catch(() => { if (!cancelled) setSelfStatus(null); })
       .finally(() => { if (!cancelled) setStatusLoading(false); });
     return () => { cancelled = true; };
   }, [tmdbId, title]);
+
+  useEffect(() => () => {
+    if (stateSendTimerRef.current) clearTimeout(stateSendTimerRef.current);
+  }, []);
 
   const inList = selfStatus?.inList ?? false;
   const watched = selfStatus?.watched ?? false;
@@ -96,8 +104,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const groupRatings = source.kind === "group" ? source.movie.ratings : [];
   const hasGroupRatings = groupRatings.length > 0;
 
-  const applyState = async (patch: { inList?: boolean; watched?: boolean }) => {
-    const previous = selfStatus;
+  const STATE_SEND_DELAY_MS = 600;
+
+  const scheduleStateSend = (patch: { inList?: boolean; watched?: boolean }) => {
     setSelfStatus((prev) => ({
       ...(prev ?? {
         id: "", title, description: description ?? "", rating: null, watched: false, inList: false,
@@ -105,47 +114,49 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
       }),
       ...patch,
     }));
-    try {
-      const next = await setPersonalState({
-        tmdbId,
-        title,
-        description: description ?? "",
-        tmdbMediaType: mediaType,
+
+    if (stateSendTimerRef.current) clearTimeout(stateSendTimerRef.current);
+    stateSendTimerRef.current = setTimeout(async () => {
+      stateSendTimerRef.current = null;
+      const desired = {
         inList: patch.inList ?? inList,
         watched: patch.watched ?? watched,
-      });
-      setSelfStatus(next);
-      onPersonalStateChange?.();
-    } catch (err) {
-      setSelfStatus(previous);
-      throw err;
-    }
+      };
+      if (
+        desired.inList === confirmedStateRef.current.inList
+        && desired.watched === confirmedStateRef.current.watched
+      ) {
+        return;
+      }
+      try {
+        const next = await setPersonalState({
+          tmdbId,
+          title,
+          description: description ?? "",
+          tmdbMediaType: mediaType,
+          inList: desired.inList,
+          watched: desired.watched,
+        });
+        confirmedStateRef.current = { inList: next?.inList ?? false, watched: next?.watched ?? false };
+        setSelfStatus(next);
+        onPersonalStateChange?.();
+      } catch {
+        setSelfStatus((prev) => ({
+          ...(prev ?? { id: "", title, description: description ?? "", rating: null, watched: false, inList: false, createdAt: "", updatedAt: "", tmdbId: tmdbId ?? undefined, tmdbMediaType: mediaType }),
+          ...confirmedStateRef.current,
+        }));
+      }
+    }, STATE_SEND_DELAY_MS);
   };
 
-  const toggleInList = async () => {
-    if (pendingInList) return;
+  const toggleInList = () => {
     hapticTabTap();
-    setPendingInList(true);
-    try {
-      await applyState({ inList: !inList });
-    } catch {
-      // reverted in applyState
-    } finally {
-      setPendingInList(false);
-    }
+    scheduleStateSend({ inList: !inList });
   };
 
-  const toggleWatched = async () => {
-    if (pendingWatched) return;
+  const toggleWatched = () => {
     hapticTabTap();
-    setPendingWatched(true);
-    try {
-      await applyState({ watched: !watched });
-    } catch {
-      // reverted in applyState
-    } finally {
-      setPendingWatched(false);
-    }
+    scheduleStateSend({ watched: !watched });
   };
 
   const addedByHint = addedByMembers.length > 0 && (
@@ -155,7 +166,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
         {t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}{" "}
         {addedByMembers.map((name, i) => (
           <span key={name} className="movie-page__watchlist-member">
-            <User size={14} />{name}{i < addedByMembers.length - 1 ? ", " : ""}
+            {name}{i < addedByMembers.length - 1 ? ", " : ""}
           </span>
         ))}
       </span>
@@ -278,11 +289,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
         {statusLoading ? (
           <>
             <div className="movie-page__action movie-page__action-skeleton">
-              <div className="sk-card movie-page__sk-action-icon" />
+              <Loader size={26} className="movie-page__action-spinner" />
               <div className="sk-line movie-page__sk-action-label" />
             </div>
             <div className="movie-page__action movie-page__action-skeleton">
-              <div className="sk-card movie-page__sk-action-icon" />
+              <Loader size={26} className="movie-page__action-spinner" />
               <div className="sk-line movie-page__sk-action-label" />
             </div>
           </>
@@ -292,7 +303,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
               type="button"
               className={`movie-page__action${inList ? " movie-page__action--listed" : ""}`}
               aria-label={inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}
-              disabled={pendingInList}
               onClick={toggleInList}
             >
               <Bookmark size={26} fill={inList ? "currentColor" : "none"} />
@@ -302,7 +312,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
               type="button"
               className={`movie-page__action${watched ? " movie-page__action--watched" : ""}`}
               aria-label={watched ? t('moviePage.actionWatched') : t('moviePage.actionNotWatched')}
-              disabled={pendingWatched}
               onClick={toggleWatched}
             >
               <Eye size={26} />

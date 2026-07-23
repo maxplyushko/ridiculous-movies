@@ -779,7 +779,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 2.25rem;
+  gap: 1.25rem;
 }
 
 .movie-page__action {
@@ -790,7 +790,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  min-width: 3.5rem;
+  width: 4.5rem;
   cursor: pointer;
   color: var(--text-secondary);
   transition: color 0.2s ease;
@@ -811,6 +811,10 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-secondary);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.2;
 }
 
 .movie-page__action-skeleton {
@@ -818,15 +822,15 @@
   cursor: default;
 }
 
-.movie-page__sk-action-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
+.movie-page__action-spinner {
+  color: var(--text-secondary);
+  animation: page-loader-spin 0.8s linear infinite;
 }
 
 .movie-page__sk-action-label {
   width: 2.5rem;
   height: 0.6875rem;
+  border-radius: 0.25rem;
 }
 
 .movie-page__action--rated {
@@ -874,12 +878,6 @@
 .movie-page__watchlist-bar svg {
   flex-shrink: 0;
   color: var(--accent);
-}
-
-.movie-page__watchlist-member {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
 }
 
 .movie-page__meta-skeleton {
