@@ -37,6 +37,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
   const [editingMovie, setEditingMovie] = useState<PersonalMovie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
+  const [ratingOnly, setRatingOnly] = useState(false);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
@@ -175,6 +176,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
     if (movie.watched) {
       applyToggle(movie);
     } else {
+      setRatingOnly(false);
       setRatingMovie(movie);
     }
   };
@@ -332,7 +334,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           onCancel={() => {
             const movie = ratingMovie;
             setRatingMovie(null);
-            if (!movie.watched) {
+            if (!ratingOnly && !movie.watched) {
               applyToggle(movie);
               celebrate(movie.id);
             }
@@ -340,7 +342,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           onSave={async (rating) => {
             const movie = ratingMovie;
             setRatingMovie(null);
-            if (movie.watched) {
+            if (ratingOnly || movie.watched) {
               await updateRating(movie, rating);
             } else {
               applyToggle(movie, rating);
@@ -356,7 +358,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
             <MoviePage
               source={{ kind: "personal", movie: viewingMovie }}
               onBack={closeMovieView}
-              onRate={() => setRatingMovie(viewingMovie)}
+              onRate={() => { setRatingOnly(true); setRatingMovie(viewingMovie); }}
               onPersonalStateChange={() => loadMovies(true)}
             />
           )}

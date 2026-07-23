@@ -150,6 +150,7 @@
     "actionToWatch": "В список",
     "actionInList": "В списке",
     "actionWatched": "Просмотрено",
+    "actionNotWatched": "Не просмотрено",
     "expand": "Показать больше",
     "collapse": "Свернуть",
     "btnRate": "Оценить фильм",

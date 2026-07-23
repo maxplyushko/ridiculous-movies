@@ -60,6 +60,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [pendingInList, setPendingInList] = useState(false);
+  const [pendingWatched, setPendingWatched] = useState(false);
   const [groupExpanded, setGroupExpanded] = useState(false);
 
   useEffect(() => {
@@ -74,9 +77,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   useEffect(() => {
     if (tmdbId == null && !title) return;
     let cancelled = false;
+    setStatusLoading(true);
     fetchMyStatus(tmdbId, title)
       .then((s) => { if (!cancelled) setSelfStatus(s); })
-      .catch(() => { if (!cancelled) setSelfStatus(null); });
+      .catch(() => { if (!cancelled) setSelfStatus(null); })
+      .finally(() => { if (!cancelled) setStatusLoading(false); });
     return () => { cancelled = true; };
   }, [tmdbId, title]);
 
@@ -91,34 +96,82 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const hasGroupRatings = groupRatings.length > 0;
 
   const applyState = async (patch: { inList?: boolean; watched?: boolean }) => {
+    const previous = selfStatus;
+    setSelfStatus((prev) => ({
+      ...(prev ?? {
+        id: "", title, description: description ?? "", rating: null, watched: false, inList: false,
+        createdAt: "", updatedAt: "", tmdbId: tmdbId ?? undefined, tmdbMediaType: mediaType,
+      }),
+      ...patch,
+    }));
+    try {
+      const next = await setPersonalState({
+        tmdbId,
+        title,
+        description: description ?? "",
+        tmdbMediaType: mediaType,
+        inList: patch.inList ?? inList,
+        watched: patch.watched ?? watched,
+      });
+      setSelfStatus(next);
+      onPersonalStateChange?.();
+    } catch (err) {
+      setSelfStatus(previous);
+      throw err;
+    }
+  };
+
+  const toggleInList = async () => {
+    if (pendingInList) return;
     hapticTabTap();
-    const next = await setPersonalState({
-      tmdbId,
-      title,
-      description: description ?? "",
-      tmdbMediaType: mediaType,
-      inList: patch.inList ?? inList,
-      watched: patch.watched ?? watched,
-    });
-    setSelfStatus(next);
-    onPersonalStateChange?.();
+    setPendingInList(true);
+    try {
+      await applyState({ inList: !inList });
+    } catch {
+      // reverted in applyState
+    } finally {
+      setPendingInList(false);
+    }
+  };
+
+  const toggleWatched = async () => {
+    if (pendingWatched) return;
+    hapticTabTap();
+    setPendingWatched(true);
+    try {
+      await applyState({ watched: !watched });
+    } catch {
+      // reverted in applyState
+    } finally {
+      setPendingWatched(false);
+    }
   };
 
   const addedByHint = addedByMembers.length > 0 && (
     <div className="movie-page__watchlist-bar">
       <Info size={16} />
       <span>
-        {t('moviePage.alsoInWatchlist', { count: addedByMembers.length })} {addedByMembers.join(", ")}
+        {t('moviePage.alsoInWatchlist', { count: addedByMembers.length })}{" "}
+        {addedByMembers.map((name, i) => (
+          <span key={name} className="movie-page__watchlist-member">
+            <User size={14} />{name}{i < addedByMembers.length - 1 ? ", " : ""}
+          </span>
+        ))}
       </span>
     </div>
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosterLoaded(false);
     setPosterErrored(false);
     setPosterAttempt(0);
   }, [posterUrl]);
+
+  useEffect(() => {
+    if (!posterUrl || posterLoaded || posterErrored) return;
+    const timer = setTimeout(() => setPosterErrored(true), POSTER_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [posterUrl, posterAttempt, posterLoaded, posterErrored]);
 
   const handlePosterError = () => {
     setPosterAttempt((prev) => {
@@ -205,7 +258,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
             className={`movie-page__action${ownRating != null ? " movie-page__action--rated" : ""}`}
             onClick={() => { hapticTabTap(); onRate(); }}
           >
-            <Star size={30} fill={ownRating != null ? "currentColor" : "none"} />
+            <Star size={26} fill={ownRating != null ? "currentColor" : "none"} />
             <span className="movie-page__action-label">
               {ownRating != null ? ownRating.toFixed(1) : t('moviePage.actionRate')}
             </span>
@@ -217,26 +270,45 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
             className={`movie-page__action movie-page__action--groupbadge${groupExpanded ? " movie-page__action--group-open" : ""}`}
             onClick={() => { hapticTabTap(); setGroupExpanded((v) => !v); }}
           >
-            <UserStar size={30} />
+            <UserStar size={26} />
             <span className="movie-page__action-label">{groupRating.toFixed(1)}</span>
           </button>
         )}
-        <button
-          type="button"
-          className={`movie-page__action${inList ? " movie-page__action--listed" : ""}`}
-          onClick={() => applyState({ inList: !inList })}
-        >
-          <Bookmark size={30} fill={inList ? "currentColor" : "none"} />
-          <span className="movie-page__action-label">{inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}</span>
-        </button>
-        <button
-          type="button"
-          className={`movie-page__action${watched ? " movie-page__action--watched" : ""}`}
-          onClick={() => applyState({ watched: !watched })}
-        >
-          <Eye size={30} />
-          <span className="movie-page__action-label">{t('moviePage.actionWatched')}</span>
-        </button>
+        {statusLoading ? (
+          <>
+            <div className="movie-page__action movie-page__action-skeleton">
+              <div className="sk-card movie-page__sk-action-icon" />
+              <div className="sk-line movie-page__sk-action-label" />
+            </div>
+            <div className="movie-page__action movie-page__action-skeleton">
+              <div className="sk-card movie-page__sk-action-icon" />
+              <div className="sk-line movie-page__sk-action-label" />
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`movie-page__action${inList ? " movie-page__action--listed" : ""}`}
+              aria-label={inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}
+              disabled={pendingInList}
+              onClick={toggleInList}
+            >
+              <Bookmark size={26} fill={inList ? "currentColor" : "none"} />
+              <span className="movie-page__action-label">{inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}</span>
+            </button>
+            <button
+              type="button"
+              className={`movie-page__action${watched ? " movie-page__action--watched" : ""}`}
+              aria-label={watched ? t('moviePage.actionWatched') : t('moviePage.actionNotWatched')}
+              disabled={pendingWatched}
+              onClick={toggleWatched}
+            >
+              <Eye size={26} />
+              <span className="movie-page__action-label">{watched ? t('moviePage.actionWatched') : t('moviePage.actionNotWatched')}</span>
+            </button>
+          </>
+        )}
       </div>
 
       {addedByHint}
