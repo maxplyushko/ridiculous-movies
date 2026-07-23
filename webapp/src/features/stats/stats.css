@@ -349,3 +349,21 @@
   animation: sk-shimmer 1.4s ease-in-out infinite;
 }
 
+
+.stat-empty {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.stat-empty__title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-empty__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}

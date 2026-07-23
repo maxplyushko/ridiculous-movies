@@ -33,15 +33,25 @@ const StatPage = ({ active, onBack }: StatPageProps) => {
   }
 
   const { bestMovies, worstMovies, usersByRating } = state.data;
+  const isEmpty = bestMovies.length === 0 && worstMovies.length === 0;
   return (
     <section className="stat-page" ref={setSectionEl}>
       <div className="page-header">
         <PageBackButton onBack={onBack} active={active} />
         <h1 className="page-title">{t('groupList.labelStatistics')}</h1>
       </div>
-      <MoviePodium title={t('stats.podiumBest')} movies={bestMovies} variant="best" active={active} />
-      <MoviePodium title={t('stats.podiumWorst')} movies={worstMovies} variant="worst" active={active} />
-      <UsersRatingChart users={usersByRating} active={active} />
+      {isEmpty ? (
+        <div className="stat-empty">
+          <p className="stat-empty__title">{t('stats.emptyTitle')}</p>
+          <p className="stat-empty__hint">{t('stats.emptyHint')}</p>
+        </div>
+      ) : (
+        <>
+          <MoviePodium title={t('stats.podiumBest')} movies={bestMovies} variant="best" active={active} />
+          <MoviePodium title={t('stats.podiumWorst')} movies={worstMovies} variant="worst" active={active} />
+          <UsersRatingChart users={usersByRating} active={active} />
+        </>
+      )}
     </section>
   );
 };

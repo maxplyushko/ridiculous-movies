@@ -126,7 +126,9 @@
     "podiumBest": "Top 3 best movies",
     "podiumWorst": "Top 3 worst movies",
     "hostsByRating": "Top 3 hosts",
-    "ratingTendencies": "Rating tendencies"
+    "ratingTendencies": "Rating tendencies",
+    "emptyTitle": "No statistics yet",
+    "emptyHint": "Go ahead and watch some movies, yeeha!"
   },
   "tmdb": {
     "section": "On TMDB",
