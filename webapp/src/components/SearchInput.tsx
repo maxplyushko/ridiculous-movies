@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react";
+import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 
 type SearchInputProps = {
   value: string;
@@ -17,6 +18,7 @@ export function SearchInput({ value, onChange, placeholder }: Readonly<SearchInp
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={(e) => scrollIntoViewAfterKeyboard(e.currentTarget)}
         />
         {value && (
           <button className="mlp__search-clear" onClick={() => onChange("")} aria-label={placeholder}>

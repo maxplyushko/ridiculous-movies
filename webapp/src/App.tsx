@@ -10,6 +10,7 @@ import { CircleUser, Film, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
+import { getKeyboardViewportHeight, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
 
 type Tab = "group" | "personal" | "misc";
 type Page = Tab | "stat" | "personalStat";
@@ -35,29 +36,27 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
     document.addEventListener('focusin', onFocusIn);
     document.addEventListener('focusout', onFocusOut);
 
-    const vv = window.visualViewport;
-    let onResize: (() => void) | undefined;
     let closeTimer: ReturnType<typeof setTimeout> | undefined;
-    if (vv) {
-      let maxHeight = vv.height;
-      onResize = () => {
-        maxHeight = Math.max(maxHeight, vv.height);
-        if (vv.height < maxHeight - 100) {
-          if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; }
-          setKeyboardOpen(true);
-        } else if (!isTextEntry(document.activeElement)) {
-          if (closeTimer) clearTimeout(closeTimer);
-          closeTimer = setTimeout(() => {
-            if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
-          }, 300);
-        }
-      };
-      vv.addEventListener('resize', onResize);
-    }
+    let maxHeight = getKeyboardViewportHeight() ?? 0;
+    const onViewportChange = () => {
+      const height = getKeyboardViewportHeight();
+      if (height === undefined) return;
+      maxHeight = Math.max(maxHeight, height);
+      if (height < maxHeight - 100) {
+        if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; }
+        setKeyboardOpen(true);
+      } else if (!isTextEntry(document.activeElement)) {
+        if (closeTimer) clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => {
+          if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
+        }, 300);
+      }
+    };
+    const unsubscribe = onKeyboardViewportChange(onViewportChange);
     return () => {
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
-      if (vv && onResize) vv.removeEventListener('resize', onResize);
+      unsubscribe();
       if (closeTimer) clearTimeout(closeTimer);
     };
   }, []);
