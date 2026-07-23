@@ -114,7 +114,7 @@
     "viewingMember": "Список — {{name}}",
     "btnShowMovieList": "Показать список фильмов",
     "listRestricted": "Пользователь ограничил доступ к списку",
-    "sectionStats": "Статистика группы",
+    "sectionStats": "Ваша статистика",
     "statMoviesRated": "Оценено фильмов",
     "statAvgGiven": "Средняя оценка",
     "statAvgAsHost": "Средняя оценка в качестве хоста",
