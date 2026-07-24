@@ -602,10 +602,35 @@ public class DataStore implements AppRepository {
       }
       rating.setScore(score);
       movie.setUpdatedAt(Instant.now());
+      markWatchedForRating(raterId, movie.getTmdbId(), movie.getTitle());
       persist();
       return movie;
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  private void markWatchedForRating(String userId, Long tmdbId, String title) {
+    PersonalMovie pm = findPersonalMovieForCaller(userId, tmdbId, title);
+    if (pm == null) {
+      pm = new PersonalMovie();
+      pm.setUserId(userId);
+      pm.setTitle(title);
+      pm.setDescription("");
+      pm.setTmdbId(tmdbId);
+      pm.setInList(false);
+    }
+    if (!pm.isWatched()) {
+      pm.setWatched(true);
+      if (pm.getId() == null) {
+        pm.setId(UUID.randomUUID().toString());
+      }
+      Instant now = Instant.now();
+      if (pm.getCreatedAt() == null) {
+        pm.setCreatedAt(now);
+      }
+      pm.setUpdatedAt(now);
+      personalMoviesById.put(pm.getId(), pm);
     }
   }
 

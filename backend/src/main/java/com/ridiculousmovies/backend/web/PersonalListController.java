@@ -68,7 +68,7 @@ public class PersonalListController {
     pm.setTitle(req.title());
     pm.setDescription(req.description() != null ? req.description() : "");
     pm.setRating(req.rating());
-    pm.setWatched(false);
+    pm.setWatched(req.rating() != null);
     pm.setInList(true);
     pm.setTmdbId(req.tmdbId());
     pm.setTmdbMediaType(req.tmdbMediaType());
@@ -120,6 +120,7 @@ public class PersonalListController {
     }
     if (req.rating() != null) {
       pm.setRating(req.rating());
+      pm.setWatched(true);
     }
     boolean listed = pm.getInList() != null && pm.getInList();
     if (!listed && !pm.isWatched() && pm.getRating() == null) {
@@ -147,7 +148,7 @@ public class PersonalListController {
     pm.setTitle(req.title());
     pm.setDescription(req.description() != null ? req.description() : "");
     pm.setRating(req.rating());
-    pm.setWatched(req.watched());
+    pm.setWatched(req.rating() != null || req.watched());
     if (req.inList() != null) {
       pm.setInList(req.inList());
     }
