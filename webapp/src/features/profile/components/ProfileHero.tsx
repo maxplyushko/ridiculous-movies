@@ -2,12 +2,13 @@ import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Shield, User as UserIcon, Users } from "lucide-react";
 
-export function ProfileHero({ name, role, groupName, action, backButton }: Readonly<{
+export function ProfileHero({ name, role, groupName, action, backButton, groupAction }: Readonly<{
   name: string;
   role: "user" | "admin";
   groupName: string;
   action?: ReactNode;
   backButton?: ReactNode;
+  groupAction?: ReactNode;
 }>) {
   const { t } = useTranslation();
   const parts = name.trim().split(/\s+/);
@@ -33,6 +34,7 @@ export function ProfileHero({ name, role, groupName, action, backButton }: Reado
           <span className="user-page__meta">
             <Users size={16} />
             {groupName}
+            {groupAction}
           </span>
         </p>
       </div>

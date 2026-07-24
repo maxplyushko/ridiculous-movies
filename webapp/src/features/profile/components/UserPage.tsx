@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../profile.css";
-import { ChevronRight, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { Check, ChevronRight, Copy, Link as LinkIcon, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { applyColorScheme } from "@/lib/telegram/telegramTheme.ts";
 import { fetchUsers, savePreferences } from "@/features/group/api/users.ts";
@@ -16,12 +16,58 @@ import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
+import { getInviteLink } from "@/features/onboarding/api/onboarding.ts";
+import { buildInviteLinks } from "@/features/onboarding/inviteLink.ts";
+import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import MemberListPage from "@/features/personal/components/MemberListPage.tsx";
 import { ProfileHero } from "./ProfileHero.tsx";
 import { ProfileStatGrid } from "./ProfileStatGrid.tsx";
 import { MemberProfileView } from "./MemberProfileView.tsx";
 
 type Props = { session: AuthResponse };
+
+function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
+  const { t } = useTranslation();
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    getInviteLink()
+      .then((res) => setInviteCode(res.inviteCode))
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, []);
+
+  const handleCopy = async () => {
+    if (!inviteCode) return;
+    hapticTabTap();
+    const links = buildInviteLinks(inviteCode);
+    const link = isTelegramMiniApp() && links.telegram ? links.telegram : links.web;
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="confirm-dialog-overlay" onClick={onClose}>
+      <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+        <p>{t('userPage.inviteDialogHint')}</p>
+        {error && <span className="confirm-dialog__error">{error}</span>}
+        {inviteCode && (
+          <div className="onboarding__invite-row">
+            <code className="onboarding__invite-code">{inviteCode}</code>
+            <button type="button" className="onboarding__copy-btn" onClick={handleCopy}>
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+          </div>
+        )}
+        <div className="confirm-dialog__actions">
+          <button type="button" onClick={() => { hapticTabTap(); onClose(); }}>{t('onboarding.btnOk')}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   session: AuthResponse;
@@ -31,6 +77,7 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
 }>) {
   const { t } = useTranslation();
   const [members, setMembers] = useState<User[]>([]);
+  const [showInvite, setShowInvite] = useState(false);
 
   useEffect(() => {
     fetchUsers()
@@ -44,12 +91,23 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
         name={session.userName}
         role={session.role}
         groupName={session.groupName ?? ""}
+        groupAction={session.role === "admin" && (
+          <button
+            type="button"
+            className="user-page__invite-link-btn"
+            onClick={() => { hapticTabTap(); setShowInvite(true); }}
+            aria-label={t('userPage.btnInviteLink')}
+          >
+            <LinkIcon size={14} />
+          </button>
+        )}
         action={
           <button className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
             <Settings size={24} />
           </button>
         }
       />
+      {showInvite && <InviteLinkDialog onClose={() => setShowInvite(false)} />}
 
       <ProfileStatGrid userId={session.userId} stats={stats} />
 

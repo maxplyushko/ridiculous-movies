@@ -168,6 +168,24 @@
   color: #ec4899;
 }
 
+.user-page__invite-link-btn {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.user-page__invite-link-btn:active {
+  background: var(--active-highlight);
+}
+
 .user-page__stat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

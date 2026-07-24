@@ -176,7 +176,7 @@ public class DataStore implements AppRepository {
     lock.readLock().lock();
     try {
       return usersById.values().stream()
-          .filter(u -> groupId.equals(u.getUserGroup().getId()))
+          .filter(u -> u.getUserGroup() != null && groupId.equals(u.getUserGroup().getId()))
           .count();
     } finally {
       lock.readLock().unlock();
@@ -192,7 +192,7 @@ public class DataStore implements AppRepository {
     lock.readLock().lock();
     try {
       List<Object[]> rows = usersById.values().stream()
-          .filter(u -> groupId.equals(u.getUserGroup().getId()))
+          .filter(u -> u.getUserGroup() != null && groupId.equals(u.getUserGroup().getId()))
           .map(u -> {
             List<BigDecimal> scores = moviesById.values().stream()
                 .filter(this::isAfterStatsCutoff)
@@ -482,10 +482,24 @@ public class DataStore implements AppRepository {
       ug.setId(groupName);
       ug.setName(groupName);
       u.setUserGroup(ug);
+      u.setRole(resolveOrCreateAdminRole());
       persist();
     } finally {
       lock.writeLock().unlock();
     }
+  }
+
+  private UserRole resolveOrCreateAdminRole() {
+    return usersById.values().stream()
+        .map(AppUser::getRole)
+        .filter(uRole -> "admin".equals(uRole.getName()))
+        .findFirst()
+        .orElseGet(() -> {
+          UserRole ur = new UserRole();
+          ur.setId("admin");
+          ur.setName("admin");
+          return ur;
+        });
   }
 
   public void assignUserToExistingGroup(String userId, String groupId) {
