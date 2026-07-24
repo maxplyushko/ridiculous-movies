@@ -41,6 +41,7 @@ public class DataStore implements AppRepository {
   private Map<String, Movie> moviesById;
   private Map<String, PersonalMovie> personalMoviesById;
   private Map<String, Long> groupChatIdsMap = new LinkedHashMap<>();
+  private Map<String, String> groupInviteCodesMap = new LinkedHashMap<>();
 
   private final Instant statsCutoffDate;
 
@@ -74,7 +75,7 @@ public class DataStore implements AppRepository {
 
     usersById = new LinkedHashMap<>();
     for (AppData.UserRecord r : data.getUsers()) {
-      UserGroup g = groupsByName.computeIfAbsent(r.group(), name -> {
+      UserGroup g = r.group() == null ? null : groupsByName.computeIfAbsent(r.group(), name -> {
         UserGroup ug = new UserGroup();
         ug.setId(name);
         ug.setName(name);
@@ -154,6 +155,11 @@ public class DataStore implements AppRepository {
     groupChatIdsMap = new LinkedHashMap<>();
     if (data.getGroupChatIds() != null) {
       groupChatIdsMap.putAll(data.getGroupChatIds());
+    }
+
+    groupInviteCodesMap = new LinkedHashMap<>();
+    if (data.getGroupInviteCodes() != null) {
+      groupInviteCodesMap.putAll(data.getGroupInviteCodes());
     }
   }
 
@@ -410,37 +416,113 @@ public class DataStore implements AppRepository {
   public AppUser registerUser(String name, String oauthSub, String groupId) {
     lock.writeLock().lock();
     try {
-      UserGroup g = usersById.values().stream()
-          .map(AppUser::getUserGroup)
-          .filter(userGroup -> groupId.equals(userGroup.getId()))
-          .findFirst()
-          .orElseGet(() -> {
-            UserGroup ug = new UserGroup();
-            ug.setId(groupId);
-            ug.setName(groupId);
-            return ug;
-          });
-      UserRole role = usersById.values().stream()
-          .map(AppUser::getRole)
-          .filter(uRole -> "user".equals(uRole.getName()))
-          .findFirst()
-          .orElseGet(() -> {
-            UserRole ur = new UserRole();
-            ur.setId("user");
-            ur.setName("user");
-            return ur;
-          });
       AppUser u = new AppUser();
       u.setId(UUID.randomUUID().toString());
       u.setName(name);
       u.setOauthSub(oauthSub);
-      u.setUserGroup(g);
-      u.setRole(role);
+      u.setUserGroup(resolveOrCreateGroup(groupId));
+      u.setRole(resolveOrCreateUserRole());
       usersById.put(u.getId(), u);
       persist();
       return u;
     } finally {
       lock.writeLock().unlock();
+    }
+  }
+
+  public AppUser registerTelegramUser(String telegramUserId, String name) {
+    lock.writeLock().lock();
+    try {
+      AppUser u = new AppUser();
+      u.setId(telegramUserId);
+      u.setName(name);
+      u.setUserGroup(null);
+      u.setRole(resolveOrCreateUserRole());
+      usersById.put(u.getId(), u);
+      persist();
+      return u;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  private UserGroup resolveOrCreateGroup(String groupId) {
+    if (groupId == null) return null;
+    return usersById.values().stream()
+        .map(AppUser::getUserGroup)
+        .filter(userGroup -> userGroup != null && groupId.equals(userGroup.getId()))
+        .findFirst()
+        .orElseGet(() -> {
+          UserGroup ug = new UserGroup();
+          ug.setId(groupId);
+          ug.setName(groupId);
+          return ug;
+        });
+  }
+
+  private UserRole resolveOrCreateUserRole() {
+    return usersById.values().stream()
+        .map(AppUser::getRole)
+        .filter(uRole -> "user".equals(uRole.getName()))
+        .findFirst()
+        .orElseGet(() -> {
+          UserRole ur = new UserRole();
+          ur.setId("user");
+          ur.setName("user");
+          return ur;
+        });
+  }
+
+  public void assignUserToNewGroup(String userId, String groupName) {
+    lock.writeLock().lock();
+    try {
+      AppUser u = usersById.get(userId);
+      if (u == null) return;
+      UserGroup ug = new UserGroup();
+      ug.setId(groupName);
+      ug.setName(groupName);
+      u.setUserGroup(ug);
+      persist();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public void assignUserToExistingGroup(String userId, String groupId) {
+    lock.writeLock().lock();
+    try {
+      AppUser u = usersById.get(userId);
+      if (u == null) return;
+      u.setUserGroup(resolveOrCreateGroup(groupId));
+      persist();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public String getOrCreateInviteCode(String groupId) {
+    lock.writeLock().lock();
+    try {
+      String existing = groupInviteCodesMap.get(groupId);
+      if (existing != null) return existing;
+      String code = UUID.randomUUID().toString().replace("-", "");
+      groupInviteCodesMap.put(groupId, code);
+      persist();
+      return code;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public String resolveGroupIdByInviteCode(String code) {
+    lock.readLock().lock();
+    try {
+      for (var entry : groupInviteCodesMap.entrySet()) {
+        if (entry.getValue().equals(code)) return entry.getKey();
+      }
+      return null;
+    } finally {
+      lock.readLock().unlock();
     }
   }
 
@@ -658,7 +740,8 @@ public class DataStore implements AppRepository {
     AppData data = new AppData();
     data.setUsers(usersById.values().stream()
         .map(u -> new AppData.UserRecord(u.getId(), u.getName(),
-            u.getUserGroup().getName(), u.getRole().getName(), u.getTheme(), u.getDefaultPage(),
+            u.getUserGroup() == null ? null : u.getUserGroup().getName(),
+            u.getRole().getName(), u.getTheme(), u.getDefaultPage(),
             u.getLang(), u.getTmdbLang(), u.getOauthSub(), u.getPersonalListPublic()))
         .toList());
     data.setMovies(moviesById.values().stream()
@@ -676,6 +759,7 @@ public class DataStore implements AppRepository {
             pm.getTmdbId(), pm.getTmdbMediaType()))
         .toList());
     data.setGroupChatIds(new LinkedHashMap<>(groupChatIdsMap));
+    data.setGroupInviteCodes(new LinkedHashMap<>(groupInviteCodesMap));
     return data;
   }
 

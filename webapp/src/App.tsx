@@ -6,6 +6,7 @@ import UserPage from "@/features/profile/components/UserPage.tsx";
 import PersonalListPage from "@/features/personal/components/PersonalListPage.tsx";
 import { AuthGate } from "@/features/auth/components/AuthGate.tsx";
 import type { AuthResponse } from "@/features/auth/api/auth.ts";
+import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal.tsx";
 import { CircleUser, Film, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
@@ -21,8 +22,9 @@ const TABS: Array<{ id: Tab; labelKey: string; icon: React.ReactNode }> = [
   { id: "misc", labelKey: "nav.profile", icon: <CircleUser size={30} /> },
 ];
 
-function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
+function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse }>) {
   const { t } = useTranslation();
+  const [session, setSession] = useState(initialSession);
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Page>(defaultTab);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -72,6 +74,14 @@ function AppShell({ session }: Readonly<{ session: AuthResponse }>) {
     hapticTabTap();
     setCurrentPage(tab);
   };
+
+  if (!session.groupId) {
+    return (
+      <OnboardingModal
+        onGroupReady={(groupId, groupName) => setSession((prev) => ({ ...prev, groupId, groupName }))}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">

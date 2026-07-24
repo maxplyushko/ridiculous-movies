@@ -4,8 +4,8 @@ export type AuthResponse = {
   userId: string;
   userName: string;
   role: "user" | "admin";
-  groupId: string;
-  groupName: string;
+  groupId: string | null;
+  groupName: string | null;
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
   lang: string | null;
@@ -18,8 +18,8 @@ export type OAuthLoginResponse = {
   userId: string;
   userName: string;
   role: "user" | "admin";
-  groupId: string;
-  groupName: string;
+  groupId: string | null;
+  groupName: string | null;
   theme: "dark" | "light" | null;
   defaultPage: "list" | "watchlist" | null;
   lang: string | null;

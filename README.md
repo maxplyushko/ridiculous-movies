@@ -3,8 +3,8 @@
 A Telegram Mini App for a private movie club. Members add films by round, rate each other's picks, and browse stats — top movies, podiums, and who rates the harshest.
 
 ## TODO
-- [ ] Introduce webapp haptic feedback (workaround)
-- [ ] Figure out how to handle user groups for newly added users (currently they are not assigned to any group)
+- [x] Introduce webapp haptic feedback (workaround)
+- [x] Figure out how to handle user groups for newly added users (currently they are not assigned to any group)
 - [ ] Migrate BE to `Go` and cleanup the BE code
 - [ ] Migrate storage back to PostgreSQL (`AppRepository` interface is ready — add `PostgresRepository implements AppRepository` and wire via `@ConditionalOnProperty`)
 - [x] Enhance rating system to allow for 3 focus points instead of just 1

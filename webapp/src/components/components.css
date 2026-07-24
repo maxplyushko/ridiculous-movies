@@ -1459,6 +1459,83 @@
   animation: page-loader-spin 1s linear infinite;
 }
 
+.onboarding__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: 0.25rem;
+}
+
+.onboarding__choice-btn {
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--page-bg);
+  color: var(--text-primary);
+}
+
+.onboarding__choice-btn:first-child {
+  background: var(--accent);
+  color: var(--button-text);
+}
+
+.onboarding__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.onboarding__invite-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--page-bg);
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.onboarding__invite-code {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.onboarding__copy-btn {
+  border: none;
+  background: none;
+  color: var(--accent);
+  padding: 0;
+  display: flex;
+  cursor: pointer;
+}
+
+.onboarding__ok-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--button-text);
+}
+
 .theme-toggle {
   position: relative;
   width: 51px;

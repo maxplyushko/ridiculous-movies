@@ -43,7 +43,7 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
       <ProfileHero
         name={session.userName}
         role={session.role}
-        groupName={session.groupName}
+        groupName={session.groupName ?? ""}
         action={
           <button className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
             <Settings size={24} />
@@ -293,7 +293,7 @@ const UserPage = ({ session }: Props) => {
         <div className="user-page__settings-overlay" ref={setMemberOverlayEl}>
           <MemberProfileView
             member={viewingMember}
-            groupName={session.groupName}
+            groupName={session.groupName ?? ""}
             stats={stats}
             onBack={closeMember}
             onOpenList={() => setViewingList(true)}

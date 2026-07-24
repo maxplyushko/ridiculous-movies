@@ -13,7 +13,6 @@ import com.ridiculousmovies.backend.web.dto.OAuthLoginResponse;
 import com.ridiculousmovies.backend.web.dto.TelegramLoginRequest;
 import java.net.URI;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,19 +34,16 @@ public class AuthController {
   private final AppRepository dataStore;
   private final TelegramAuthService telegramAuthService;
   private final GoogleOAuthFlowService googleOAuthFlowService;
-  private final String defaultGroup;
 
   public AuthController(AuthService authService, OAuthVerifier oAuthVerifier,
       JwtService jwtService, AppRepository dataStore, TelegramAuthService telegramAuthService,
-      GoogleOAuthFlowService googleOAuthFlowService,
-      @Value("${google.default-group:Guest group}") String defaultGroup) {
+      GoogleOAuthFlowService googleOAuthFlowService) {
     this.authService = authService;
     this.oAuthVerifier = oAuthVerifier;
     this.jwtService = jwtService;
     this.dataStore = dataStore;
     this.telegramAuthService = telegramAuthService;
     this.googleOAuthFlowService = googleOAuthFlowService;
-    this.defaultGroup = defaultGroup;
   }
 
   @GetMapping
@@ -58,9 +54,9 @@ public class AuthController {
 
   @PostMapping("/telegram")
   public OAuthLoginResponse telegramLogin(@RequestBody TelegramLoginRequest req) {
-    String userId = telegramAuthService.verifyAndGetUserId(req.initData());
-    AppUser user = dataStore.findUserById(userId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User not registered"));
+    TelegramAuthService.TelegramUser tgUser = telegramAuthService.verifyAndGetUser(req.initData());
+    AppUser user = dataStore.findUserById(tgUser.id())
+        .orElseGet(() -> dataStore.registerTelegramUser(tgUser.id(), tgUser.name()));
     return OAuthLoginResponse.of(jwtService.issue(user.getId()), user);
   }
 
@@ -75,7 +71,7 @@ public class AuthController {
   public OAuthLoginResponse oauthLogin(@RequestBody OAuthLoginRequest req) {
     OAuthVerifier.UserInfo info = oAuthVerifier.verify(req.idToken());
     AppUser user = dataStore.findUserByOauthSub(info.sub())
-        .orElseGet(() -> dataStore.registerUser(info.name(), info.sub(), defaultGroup));
+        .orElseGet(() -> dataStore.registerUser(info.name(), info.sub(), null));
     return OAuthLoginResponse.of(jwtService.issue(user.getId()), user);
   }
 
@@ -104,7 +100,7 @@ public class AuthController {
   public OAuthLoginResponse googleToken(@RequestParam String token) {
     OAuthVerifier.UserInfo info = googleOAuthFlowService.consumeToken(token);
     AppUser user = dataStore.findUserByOauthSub(info.sub())
-        .orElseGet(() -> dataStore.registerUser(info.name(), info.sub(), defaultGroup));
+        .orElseGet(() -> dataStore.registerUser(info.name(), info.sub(), null));
     return OAuthLoginResponse.of(jwtService.issue(user.getId()), user);
   }
 }

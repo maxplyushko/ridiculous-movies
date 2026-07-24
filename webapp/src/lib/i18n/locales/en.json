@@ -169,5 +169,18 @@
     "btnLoading": "Loading…",
     "btnGuest": "Continue as guest",
     "or": "or"
+  },
+  "onboarding": {
+    "title": "Welcome! How do you want to get started?",
+    "btnCreateGroup": "Create a group",
+    "btnAskFriend": "Ask a friend to add you",
+    "askFriendHint": "Ask a friend who's already in a club to send you their invite link.",
+    "btnBack": "Back",
+    "createGroupPrompt": "Name your movie club",
+    "groupNamePlaceholder": "Group name",
+    "btnCreate": "Create",
+    "createdTitle": "\"{{name}}\" is ready!",
+    "inviteHint": "Share this invite code or link so friends can join your club:",
+    "btnOk": "OK"
   }
 }

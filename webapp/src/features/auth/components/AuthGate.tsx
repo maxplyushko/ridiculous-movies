@@ -8,6 +8,7 @@ import { SignInScreen } from "./SignInScreen.tsx";
 import { applySavedTheme, hasTelegramThemeContext } from "@/lib/telegram/telegramTheme.ts";
 import i18n from "@/lib/i18n/index.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
+import { joinGroup } from "@/features/onboarding/api/onboarding.ts";
 import * as React from "react";
 
 type AuthGateProps = {
@@ -54,6 +55,10 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
         }
       }
 
+      const inviteCode = startParam?.startsWith("invite_")
+        ? startParam.slice("invite_".length)
+        : new URLSearchParams(window.location.search).get("invite");
+
       if (isTelegramMiniApp() && !tokenStore.get() && !tokenStore.isLoggedOut()) {
         const tg = getTelegramWebApp();
         if (tg?.initData) {
@@ -67,6 +72,20 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
         }
       }
       const data = await checkAccess();
+      if (!data.groupId && inviteCode) {
+        try {
+          const joined = await joinGroup(inviteCode);
+          data.groupId = joined.groupId;
+          data.groupName = joined.groupName;
+        } catch {
+          // bad/expired invite — fall through to onboarding modal
+        }
+      }
+      if (new URLSearchParams(window.location.search).has("invite")) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("invite");
+        window.history.replaceState({}, "", url.toString());
+      }
       if (!cancelled) {
         if (data.lang) {
           i18n.changeLanguage(data.lang);

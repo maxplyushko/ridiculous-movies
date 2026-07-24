@@ -13,6 +13,7 @@ public class AppData {
   private List<MovieRecord> movies = new ArrayList<>();
   private List<PersonalMovieRecord> personalMovies = new ArrayList<>();
   private Map<String, Long> groupChatIds = new LinkedHashMap<>();
+  private Map<String, String> groupInviteCodes = new LinkedHashMap<>();
 
   public List<UserRecord> getUsers() { return users; }
   public void setUsers(List<UserRecord> v) { this.users = v; }
@@ -25,6 +26,9 @@ public class AppData {
 
   public Map<String, Long> getGroupChatIds() { return groupChatIds; }
   public void setGroupChatIds(Map<String, Long> v) { this.groupChatIds = v != null ? v : new LinkedHashMap<>(); }
+
+  public Map<String, String> getGroupInviteCodes() { return groupInviteCodes; }
+  public void setGroupInviteCodes(Map<String, String> v) { this.groupInviteCodes = v != null ? v : new LinkedHashMap<>(); }
 
   public record UserRecord(String id, String name, String group, String role, String theme, String defaultPage,
                            String lang, String tmdbLang, String oauthSub, Boolean personalListPublic) {}

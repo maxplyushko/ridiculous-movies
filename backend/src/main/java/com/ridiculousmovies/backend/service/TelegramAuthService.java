@@ -16,6 +16,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class TelegramAuthService {
 
   private static final Pattern USER_ID_PATTERN = Pattern.compile("\"id\"\\s*:\\s*(\\d+)");
+  private static final Pattern FIRST_NAME_PATTERN = Pattern.compile("\"first_name\"\\s*:\\s*\"([^\"]*)\"");
+  private static final Pattern LAST_NAME_PATTERN = Pattern.compile("\"last_name\"\\s*:\\s*\"([^\"]*)\"");
+  private static final Pattern USERNAME_PATTERN = Pattern.compile("\"username\"\\s*:\\s*\"([^\"]*)\"");
+
+  public record TelegramUser(String id, String name) {}
 
   private final byte[] secretKey;
 
@@ -28,7 +33,7 @@ public class TelegramAuthService {
     }
   }
 
-  public String verifyAndGetUserId(String initData) {
+  public TelegramUser verifyAndGetUser(String initData) {
     if (secretKey == null) {
       throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
           "Telegram auth not configured");
@@ -67,12 +72,25 @@ public class TelegramAuthService {
       if (!m.find()) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
       }
-      return m.group(1);
+      String userId = m.group(1);
+      String name = extractName(userJson);
+      return new TelegramUser(userId, name);
     } catch (ResponseStatusException e) {
       throw e;
     } catch (Exception e) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
     }
+  }
+
+  private static String extractName(String userJson) {
+    Matcher first = FIRST_NAME_PATTERN.matcher(userJson);
+    String firstName = first.find() ? first.group(1) : null;
+    Matcher last = LAST_NAME_PATTERN.matcher(userJson);
+    String lastName = last.find() ? last.group(1) : null;
+    String fullName = ((firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName)).trim();
+    if (!fullName.isBlank()) return fullName;
+    Matcher username = USERNAME_PATTERN.matcher(userJson);
+    return username.find() ? username.group(1) : "Telegram user";
   }
 
   private static byte[] hmacSha256(byte[] key, byte[] data) {

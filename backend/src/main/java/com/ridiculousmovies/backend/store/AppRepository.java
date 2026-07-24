@@ -36,6 +36,16 @@ public interface AppRepository {
 
   AppUser registerUser(String name, String oauthSub, String groupId);
 
+  AppUser registerTelegramUser(String telegramUserId, String name);
+
+  void assignUserToNewGroup(String userId, String groupName);
+
+  void assignUserToExistingGroup(String userId, String groupId);
+
+  String getOrCreateInviteCode(String groupId);
+
+  String resolveGroupIdByInviteCode(String code);
+
   void saveUserPreferences(String userId, String theme, String defaultPage, String lang, String tmdbLang,
       Boolean personalListPublic);
 
