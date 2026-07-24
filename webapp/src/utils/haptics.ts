@@ -31,13 +31,13 @@ export const hapticSpinStart = () =>
   haptic(() => telegramImpact("medium"), () => navigator.vibrate(60), triggerIosSwitchHaptic);
 
 export const hapticSpinTick = () =>
-  haptic(telegramSelectionChanged, () => navigator.vibrate(30));
+  haptic(telegramSelectionChanged, () => navigator.vibrate(30), triggerIosSwitchHaptic);
 
 export const hapticBarGrowTick = () =>
-  haptic(telegramSelectionChanged, () => navigator.vibrate(12));
+  haptic(telegramSelectionChanged, () => navigator.vibrate(12), triggerIosSwitchHaptic);
 
 export const hapticTabTap = () =>
-  haptic(() => telegramImpact("light"), () => navigator.vibrate(15));
+  haptic(() => telegramImpact("light"), () => navigator.vibrate(15), triggerIosSwitchHaptic);
 
 export const hapticError = () =>
   haptic(() => telegramNotification("error"), () => navigator.vibrate([40, 30, 40, 30, 40]), triggerIosSwitchHaptic);
