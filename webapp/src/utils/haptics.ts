@@ -17,8 +17,8 @@ function triggerIosSwitchHaptic(): void {
   input.setAttribute("switch", "");
   label.appendChild(input);
   document.body.appendChild(label);
-  input.click();
-  label.remove();
+  label.click();
+  requestAnimationFrame(() => label.remove());
 }
 
 function haptic(tg: () => void, vibration: () => void, ios?: () => void): void {
