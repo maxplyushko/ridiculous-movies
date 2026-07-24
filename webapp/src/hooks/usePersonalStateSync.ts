@@ -9,11 +9,12 @@ interface Identity {
   description?: string;
   tmdbMediaType?: TmdbMediaType | null;
   onChange?: () => void;
+  onError?: (message: string) => void;
 }
 
 type Flags = { inList: boolean; watched: boolean };
 
-export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType, onChange }: Identity) {
+export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType, onChange, onError }: Identity) {
   const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
@@ -23,10 +24,12 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
 
   const identityRef = useRef({ tmdbId, title, description, tmdbMediaType });
   const onChangeRef = useRef(onChange);
+  const onErrorRef = useRef(onError);
 
   useEffect(() => {
     identityRef.current = { tmdbId, title, description, tmdbMediaType };
     onChangeRef.current = onChange;
+    onErrorRef.current = onError;
   });
 
   useEffect(() => {
@@ -69,10 +72,11 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
         inFlightRef.current = false;
         flush();
       })
-      .catch(() => {
+      .catch((e) => {
         desiredRef.current = { ...confirmedRef.current };
         setSelfStatus((prev) => (prev ? { ...prev, ...confirmedRef.current } : prev));
         inFlightRef.current = false;
+        if (e instanceof Error) onErrorRef.current?.(e.message);
       });
   };
 

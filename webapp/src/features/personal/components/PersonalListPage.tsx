@@ -10,6 +10,7 @@ import { ChartLine, Dices, Loader, Plus } from "lucide-react";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
+import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { SearchInput } from "@/components/SearchInput.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
@@ -38,6 +39,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
   const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [ratingOnly, setRatingOnly] = useState(false);
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
@@ -289,7 +291,9 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           <TmdbSearchSection
             query={searchQuery}
             onOpenMovie={(m) => setTmdbMovieToView(m)}
-            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType }).then((added) => { setMovies((prev) => [added, ...prev]); })}
+            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
+              .then((added) => { setMovies((prev) => [added, ...prev]); })
+              .catch((e) => { if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); })}
           />
         )}
       </div>
@@ -376,6 +380,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           )}
         </div>
       )}
+      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </div>
   );
 };

@@ -2,6 +2,10 @@
   "errors": {
     "title": "Oops! Mayday Mayday"
   },
+  "guestLimit": {
+    "message": "Like the app? Create your own group or ask yours friends to invite you.",
+    "ok": "OK"
+  },
   "nav": {
     "stats": "Statistics",
     "groupList": "Group List",

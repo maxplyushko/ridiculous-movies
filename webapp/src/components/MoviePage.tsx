@@ -8,6 +8,7 @@ import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
 import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -62,12 +63,14 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [groupExpanded, setGroupExpanded] = useState(false);
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
   const { selfStatus, statusLoading, setInList, setWatched } = usePersonalStateSync({
     tmdbId,
     title,
     description,
     tmdbMediaType: mediaType,
     onChange: onPersonalStateChange,
+    onError: (message) => { if (message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); },
   });
 
   useEffect(() => {
@@ -365,6 +368,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
           )}
         </div>
       )}
+      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </div>
   );
 }

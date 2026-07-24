@@ -37,6 +37,10 @@ public class AuthService {
     return dataStore.countUsersByGroupId(groupId);
   }
 
+  public boolean isGuest(AppUser user) {
+    return GUEST_USER_ID.equals(user.getId());
+  }
+
   public void requireAdmin(AppUser user) {
     if (!"admin".equals(user.getRole().getName())) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");

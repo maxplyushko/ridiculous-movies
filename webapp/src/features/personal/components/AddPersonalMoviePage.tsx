@@ -5,6 +5,7 @@ import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "../api/personalList.ts";
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
@@ -32,6 +33,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [tmdbMediaType, setTmdbMediaType] = useState(movie?.tmdbMediaType);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [proposedOverview, setProposedOverview] = useState<string | null>(null);
 
@@ -68,7 +70,11 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       }
       onBack();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") {
+        setShowGuestLimit(true);
+      } else {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -159,6 +165,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
           </button>
         </div>
       )}
+      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </section>
   );
 };

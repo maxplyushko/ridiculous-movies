@@ -8,6 +8,7 @@ import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
 import { useRatingForm, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
+import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
@@ -153,6 +154,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
   const [tmdbMediaType, setTmdbMediaType] = useState(movie?.tmdbMediaType);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showGuestLimit, setShowGuestLimit] = useState(false);
 
   const { t } = useTranslation();
   const { forms, add, remove, updateUser, updateScore, updateMode, updateDetailed, buildRatings } = useRatingForm(movie);
@@ -183,7 +185,11 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
       }
       onBack();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") {
+        setShowGuestLimit(true);
+      } else {
+        setError(e instanceof Error ? e.message : "Something went wrong");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -307,6 +313,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
           </button>
         </div>
       )}
+      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </section>
   );
 };

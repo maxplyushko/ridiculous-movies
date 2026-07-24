@@ -63,6 +63,7 @@ public class PersonalListController {
       @RequestHeader("User-Id") String userId,
       @RequestBody CreatePersonalMovieRequest req
   ) {
+    assertGuestLimit(userId);
     PersonalMovie pm = new PersonalMovie();
     pm.setUserId(userId);
     pm.setTitle(req.title());
@@ -103,6 +104,7 @@ public class PersonalListController {
   ) {
     PersonalMovie pm = dataStore.findPersonalMovieForCaller(userId, req.tmdbId(), req.title());
     if (pm == null) {
+      assertGuestLimit(userId);
       pm = new PersonalMovie();
       pm.setUserId(userId);
       pm.setTitle(req.title());
@@ -162,5 +164,15 @@ public class PersonalListController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@RequestHeader("User-Id") String userId, @PathVariable String id) {
     dataStore.deletePersonalMovieById(id, userId);
+  }
+
+  private static final int GUEST_PERSONAL_LIMIT = 4;
+
+  private void assertGuestLimit(String userId) {
+    AppUser user = authService.requireUser(userId);
+    if (authService.isGuest(user)
+        && dataStore.findPersonalMoviesForUser(userId).size() >= GUEST_PERSONAL_LIMIT) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
+    }
   }
 }

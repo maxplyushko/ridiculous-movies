@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class MovieService {
 
   private static final BigDecimal MAX_SCORE = BigDecimal.TEN;
+  private static final int GUEST_MOVIE_LIMIT = 4;
 
   private final AppRepository dataStore;
   private final MovieMapper movieMapper;
@@ -91,6 +92,14 @@ public class MovieService {
   public MovieResponse createMovie(String userId, CreateMovieRequest req) {
     AppUser actor = authService.requireUser(userId);
     String groupId = actor.getUserGroup().getId();
+    if (authService.isGuest(actor)) {
+      long ownedCount = dataStore.findMoviesForGroup(groupId, true).stream()
+          .filter(m -> m.getOwner().getId().equals(actor.getId()))
+          .count();
+      if (ownedCount >= GUEST_MOVIE_LIMIT) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
+      }
+    }
     AppUser owner = resolveOwner(groupId, req.title(), req.ownerId());
 
     Movie movie = new Movie();
