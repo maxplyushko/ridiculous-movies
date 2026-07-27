@@ -16,10 +16,17 @@ import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { SearchInput } from "@/components/SearchInput.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
+import { ActorPage } from "@/components/ActorPage.tsx";
 import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
 import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
+import { useDetailStack } from "@/hooks/useDetailStack.ts";
+
+type DetailEntry =
+  | { kind: "group"; movieId: string }
+  | { kind: "tmdb"; movie: TmdbMovie }
+  | { kind: "actor"; personId: number };
 
 const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boolean; currentUserId: string; onShowStats: () => void }) => {
   const { t } = useTranslation();
@@ -28,8 +35,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   const [maxRound, setMaxRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
-  const [tmdbMovieToView, setTmdbMovieToView] = useState<TmdbMovie | null>(null);
+  const detailStack = useDetailStack<DetailEntry>();
   const [showMovieForm, setShowMovieForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);
@@ -39,7 +45,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
-  const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [npOpen, setNpOpen] = useState(false);
   const [npSliderMax, setNpSliderMax] = useState(10);
@@ -96,17 +101,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   };
 
   useSwipeBack(closeMovieForm, addMovieEl);
-
-  const closeMovieView = () => {
-    setViewingMovieId(null);
-    setTmdbMovieToView(null);
-  };
-
-  useSwipeBack(closeMovieView, movieViewEl);
-
-  const viewingMovie = movieGroups
-    .flatMap((g) => g.movies)
-    .find((m) => m.id === viewingMovieId) ?? null;
 
   const handleEdit = (movie: Movie) => {
     setOpenSwipeId(null);
@@ -198,7 +192,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
             movieGroup={group}
             openSwipeId={openSwipeId}
             isAdmin={isAdmin}
-            onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
+            onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "group", movieId: movie.id }); }}
             onEdit={handleEdit}
             onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
             onSwipeOpen={(id) => setOpenSwipeId(id)}
@@ -206,7 +200,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
             onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
           />
         ))}
-        {showTmdb && <TmdbSearchSection query={searchQuery} onOpenMovie={(m) => setTmdbMovieToView(m)} />}
+        {showTmdb && <TmdbSearchSection query={searchQuery} onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })} />}
       </div>
 
       {showMovieForm && (
@@ -223,24 +217,45 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
         </div>
       )}
 
-      {(viewingMovie || tmdbMovieToView) && (
-        <div className="movie-list__add__movie" ref={setMovieViewEl}>
-          {viewingMovie && (
+      {detailStack.stack.map((entry, i) => {
+        const isTop = i === detailStack.stack.length - 1;
+        const ref = isTop ? detailStack.setTopEl : undefined;
+        if (entry.kind === "actor") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <ActorPage
+                personId={entry.personId}
+                onBack={detailStack.pop}
+                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
+              />
+            </div>
+          );
+        }
+        if (entry.kind === "tmdb") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <MoviePage
+                source={{ kind: "tmdb", movie: entry.movie }}
+                onBack={detailStack.pop}
+                onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
+              />
+            </div>
+          );
+        }
+        const movie = movieGroups.flatMap((g) => g.movies).find((m) => m.id === entry.movieId);
+        if (!movie) return null;
+        return (
+          <div className="movie-list__add__movie" key={i} ref={ref}>
             <MoviePage
-              source={{ kind: "group", movie: viewingMovie }}
+              source={{ kind: "group", movie }}
               currentUserId={currentUserId}
-              onBack={closeMovieView}
-              onRate={() => setRatingMovie(viewingMovie)}
+              onBack={detailStack.pop}
+              onRate={() => setRatingMovie(movie)}
+              onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
-          )}
-          {tmdbMovieToView && (
-            <MoviePage
-              source={{ kind: "tmdb", movie: tmdbMovieToView }}
-              onBack={closeMovieView}
-            />
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })}
 
       {movieToDelete && (
         <ConfirmDialog

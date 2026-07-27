@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Calendar, ChevronDown, ChevronUp, MapPin, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbActor } from "@/hooks/useTmdbActor.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
@@ -8,9 +9,10 @@ import { hapticTabTap } from "@/utils/haptics.ts";
 type ActorPageProps = {
   personId: number;
   onBack: () => void;
+  onOpenMovie?: (movie: TmdbMovie) => void;
 };
 
-export function ActorPage({ personId, onBack }: Readonly<ActorPageProps>) {
+export function ActorPage({ personId, onBack, onOpenMovie }: Readonly<ActorPageProps>) {
   const { t } = useTranslation();
   const { actor, loading } = useTmdbActor(personId);
   const bioRef = useRef<HTMLParagraphElement | null>(null);
@@ -90,14 +92,28 @@ export function ActorPage({ personId, onBack }: Readonly<ActorPageProps>) {
         <div className="movie-page__crew">
           <p className="movie-page__section-title">{t('actorPage.knownFor')}</p>
           <div className="actor-page__known-for-list">
-            {knownFor.map((m) => (
-              <div className="actor-page__known-for-item" key={m.id}>
-                <div className="actor-page__known-for-poster">
-                  {m.posterUrl ? <img src={m.posterUrl} alt={m.title} loading="lazy" decoding="async" /> : null}
-                </div>
-                <span className="actor-page__known-for-title">{m.title}</span>
-              </div>
-            ))}
+            {knownFor.map((m) => {
+              const content = (
+                <>
+                  <div className="actor-page__known-for-poster">
+                    {m.posterUrl ? <img src={m.posterUrl} alt={m.title} loading="lazy" decoding="async" /> : null}
+                  </div>
+                  <span className="actor-page__known-for-title">{m.title}</span>
+                </>
+              );
+              return onOpenMovie ? (
+                <button
+                  type="button"
+                  className="actor-page__known-for-item"
+                  key={m.id}
+                  onClick={() => { hapticTabTap(); onOpenMovie(m); }}
+                >
+                  {content}
+                </button>
+              ) : (
+                <div className="actor-page__known-for-item" key={m.id}>{content}</div>
+              );
+            })}
           </div>
         </div>
       )}

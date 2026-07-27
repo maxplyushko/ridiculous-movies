@@ -9,8 +9,6 @@ import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
-import { ActorPage } from "@/components/ActorPage.tsx";
-import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -25,6 +23,7 @@ type MoviePageProps = {
   onBack: () => void;
   onRate?: () => void | Promise<unknown>;
   onPersonalStateChange?: () => void;
+  onOpenActor?: (personId: number) => void;
 };
 
 const POSTER_MAX_RETRIES = 2;
@@ -36,7 +35,7 @@ function formatDuration(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalStateChange }: Readonly<MoviePageProps>) {
+export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalStateChange, onOpenActor }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
@@ -66,10 +65,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
-  const [viewingActorId, setViewingActorId] = useState<number | null>(null);
-  const [actorViewEl, setActorViewEl] = useState<HTMLDivElement | null>(null);
-  const closeActorView = () => setViewingActorId(null);
-  useSwipeBack(closeActorView, actorViewEl);
   const { selfStatus, statusLoading, setInList, setWatched } = usePersonalStateSync({
     tmdbId,
     title,
@@ -344,34 +339,43 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
                 {cast.map((c, i) => {
                   const photoKey = `${c.name}-${i}`;
                   const photoLoaded = loadedCastPhotos[photoKey];
-                  return (
-                  <button
-                    type="button"
-                    className="movie-page__cast-item"
-                    key={photoKey}
-                    onClick={() => { hapticTabTap(); setViewingActorId(c.id); }}
-                  >
-                    <div className="movie-page__cast-photo">
-                      {c.profileUrl
-                        ? (
-                          <>
-                            {!photoLoaded && <Loader size={18} className="movie-page__cast-photo-spinner" />}
-                            <img
-                              src={c.profileUrl}
-                              alt={c.name}
-                              loading="lazy"
-                              decoding="async"
-                              className={photoLoaded ? "" : "movie-page__cast-photo-img--hidden"}
-                              onLoad={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
-                              onError={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
-                            />
-                          </>
-                        )
-                        : <User size={24} />}
+                  const castContent = (
+                    <>
+                      <div className="movie-page__cast-photo">
+                        {c.profileUrl
+                          ? (
+                            <>
+                              {!photoLoaded && <Loader size={18} className="movie-page__cast-photo-spinner" />}
+                              <img
+                                src={c.profileUrl}
+                                alt={c.name}
+                                loading="lazy"
+                                decoding="async"
+                                className={photoLoaded ? "" : "movie-page__cast-photo-img--hidden"}
+                                onLoad={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
+                                onError={() => setLoadedCastPhotos((prev) => ({ ...prev, [photoKey]: true }))}
+                              />
+                            </>
+                          )
+                          : <User size={24} />}
+                      </div>
+                      <span className="movie-page__cast-name">{c.name}</span>
+                      {c.character && <span className="movie-page__cast-character">{c.character}</span>}
+                    </>
+                  );
+                  return onOpenActor ? (
+                    <button
+                      type="button"
+                      className="movie-page__cast-item"
+                      key={photoKey}
+                      onClick={() => { hapticTabTap(); onOpenActor(c.id); }}
+                    >
+                      {castContent}
+                    </button>
+                  ) : (
+                    <div className="movie-page__cast-item" key={photoKey}>
+                      {castContent}
                     </div>
-                    <span className="movie-page__cast-name">{c.name}</span>
-                    {c.character && <span className="movie-page__cast-character">{c.character}</span>}
-                  </button>
                   );
                 })}
               </div>
@@ -380,12 +384,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
         </div>
       )}
       {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
-
-      {viewingActorId != null && (
-        <div className="movie-list__add__movie" ref={setActorViewEl}>
-          <ActorPage personId={viewingActorId} onBack={closeActorView} />
-        </div>
-      )}
     </div>
   );
 }

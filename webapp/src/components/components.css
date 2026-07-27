@@ -716,6 +716,16 @@
 }
 
 .movie-page__cast-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 4.25rem;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+button.movie-page__cast-item {
   all: unset;
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
@@ -803,6 +813,19 @@
 }
 
 .actor-page__known-for-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 5.5rem;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+button.actor-page__known-for-item {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;

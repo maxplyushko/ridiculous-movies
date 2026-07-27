@@ -2,19 +2,26 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../personal.css";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
+import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
+import { ActorPage } from "@/components/ActorPage.tsx";
 import { fetchPersonalListForUser } from "../api/personalList.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
-import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
+import { useDetailStack } from "@/hooks/useDetailStack.ts";
 
 type Props = {
   targetUserId: string;
   targetName: string;
   onBack: () => void;
 };
+
+type DetailEntry =
+  | { kind: "personal"; movieId: string }
+  | { kind: "tmdb"; movie: TmdbMovie }
+  | { kind: "actor"; personId: number };
 
 const noop = () => {};
 
@@ -23,8 +30,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
-  const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
+  const detailStack = useDetailStack<DetailEntry>();
 
   const loadMovies = useCallback(() => {
     setLoading(true);
@@ -40,10 +46,6 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetUserId]);
 
-  const closeMovieView = () => setViewingMovieId(null);
-  useSwipeBack(closeMovieView, movieViewEl);
-
-  const viewingMovie = movies.find((m) => m.id === viewingMovieId) ?? null;
   const toWatch = movies.filter((m) => m.inList && !m.watched);
   const watched = movies.filter((m) => m.watched);
 
@@ -62,7 +64,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
             openSwipeId={null}
             celebratingId={null}
             readOnly
-            onOpen={(movie) => setViewingMovieId(movie.id)}
+            onOpen={(movie) => detailStack.push({ kind: "personal", movieId: movie.id })}
             onEdit={noop}
             onDelete={noop}
             onToggleWatched={noop}
@@ -76,7 +78,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
             openSwipeId={null}
             celebratingId={null}
             readOnly
-            onOpen={(movie) => setViewingMovieId(movie.id)}
+            onOpen={(movie) => detailStack.push({ kind: "personal", movieId: movie.id })}
             onEdit={noop}
             onDelete={noop}
             onToggleWatched={noop}
@@ -90,14 +92,43 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
         </div>
       )}
 
-      {viewingMovie && (
-        <div className="movie-list__add__movie" ref={setMovieViewEl}>
-          <MoviePage
-            source={{ kind: "personal", movie: viewingMovie }}
-            onBack={closeMovieView}
-          />
-        </div>
-      )}
+      {detailStack.stack.map((entry, i) => {
+        const isTop = i === detailStack.stack.length - 1;
+        const ref = isTop ? detailStack.setTopEl : undefined;
+        if (entry.kind === "actor") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <ActorPage
+                personId={entry.personId}
+                onBack={detailStack.pop}
+                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
+              />
+            </div>
+          );
+        }
+        if (entry.kind === "tmdb") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <MoviePage
+                source={{ kind: "tmdb", movie: entry.movie }}
+                onBack={detailStack.pop}
+                onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
+              />
+            </div>
+          );
+        }
+        const movie = movies.find((m) => m.id === entry.movieId);
+        if (!movie) return null;
+        return (
+          <div className="movie-list__add__movie" key={i} ref={ref}>
+            <MoviePage
+              source={{ kind: "personal", movie }}
+              onBack={detailStack.pop}
+              onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };

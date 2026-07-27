@@ -9,6 +9,7 @@ import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
 import { ChartLine, Dices, Loader, Plus } from "lucide-react";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
+import { ActorPage } from "@/components/ActorPage.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
@@ -19,7 +20,13 @@ import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
+import { useDetailStack } from "@/hooks/useDetailStack.ts";
 import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
+
+type DetailEntry =
+  | { kind: "personal"; movieId: string }
+  | { kind: "tmdb"; movie: TmdbMovie }
+  | { kind: "actor"; personId: number };
 
 const CELEBRATION_COLORS = ["#ffd60a", "#ff9f0a", "#30d158", "#3390ec", "#ff375f", "#bf5af2"];
 
@@ -42,13 +49,11 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
-  const [viewingMovieId, setViewingMovieId] = useState<string | null>(null);
-  const [tmdbMovieToView, setTmdbMovieToView] = useState<TmdbMovie | null>(null);
+  const detailStack = useDetailStack<DetailEntry>();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
-  const [movieViewEl, setMovieViewEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
   const moviePicker = useSpinPicker<string>();
 
@@ -80,19 +85,12 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
 
   useSwipeBack(closeForm, formEl);
 
-  const closeMovieView = () => {
-    setViewingMovieId(null);
-    setTmdbMovieToView(null);
-  };
-
-  useSwipeBack(closeMovieView, movieViewEl);
-
-  const viewingMovieFromList = movies.find((m) => m.id === viewingMovieId) ?? null;
-  const lastViewingMovieRef = useRef<PersonalMovie | null>(null);
+  const lastKnownMoviesRef = useRef<Map<string, PersonalMovie>>(new Map());
   useEffect(() => {
-    if (viewingMovieFromList) lastViewingMovieRef.current = viewingMovieFromList;
-  }, [viewingMovieFromList]);
-  const viewingMovie = viewingMovieId ? (viewingMovieFromList ?? lastViewingMovieRef.current) : null;
+    movies.forEach((m) => lastKnownMoviesRef.current.set(m.id, m));
+  }, [movies]);
+  const resolvePersonalMovie = (movieId: string): PersonalMovie | null =>
+    movies.find((m) => m.id === movieId) ?? lastKnownMoviesRef.current.get(movieId) ?? null;
 
   useEffect(() => {
     if (openSwipeId === null) return;
@@ -266,7 +264,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
+          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -279,7 +277,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           onEdit={handleEdit}
           onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
           onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } setViewingMovieId(movie.id); }}
+          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); }}
           onSwipeOpen={(id) => setOpenSwipeId(id)}
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
@@ -290,7 +288,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
         {showTmdb && (
           <TmdbSearchSection
             query={searchQuery}
-            onOpenMovie={(m) => setTmdbMovieToView(m)}
+            onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
             onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
               .then((added) => { setMovies((prev) => [added, ...prev]); })
               .catch((e) => { if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); })}
@@ -361,25 +359,46 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
         />
       )}
 
-      {(viewingMovie || tmdbMovieToView) && (
-        <div className="movie-list__add__movie" ref={setMovieViewEl}>
-          {viewingMovie && (
+      {detailStack.stack.map((entry, i) => {
+        const isTop = i === detailStack.stack.length - 1;
+        const ref = isTop ? detailStack.setTopEl : undefined;
+        if (entry.kind === "actor") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <ActorPage
+                personId={entry.personId}
+                onBack={detailStack.pop}
+                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
+              />
+            </div>
+          );
+        }
+        if (entry.kind === "tmdb") {
+          return (
+            <div className="movie-list__add__movie" key={i} ref={ref}>
+              <MoviePage
+                source={{ kind: "tmdb", movie: entry.movie }}
+                onBack={detailStack.pop}
+                onPersonalStateChange={() => loadMovies(true)}
+                onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
+              />
+            </div>
+          );
+        }
+        const movie = resolvePersonalMovie(entry.movieId);
+        if (!movie) return null;
+        return (
+          <div className="movie-list__add__movie" key={i} ref={ref}>
             <MoviePage
-              source={{ kind: "personal", movie: viewingMovie }}
-              onBack={closeMovieView}
-              onRate={() => { setRatingOnly(true); setRatingMovie(viewingMovie); }}
+              source={{ kind: "personal", movie }}
+              onBack={detailStack.pop}
+              onRate={() => { setRatingOnly(true); setRatingMovie(movie); }}
               onPersonalStateChange={() => loadMovies(true)}
+              onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
-          )}
-          {tmdbMovieToView && (
-            <MoviePage
-              source={{ kind: "tmdb", movie: tmdbMovieToView }}
-              onBack={closeMovieView}
-              onPersonalStateChange={() => loadMovies(true)}
-            />
-          )}
-        </div>
-      )}
+          </div>
+        );
+      })}
       {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </div>
   );
