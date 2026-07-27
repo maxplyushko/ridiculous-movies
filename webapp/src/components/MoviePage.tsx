@@ -9,6 +9,8 @@ import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { ActorPage } from "@/components/ActorPage.tsx";
+import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -64,6 +66,10 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
+  const [viewingActorId, setViewingActorId] = useState<number | null>(null);
+  const [actorViewEl, setActorViewEl] = useState<HTMLDivElement | null>(null);
+  const closeActorView = () => setViewingActorId(null);
+  useSwipeBack(closeActorView, actorViewEl);
   const { selfStatus, statusLoading, setInList, setWatched } = usePersonalStateSync({
     tmdbId,
     title,
@@ -339,7 +345,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
                   const photoKey = `${c.name}-${i}`;
                   const photoLoaded = loadedCastPhotos[photoKey];
                   return (
-                  <div className="movie-page__cast-item" key={photoKey}>
+                  <button
+                    type="button"
+                    className="movie-page__cast-item"
+                    key={photoKey}
+                    onClick={() => { hapticTabTap(); setViewingActorId(c.id); }}
+                  >
                     <div className="movie-page__cast-photo">
                       {c.profileUrl
                         ? (
@@ -360,7 +371,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
                     </div>
                     <span className="movie-page__cast-name">{c.name}</span>
                     {c.character && <span className="movie-page__cast-character">{c.character}</span>}
-                  </div>
+                  </button>
                   );
                 })}
               </div>
@@ -369,6 +380,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
         </div>
       )}
       {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+
+      {viewingActorId != null && (
+        <div className="movie-list__add__movie" ref={setActorViewEl}>
+          <ActorPage personId={viewingActorId} onBack={closeActorView} />
+        </div>
+      )}
     </div>
   );
 }

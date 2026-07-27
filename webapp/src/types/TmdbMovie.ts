@@ -11,6 +11,7 @@ export type TmdbMovie = {
 };
 
 export type TmdbCastMember = {
+  id: number;
   name: string;
   character: string | null;
   profileUrl: string | null;

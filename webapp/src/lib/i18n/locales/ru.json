@@ -166,6 +166,14 @@
     "btnRemoveFromList": "Убрать из списка",
     "confirmRemove": "Убрать фильм из вашего списка?"
   },
+  "actorPage": {
+    "biography": "Биография",
+    "bornOn": "Дата рождения",
+    "placeOfBirth": "Место рождения",
+    "knownFor": "Известен по",
+    "expand": "Показать больше",
+    "collapse": "Свернуть"
+  },
   "signIn": {
     "heading": "Дурацкие фильмы",
     "tagline": "Закрытый кино-клуб",

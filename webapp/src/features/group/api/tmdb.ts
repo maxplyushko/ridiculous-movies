@@ -1,5 +1,6 @@
 import { apiFetch } from "@/api/client";
 import type { TmdbMediaType, TmdbMovie, TmdbMovieDetails } from "@/types/TmdbMovie";
+import type { TmdbActor } from "@/types/TmdbActor";
 import { getTmdbLang } from "@/utils/tmdbLang.ts";
 
 export function searchTmdb(query: string, signal?: AbortSignal, includeTv = false): Promise<TmdbMovie[]> {
@@ -16,6 +17,13 @@ export function fetchTmdbMovieDetails(
 ): Promise<TmdbMovieDetails> {
   return apiFetch<TmdbMovieDetails>(
     `/api/tmdb/movie/${tmdbId}?lang=${getTmdbLang()}&mediaType=${mediaType}`,
+    { signal }
+  );
+}
+
+export function fetchTmdbActor(personId: number, signal?: AbortSignal): Promise<TmdbActor> {
+  return apiFetch<TmdbActor>(
+    `/api/tmdb/actor/${personId}?lang=${getTmdbLang()}`,
     { signal }
   );
 }

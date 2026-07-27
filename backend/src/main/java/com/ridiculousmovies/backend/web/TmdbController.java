@@ -1,6 +1,7 @@
 package com.ridiculousmovies.backend.web;
 
 import com.ridiculousmovies.backend.tmdb.TmdbClient;
+import com.ridiculousmovies.backend.web.dto.TmdbActorResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieDetailsResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
 import java.util.List;
@@ -42,6 +43,15 @@ public class TmdbController {
   ) {
     return tmdbClient.getDetails(id, lang, mediaType)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TMDB movie not found"));
+  }
+
+  @GetMapping("/actor/{id}")
+  public TmdbActorResponse actor(
+      @PathVariable long id,
+      @RequestParam(required = false) String lang
+  ) {
+    return tmdbClient.getActor(id, lang)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TMDB actor not found"));
   }
 
   @GetMapping("/image/{size}/{filename:.+}")
