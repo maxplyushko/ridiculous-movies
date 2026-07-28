@@ -32,6 +32,7 @@ public class MovieMapper {
         m.getId(),
         m.getTitle(),
         m.getDescription(),
+        m.getTagline(),
         m.getCreatedAt(),
         m.getUpdatedAt(),
         owner,

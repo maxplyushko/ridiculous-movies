@@ -36,7 +36,7 @@ function fireWatchedCelebration() {
   confetti({ ...defaults, particleCount: 15, spread: 360, startVelocity: 36, ticks: 50, scalar: 0.55 });
 }
 
-const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; onShowStats: () => void }>) => {
+const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ active: boolean; onShowStats: () => void; resetSignal?: number }>) => {
   const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [isLoading, setLoading] = useState(true);
@@ -50,6 +50,8 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
+
+  useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,6 +137,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
     const payload = {
       title: movie.title,
       description: movie.description,
+      tagline: movie.tagline,
       rating: rating !== undefined ? rating : movie.rating,
       watched: !movie.watched,
       tmdbId: movie.tmdbId,
@@ -159,6 +162,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
       const updated = await editPersonalMovie(movie.id, {
         title: movie.title,
         description: movie.description,
+        tagline: movie.tagline,
         rating,
         watched: movie.watched,
         tmdbId: movie.tmdbId,
@@ -289,7 +293,7 @@ const PersonalListPage = ({ active, onShowStats }: Readonly<{ active: boolean; o
           <TmdbSearchSection
             query={searchQuery}
             onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
+            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", tagline: "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
               .then((added) => { setMovies((prev) => [added, ...prev]); })
               .catch((e) => { if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); })}
           />

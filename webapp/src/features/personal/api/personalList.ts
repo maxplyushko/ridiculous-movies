@@ -5,6 +5,7 @@ import type { TmdbMediaType } from "@/types/TmdbMovie";
 export interface PersonalMoviePayload {
   title: string;
   description: string;
+  tagline: string;
   rating: number | null;
   tmdbId?: number | null;
   tmdbMediaType?: TmdbMediaType | null;
@@ -19,6 +20,7 @@ export interface PersonalStatePayload {
   tmdbId?: number | null;
   title: string;
   description?: string;
+  tagline?: string;
   tmdbMediaType?: TmdbMediaType | null;
   inList?: boolean;
   watched?: boolean;

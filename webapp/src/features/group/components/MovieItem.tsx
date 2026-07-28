@@ -109,7 +109,9 @@ const MovieItem = ({
         >
           <div className="movie-item-header__left">
             <span className="movie-item-header__title">{movie.title}</span>
-            <span className="movie-item-header__desc">{movie.description}</span>
+            {movie.tagline && (
+              <span className="movie-item-header__desc">{movie.tagline}</span>
+            )}
           </div>
           <div className="movie-item-header__right">
             <div className="movie-item-header__info">

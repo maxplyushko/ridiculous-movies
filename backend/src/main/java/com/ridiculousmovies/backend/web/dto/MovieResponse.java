@@ -7,6 +7,7 @@ public record MovieResponse(
     String id,
     String title,
     String description,
+    String tagline,
     Instant createdAt,
     Instant updatedAt,
     UserRefDto owner,

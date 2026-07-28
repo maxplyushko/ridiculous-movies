@@ -68,6 +68,7 @@ public class PersonalListController {
     pm.setUserId(userId);
     pm.setTitle(req.title());
     pm.setDescription(req.description() != null ? req.description() : "");
+    pm.setTagline(req.tagline() != null ? req.tagline() : "");
     pm.setRating(req.rating());
     pm.setWatched(req.rating() != null);
     pm.setInList(true);
@@ -109,6 +110,7 @@ public class PersonalListController {
       pm.setUserId(userId);
       pm.setTitle(req.title());
       pm.setDescription(req.description() != null ? req.description() : "");
+      pm.setTagline(req.tagline() != null ? req.tagline() : "");
       pm.setTmdbId(req.tmdbId());
       pm.setTmdbMediaType(req.tmdbMediaType());
       pm.setInList(false);
@@ -149,6 +151,7 @@ public class PersonalListController {
             org.springframework.http.HttpStatus.NOT_FOUND));
     pm.setTitle(req.title());
     pm.setDescription(req.description() != null ? req.description() : "");
+    pm.setTagline(req.tagline() != null ? req.tagline() : "");
     pm.setRating(req.rating());
     pm.setWatched(req.rating() != null || req.watched());
     if (req.inList() != null) {

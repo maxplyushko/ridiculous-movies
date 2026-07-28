@@ -6,6 +6,7 @@ public record PersonalMovieStateRequest(
     Long tmdbId,
     String title,
     String description,
+    String tagline,
     String tmdbMediaType,
     Boolean inList,
     Boolean watched,

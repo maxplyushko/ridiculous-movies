@@ -12,6 +12,7 @@ public class PersonalMovie {
   private String userId;
   private String title;
   private String description;
+  private String tagline;
   private BigDecimal rating;
   private boolean watched;
   private Boolean inList;

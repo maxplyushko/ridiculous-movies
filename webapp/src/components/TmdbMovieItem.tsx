@@ -1,4 +1,4 @@
-import { Bookmark, Calendar, Star } from "lucide-react";
+import { Bookmark, Calendar, Globe } from "lucide-react";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
@@ -99,7 +99,7 @@ const TmdbMovieItem = ({
         <div className="tmdb-movie-item__right">
           {movie.tmdbScore > 0 && (
             <span className="tmdb-movie-item__score">
-              {movie.tmdbScore.toFixed(1)}<Star size={14} />
+              {movie.tmdbScore.toFixed(1)}<Globe size={14} />
             </span>
           )}
           {movie.releaseYear && (

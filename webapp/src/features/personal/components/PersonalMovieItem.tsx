@@ -144,8 +144,8 @@ const PersonalMovieItem = ({
             <span className={`movie-item-header__title${movie.watched ? " personal-item__title--watched" : ""}`}>
               {movie.title}
             </span>
-            {movie.description && (
-              <span className="movie-item-header__desc">{movie.description}</span>
+            {movie.tagline && (
+              <span className="movie-item-header__desc">{movie.tagline}</span>
             )}
           </div>
           <div className="movie-item-header__right">

@@ -8,6 +8,7 @@ const BASE = "/api/movies";
 export type MovieFormPayload = {
   title: string;
   description: string;
+  tagline: string;
   ownerId: string;
   round?: number;
   ratings: { userId: string; score: number }[];

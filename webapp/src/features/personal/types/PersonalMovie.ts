@@ -4,6 +4,7 @@ export interface PersonalMovie {
   id: string;
   title: string;
   description: string;
+  tagline: string;
   rating: number | null;
   watched: boolean;
   inList: boolean;

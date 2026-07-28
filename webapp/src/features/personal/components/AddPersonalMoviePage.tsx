@@ -23,6 +23,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const isEditMode = movie !== undefined;
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
+  const [tagline, setTagline] = useState(movie?.tagline ?? "");
   const initRating = movie?.rating != null && movie.rating > 0 ? Math.round(movie.rating) : null;
   const [ratingMode, setRatingMode] = useState<RatingMode>("detailed");
   const [detailedRating, setDetailedRating] = useState<DetailedScores>(
@@ -35,7 +36,6 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [proposedOverview, setProposedOverview] = useState<string | null>(null);
 
   const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
   const isTg = isTelegramMiniApp();
@@ -59,6 +59,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       const payload: PersonalMoviePayload = {
         title,
         description,
+        tagline,
         rating: isEditMode ? rating : null,
         tmdbId,
         tmdbMediaType,
@@ -109,7 +110,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { setTitle(s.title); setTmdbId(s.id); setTmdbMediaType(s.mediaType); if (s.overview) setProposedOverview(s.overview); setShowSuggestions(false); }}
+                    onClick={() => { setTitle(s.title); setTmdbId(s.id); setTmdbMediaType(s.mediaType); if (s.overview) setDescription(s.overview); setShowSuggestions(false); }}
                   >
                     <span className="title-suggestions__title">{s.title}</span>
                     {s.releaseYear && <span className="title-suggestions__year">{s.releaseYear}</span>}
@@ -119,25 +120,27 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             </ul>
           )}
         </div>
-        <div className={`add-movie__item${proposedOverview ? " add-movie__item--float-label" : ""}`}>
+        <div className="add-movie__item">
           <input
             id="pl-movie-desc"
             type="text"
             value={description}
-            onChange={(e) => { setDescription(e.target.value); setProposedOverview(null); }}
+            onChange={(e) => setDescription(e.target.value)}
             onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder=" "
           />
           <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
-          {proposedOverview && (
-            <div className="overview-proposal">
-              <span className="overview-proposal__text">{proposedOverview}</span>
-              <div className="overview-proposal__actions">
-                <button type="button" onClick={() => setProposedOverview(null)}>{t('addPersonal.btnDismiss')}</button>
-                <button type="button" onClick={() => { setDescription(proposedOverview); setProposedOverview(null); }}>{t('addPersonal.btnUse')}</button>
-              </div>
-            </div>
-          )}
+        </div>
+        <div className="add-movie__item">
+          <input
+            id="pl-movie-tagline"
+            type="text"
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
+            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
+            placeholder=" "
+          />
+          <label htmlFor="pl-movie-tagline">{t('addPersonal.labelTagline')}</label>
         </div>
       </div>
 

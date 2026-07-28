@@ -88,6 +88,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
         id: "",
         title,
         description: description ?? "",
+        tagline: "",
         rating: null,
         createdAt: "",
         updatedAt: "",

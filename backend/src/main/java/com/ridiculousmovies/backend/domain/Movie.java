@@ -12,6 +12,7 @@ public class Movie {
   private String id;
   private String title;
   private String description = "";
+  private String tagline = "";
   private AppUser owner;
   private List<Rating> ratings = new ArrayList<>();
   private Integer round;

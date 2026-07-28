@@ -30,7 +30,7 @@ export function useNavDrag(
     const nav = navRef.current;
     const ind = indicatorRef.current;
     if (!nav || !ind) return;
-    ind.style.transition = animated ? "left 0.3s cubic-bezier(0.34,1.56,0.64,1)" : "none";
+    ind.style.transition = animated ? "left 0.38s cubic-bezier(0.22,1,0.36,1)" : "none";
     ind.style.left = `${calcLeft(nav, idx, tabCount)}px`;
   };
 
@@ -67,7 +67,7 @@ export function useNavDrag(
       const target = Math.max(0, Math.min(tabCount - 1,
         Math.round(s.startIdx + (e.changedTouches[0].clientX - s.startX) / step)));
       dragRef.current = null;
-      indicatorRef.current.style.transition = "left 0.3s cubic-bezier(0.34,1.56,0.64,1)";
+      indicatorRef.current.style.transition = "left 0.38s cubic-bezier(0.22,1,0.36,1)";
       indicatorRef.current.style.left = `${calcLeft(navRef.current, target, tabCount)}px`;
       indicatorRef.current.style.transform = INDICATOR_TRANSFORM;
       if (target !== s.startIdx) {

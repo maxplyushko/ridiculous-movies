@@ -28,6 +28,8 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Page>(defaultTab);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [groupResetSignal, setGroupResetSignal] = useState(0);
+  const [personalResetSignal, setPersonalResetSignal] = useState(0);
   const isAdmin = session.role === "admin";
 
   useEffect(() => {
@@ -44,7 +46,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
       const height = getKeyboardViewportHeight();
       if (height === undefined) return;
       maxHeight = Math.max(maxHeight, height);
-      if (height < maxHeight - 100) {
+      if (height < maxHeight - 100 && isTextEntry(document.activeElement)) {
         if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; }
         setKeyboardOpen(true);
       } else if (!isTextEntry(document.activeElement)) {
@@ -72,6 +74,10 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
 
   const selectTab = (tab: Tab) => {
     hapticTabTap();
+    if (tab === currentPage) {
+      if (tab === "group") setGroupResetSignal((n) => n + 1);
+      if (tab === "personal") setPersonalResetSignal((n) => n + 1);
+    }
     setCurrentPage(tab);
   };
 
@@ -86,9 +92,9 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   return (
     <div className="app-shell">
       <main className="app-main">
-        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} /></div>
+        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} resetSignal={groupResetSignal} /></div>
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
-        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} /></div>
+        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
         <div hidden={currentPage !== "misc"}><UserPage session={session} /></div>
       </main>

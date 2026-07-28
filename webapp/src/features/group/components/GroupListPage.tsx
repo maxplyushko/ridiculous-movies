@@ -28,7 +28,7 @@ type DetailEntry =
   | { kind: "tmdb"; movie: TmdbMovie }
   | { kind: "actor"; personId: number };
 
-const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boolean; currentUserId: string; onShowStats: () => void }) => {
+const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { isAdmin: boolean; currentUserId: string; onShowStats: () => void; resetSignal?: number }) => {
   const { t } = useTranslation();
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -36,6 +36,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats }: { isAdmin: boole
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
+
+  useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showMovieForm, setShowMovieForm] = useState(false);
   const [editingMovie, setEditingMovie] = useState<Movie | undefined>(undefined);
   const [movieToDelete, setMovieToDelete] = useState<Movie | null>(null);

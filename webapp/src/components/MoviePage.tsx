@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Info, Loader, Star, Tv, User, UserStar } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Star, Tv, User, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
@@ -127,7 +127,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
     let attempt = 0;
     const img = new Image();
 
-    const succeed = () => { if (!cancelled) setPosterLoaded(true); };
+    const timer = setTimeout(() => { if (!cancelled) setPosterErrored(true); }, POSTER_TIMEOUT_MS);
+
+    const succeed = () => { if (!cancelled) { setPosterLoaded(true); clearTimeout(timer); } };
     const fail = () => {
       if (cancelled) return;
       if (attempt < POSTER_MAX_RETRIES) {
@@ -142,8 +144,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
     img.onerror = fail;
     img.src = posterUrl;
     if (img.complete && img.naturalWidth > 0) succeed();
-
-    const timer = setTimeout(() => { if (!cancelled) setPosterErrored(true); }, POSTER_TIMEOUT_MS);
 
     return () => {
       cancelled = true;
@@ -184,6 +184,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
       </div>
       <div className="movie-page__header">
         <h1 className="movie-page__title">{title}</h1>
+        {!detailsLoading && tagline && <h2 className="movie-item-header__desc movie-page__tagline">{tagline}</h2>}
         <div className="movie-page__subhead">
           {detailsLoading ? (
             <div className="movie-page__meta-skeleton">
@@ -196,7 +197,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
             </div>
           ) : (
             <>
-              {tagline && <p className="movie-item-header__desc">{tagline}</p>}
               {genres.length > 0 && <p className="movie-page__genres">{genres.join(" · ")}</p>}
               <div className="movie-page__meta">
                 <span>
@@ -213,7 +213,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
                   </span>
                 )}
                 {releaseYear && <span><Calendar size={14} />{releaseYear}</span>}
-                {!!tmdbScore && <span><Star size={14} />{tmdbScore.toFixed(1)}</span>}
+                {!!tmdbScore && <span><Globe size={14} />{tmdbScore.toFixed(1)}</span>}
               </div>
             </>
           )}
@@ -240,7 +240,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
             className={`movie-page__action movie-page__action--groupbadge${groupExpanded ? " movie-page__action--group-open" : ""}`}
             onClick={() => { hapticTabTap(); setGroupExpanded((v) => !v); }}
           >
-            <UserStar size={26} />
+            <Users size={26} />
             <span className="movie-page__action-label">{groupRating.toFixed(1)}</span>
           </button>
         )}

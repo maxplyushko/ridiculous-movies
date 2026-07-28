@@ -105,6 +105,7 @@ public class MovieService {
     Movie movie = new Movie();
     movie.setTitle(req.title().trim());
     movie.setDescription(normalizeDescription(req.description()));
+    movie.setTagline(normalizeDescription(req.tagline()));
     movie.setOwner(owner);
     movie.setRound(resolveCreateRound(groupId, req.round()));
     movie.setTmdbId(req.tmdbId());
@@ -127,6 +128,7 @@ public class MovieService {
 
     movie.setTitle(req.title().trim());
     movie.setDescription(normalizeDescription(req.description()));
+    movie.setTagline(normalizeDescription(req.tagline()));
     movie.setOwner(owner);
     if (req.round() != null) {
       movie.setRound(Math.max(1, req.round()));

@@ -6,6 +6,7 @@ export type Movie = {
   id: string;
   title: string;
   description: string;
+  tagline: string;
   createdAt: string;
   updateAt: string;
   owner: User;
