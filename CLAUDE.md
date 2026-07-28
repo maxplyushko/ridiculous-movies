@@ -20,16 +20,20 @@ All new features and UI/UX changes must be fully consistent with existing patter
 
 ## Testing
 
-Don't start the backend or frontend dev servers to test changes — user tests UI/UX manually. Verify via build/lint/unit tests only (`npm run build`, `npm run lint`, `./mvnw test`).
+Don't start the backend or frontend dev servers to test changes — user tests UI/UX manually. Verify via build/lint/unit tests only (`npm run build`, `npm run lint`, `mvn test`).
+
+Don't run API validations (curl probes against a running backend) — the user performs those manually.
+
+Use `mvn`, not `./mvnw` — the wrapper is broken in this repo (`.mvn/wrapper/maven-wrapper.properties` is missing). Whenever backend sources change, refresh the backend with `mvn` (e.g. `mvn -q test` / `mvn -q compile`).
 
 ## Commands
 
 ### Backend (run from `backend/`)
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev   # start with local JSON storage
-./mvnw test                     # run all tests
-./mvnw test -Dtest=ClassName    # run single test class
-./mvnw package -DskipTests      # build fat JAR
+mvn spring-boot:run -Dspring-boot.run.profiles=dev   # start with local JSON storage
+mvn test                     # run all tests
+mvn test -Dtest=ClassName    # run single test class
+mvn package -DskipTests      # build fat JAR
 ```
 
 ### Frontend (run from `webapp/`)
@@ -65,7 +69,9 @@ npm run lint         # ESLint
 
 **Frontend API layer**: `webapp/src/api/client.ts` wraps `fetch` — injects `Authorization: Bearer <token>` from localStorage. Feature-scoped API modules live under `webapp/src/features/*/api/` and all call through `apiFetch`. Vite proxies `/api` to the backend in dev.
 
-**Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four tabs: Stats, Group List, Personal List, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
+**Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four bottom-bar buttons: Group List, Personal List, Search, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
+
+**Search**: Search is a global overlay mode owned by `AppShell`, not a page. Tapping the Search nav button sets `searchOpen`, which hides every page plus the bottom bar and reveals `SearchResults` (`features/search/`) alongside a docked `SearchInput` (`mlp__search-bar--docked`) that slides up from the bottom and rides above the keyboard via `useKeyboardOffset`. The trailing cross is two-stage: clears the query first, closes search when already empty. Results always cover all four sources — club movies, personal watchlist, TMDB movies/TV, TMDB people — regardless of which tab was active. Club and personal rows render `readOnly` (tap to open, no swipe actions); TMDB rows keep swipe-to-bookmark, disabled and filled when the movie is already in the caller's list.
 
 **Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items carry two **independent** booleans — `inList` (in the "to watch" list) and `watched` — plus an optional `rating`. A movie can be watched without being listed, and vice-versa; a record is deleted once both flags are false and no rating remains. `inList` is nullable in storage: legacy records (no field) deserialize as `null` and are treated as `true`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies. `MovieDetail` (`MoviePage.tsx`) surfaces these as a shared icon action row (rate star, group-rating badge, bookmark=`inList`, eye=`watched`) that acts on the **caller's own** record via `GET /status` + `PUT /state`, consistent across every source (group / personal / TMDB / member).
 
@@ -109,6 +115,7 @@ npm run lint         # ESLint
 | GET | `/api/users` | List users in caller's group |
 | PUT | `/api/users/me/preferences` | Update caller's preferences (theme, defaultPage, lang) |
 | GET | `/api/tmdb/search` | Search TMDB for movies |
+| GET | `/api/tmdb/search/person` | Search TMDB for people (actors) |
 | GET | `/api/tmdb/movie/{id}` | Fetch full TMDB movie detail (poster, director, cast) |
 | POST | `/api/telegram/webhook` | Telegram bot webhook |
 

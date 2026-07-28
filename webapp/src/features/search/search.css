@@ -1,0 +1,7 @@
+.search-results {
+  min-height: 100%;
+}
+
+.search-results .movie-list {
+  padding-bottom: var(--search-bar-offset);
+}

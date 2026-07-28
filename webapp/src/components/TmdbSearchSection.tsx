@@ -9,9 +9,10 @@ type TmdbSearchSectionProps = {
   query: string;
   onOpenMovie?: (movie: TmdbMovie) => void;
   onAddToPersonalList?: (movie: TmdbMovie) => void;
+  bookmarkedTmdbIds?: Set<number>;
 };
 
-const TmdbSearchSection = ({ query, onOpenMovie, onAddToPersonalList }: TmdbSearchSectionProps) => {
+const TmdbSearchSection = ({ query, onOpenMovie, onAddToPersonalList, bookmarkedTmdbIds }: TmdbSearchSectionProps) => {
   const { t } = useTranslation();
   const [openSwipeId, setOpenSwipeId] = useState<number | null>(null);
 
@@ -38,6 +39,7 @@ const TmdbSearchSection = ({ query, onOpenMovie, onAddToPersonalList }: TmdbSear
           onSwipeClose={() => setOpenSwipeId((cur) => cur === m.id ? null : cur)}
           onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== m.id) setOpenSwipeId(null); }}
           onAddToPersonalList={onAddToPersonalList ? () => onAddToPersonalList(m) : undefined}
+          bookmarked={bookmarkedTmdbIds?.has(m.id) ?? false}
         />
       ))}
     </div>

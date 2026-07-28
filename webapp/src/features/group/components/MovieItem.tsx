@@ -7,6 +7,7 @@ type MovieItemProps = {
   movie: Movie;
   isSwipeOpen: boolean;
   canDelete: boolean;
+  readOnly?: boolean;
   onOpen: (movie: Movie) => void;
   onEdit: (movie: Movie) => void;
   onDelete: (movie: Movie) => void;
@@ -29,6 +30,7 @@ const MovieItem = ({
   movie,
   isSwipeOpen,
   canDelete,
+  readOnly = false,
   onOpen,
   onEdit,
   onDelete,
@@ -70,9 +72,10 @@ const MovieItem = ({
 
   return (
     <div
-      className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}`}
+      className={`movie-item-wrapper${showActions && !readOnly ? " movie-item-wrapper--actions-visible" : ""}`}
       style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
     >
+      {!readOnly && (
       <div className="movie-item-management">
         <button
           type="button"
@@ -90,16 +93,17 @@ const MovieItem = ({
           <Trash2 size={16} />
         </button>
       </div>
+      )}
       <article
         tabIndex={-1}
         className="movie-item"
         aria-label={movie.title}
-        style={{
+        style={readOnly ? undefined : {
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
-        onTransitionEnd={(e) => handleTransitionEnd(e.propertyName)}
-        {...touchHandlers}
+        onTransitionEnd={readOnly ? undefined : (e) => handleTransitionEnd(e.propertyName)}
+        {...(readOnly ? {} : touchHandlers)}
       >
         <button
           type="button"

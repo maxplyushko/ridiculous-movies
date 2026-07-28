@@ -11,7 +11,15 @@
     "groupList": "Group List",
     "personalList": "Personal List",
     "profile": "Profile",
-    "back": "Back"
+    "back": "Back",
+    "search": "Search"
+  },
+  "search": {
+    "placeholder": "Search movies and actors…",
+    "cancel": "Cancel",
+    "noResults": "Nothing found for",
+    "sectionClub": "In your club",
+    "sectionPersonal": "In your personal list"
   },
   "addMovie": {
     "headingEdit": "Edit Movie",
@@ -65,10 +73,7 @@
     "btnTryAgain": "Try again",
     "labelNextHost": "Next host",
     "btnAddMovie": "Add movie",
-    "placeholderSearch": "Search...",
-    "btnRate": "Rate the movie",
-    "sectionInYourClub": "In your club",
-    "noMatch": "No movies match"
+    "btnRate": "Rate the movie"
   },
   "personalList": {
     "btnCancel": "Cancel",
@@ -80,12 +85,9 @@
     "labelToWatch": "To Watch",
     "labelWatched": "Watched",
     "btnAddMovie": "Add movie",
-    "placeholderSearch": "Search…",
     "sectionToWatch": "To Watch",
     "sectionWatched": "Watched",
     "empty": "Your personal list is empty. Add something!",
-    "sectionInYourList": "In your personal list",
-    "noMatch": "No movies match",
     "randomTitle": "Random movie is"
   },
   "personalMovie": {
@@ -140,7 +142,8 @@
   },
   "tmdb": {
     "section": "On Internet",
-    "empty": "No Internet results"
+    "empty": "No Internet results",
+    "sectionPeople": "People"
   },
   "moviePage": {
     "movie": "Movie",

@@ -11,6 +11,7 @@ type TmdbMovieItemProps = {
   onSwipeClose: () => void;
   onSwipeBegin: () => void;
   onAddToPersonalList?: () => void;
+  bookmarked?: boolean;
 };
 
 const ACTIONS_WIDTH = 56;
@@ -24,6 +25,7 @@ const TmdbMovieItem = ({
   onSwipeClose,
   onSwipeBegin,
   onAddToPersonalList,
+  bookmarked = false,
 }: TmdbMovieItemProps) => {
   const swipeable = !!onAddToPersonalList;
   const {
@@ -68,9 +70,10 @@ const TmdbMovieItem = ({
           <button
             type="button"
             className="movie-item-management__personal-list"
+            disabled={bookmarked}
             onClick={() => { closeSwipe(); hapticTabTap(); onAddToPersonalList!(); }}
           >
-            <Bookmark size={16} />
+            <Bookmark size={16} fill={bookmarked ? "currentColor" : "none"} />
           </button>
         </div>
       )}

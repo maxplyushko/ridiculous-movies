@@ -4,6 +4,7 @@ import com.ridiculousmovies.backend.tmdb.TmdbClient;
 import com.ridiculousmovies.backend.web.dto.TmdbActorResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieDetailsResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
+import com.ridiculousmovies.backend.web.dto.TmdbPersonResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,18 @@ public class TmdbController {
           "Query must be at least 2 characters");
     }
     return tmdbClient.search(q.trim(), lang, includeTv);
+  }
+
+  @GetMapping("/search/person")
+  public List<TmdbPersonResponse> searchPeople(
+      @RequestParam String q,
+      @RequestParam(required = false) String lang
+  ) {
+    if (q == null || q.trim().length() < 2) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Query must be at least 2 characters");
+    }
+    return tmdbClient.searchPeople(q.trim(), lang);
   }
 
   @GetMapping("/movie/{id}")

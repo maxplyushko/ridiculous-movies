@@ -11,7 +11,15 @@
     "groupList": "Фильмы группы",
     "personalList": "Личный список",
     "profile": "Профиль",
-    "back": "Назад"
+    "back": "Назад",
+    "search": "Поиск"
+  },
+  "search": {
+    "placeholder": "Поиск фильмов и актёров…",
+    "cancel": "Отмена",
+    "noResults": "Ничего не найдено по запросу",
+    "sectionClub": "В твоей группе",
+    "sectionPersonal": "В твоём списке"
   },
   "addMovie": {
     "headingEdit": "Редактировать Фильм",
@@ -65,10 +73,7 @@
     "btnTryAgain": "Попробовать снова",
     "labelNextHost": "Следующий хост",
     "btnAddMovie": "Добавить",
-    "placeholderSearch": "Поиск...",
-    "btnRate": "Оценить фильм",
-    "sectionInYourClub": "В твоей группе",
-    "noMatch": "нет совпадений"
+    "btnRate": "Оценить фильм"
   },
   "personalList": {
     "btnCancel": "Отмена",
@@ -80,12 +85,9 @@
     "labelToWatch": "К просмотру",
     "labelWatched": "Просмотрено",
     "btnAddMovie": "Добавить",
-    "placeholderSearch": "Поиск...",
     "sectionToWatch": "К просмотру",
     "sectionWatched": "Просмотрено",
     "empty": "Список пуст. Добавь что-нибудь!",
-    "sectionInYourList": "В твоём списке",
-    "noMatch": "нет совпадений",
     "randomTitle": "Рандомный фильм"
   },
   "personalMovie": {
@@ -139,7 +141,8 @@
   },
   "tmdb": {
     "section": "Интернет",
-    "empty": "нет результатов"
+    "empty": "нет результатов",
+    "sectionPeople": "Люди"
   },
   "moviePage": {
     "movie": "Фильм",

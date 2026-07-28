@@ -13,11 +13,9 @@ import { fetchUsers } from "../api/users.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
-import { SearchInput } from "@/components/SearchInput.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
-import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
 import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
@@ -45,7 +43,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [npOpen, setNpOpen] = useState(false);
@@ -132,22 +129,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     }
   };
 
-  const normalizedQuery = searchQuery.toLowerCase().trim();
-  const visibleGroups = normalizedQuery
-    ? movieGroups
-        .map((g) => ({
-          ...g,
-          movies: g.movies.filter(
-            (m) =>
-              m.title.toLowerCase().includes(normalizedQuery) ||
-              m.description.toLowerCase().includes(normalizedQuery),
-          ),
-        }))
-        .filter((g) => g.movies.length > 0)
-    : movieGroups;
-
-  const showTmdb = normalizedQuery.length >= 3;
-
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
     console.error(error);
@@ -173,22 +154,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         </div>
       </div>
 
-      <SearchInput
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder={t('groupList.placeholderSearch')}
-      />
-
       <div className="movie-list">
-        {normalizedQuery && visibleGroups.length === 0 && !showTmdb && (
-          <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
-        )}
-        {showTmdb && visibleGroups.length > 0 && (
-          <div className="movie-group__header">
-            <h3>{t('groupList.sectionInYourClub')}</h3>
-          </div>
-        )}
-        {visibleGroups.map((group) => (
+        {movieGroups.map((group) => (
           <RoundSection
             key={group.groupId}
             movieGroup={group}
@@ -202,7 +169,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
             onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
           />
         ))}
-        {showTmdb && <TmdbSearchSection query={searchQuery} onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })} />}
       </div>
 
       {detailStack.stack.map((entry, i) => {

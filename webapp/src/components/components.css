@@ -383,7 +383,14 @@
   background: #1e7e34;
 }
 
-.movie-item-management__personal-list:active {
+.movie-item-management__personal-list:disabled {
+  background: var(--separator);
+  color: var(--text-secondary);
+  cursor: default;
+  opacity: 1;
+}
+
+.movie-item-management__personal-list:active:not(:disabled) {
   opacity: 0.85;
 }
 
@@ -2252,4 +2259,135 @@ button.actor-page__known-for-item {
 
 .overview-proposal__actions button:active {
   opacity: 0.7;
+}
+
+.mlp__search-bar--docked {
+  position: fixed;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  padding: 0.5rem 0.75rem calc(0.5rem + var(--bottom-bar-inset));
+  border-top: 1px solid var(--tab-bar-glass-border);
+  background: var(--tab-bar-glass);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  animation: search-bar-rise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: bottom 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mlp__search-bar--docked {
+    background: color-mix(in srgb, var(--tab-bar-bg) 94%, var(--surface));
+  }
+}
+
+.mlp__search-bar--lifted {
+  padding-bottom: 0.5rem;
+}
+
+.mlp__search-bar--closing {
+  animation: search-bar-fall 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes search-bar-rise {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes search-bar-fall {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.mlp__search-cancel {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.mlp__search-cancel:active {
+  background: var(--active-highlight);
+  color: var(--accent);
+}
+
+.tmdb-person-item {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  background: var(--surface);
+}
+
+.tmdb-person-item:active {
+  background: var(--active-highlight);
+}
+
+.tmdb-person-item__avatar {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  color: var(--text-secondary);
+}
+
+.tmdb-person-item__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tmdb-person-item__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.tmdb-person-item__name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.tmdb-person-item__known-for {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

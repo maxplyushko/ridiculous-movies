@@ -11,17 +11,14 @@ import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
-import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
-import { SearchInput } from "@/components/SearchInput.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
-import { addPersonalMovie, deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
+import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
-import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
 
 type DetailEntry =
   | { kind: "personal"; movieId: string }
@@ -46,7 +43,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const [movieToDelete, setMovieToDelete] = useState<PersonalMovie | null>(null);
   const [ratingMovie, setRatingMovie] = useState<PersonalMovie | null>(null);
   const [ratingOnly, setRatingOnly] = useState(false);
-  const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
@@ -54,7 +50,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
   const moviePicker = useSpinPicker<string>();
@@ -190,18 +185,8 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
     }
   };
 
-  const showTmdb = searchQuery.trim().length >= 3;
-  const normalizedQuery = searchQuery.toLowerCase().trim();
-  const filtered = normalizedQuery
-    ? movies.filter(
-        (m) =>
-          m.title.toLowerCase().includes(normalizedQuery) ||
-          m.description.toLowerCase().includes(normalizedQuery),
-      )
-    : movies;
-
-  const toWatch = filtered.filter((m) => m.inList && !m.watched);
-  const watched = filtered.filter((m) => m.watched);
+  const toWatch = movies.filter((m) => m.inList && !m.watched);
+  const watched = movies.filter((m) => m.watched);
 
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
@@ -247,19 +232,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         </div>
       </div>
 
-      <SearchInput
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder={t('personalList.placeholderSearch')}
-      />
-
       <div className="movie-list">
-        {normalizedQuery && toWatch.length === 0 && watched.length === 0 && !showTmdb && (
-          <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
-        )}
-        {showTmdb && (toWatch.length > 0 || watched.length > 0) && (
-          <div className="movie-group__header"><h3>{t('personalList.sectionInYourList')}</h3></div>
-        )}
         <PersonalSection
           title={t('personalList.sectionToWatch')}
           movies={toWatch}
@@ -286,17 +259,8 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
-        {movies.length === 0 && !normalizedQuery && (
+        {movies.length === 0 && (
           <p className="movie-list__no-results">{t('personalList.empty')}</p>
-        )}
-        {showTmdb && (
-          <TmdbSearchSection
-            query={searchQuery}
-            onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-            onAddToPersonalList={(m) => addPersonalMovie({ title: m.title, description: m.overview ?? "", tagline: "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
-              .then((added) => { setMovies((prev) => [added, ...prev]); })
-              .catch((e) => { if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); })}
-          />
         )}
       </div>
 
@@ -404,7 +368,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
           />
         </div>
       )}
-      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </div>
   );
 };

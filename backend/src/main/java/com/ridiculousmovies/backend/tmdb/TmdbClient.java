@@ -4,6 +4,7 @@ import com.ridiculousmovies.backend.web.dto.TmdbActorResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbCastMemberResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieDetailsResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
+import com.ridiculousmovies.backend.web.dto.TmdbPersonResponse;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
@@ -37,11 +38,14 @@ public class TmdbClient {
     private static final String MEDIA_TYPE_TV = "tv";
     private static final int MAX_CAST = 5;
     private static final int MAX_KNOWN_FOR = 10;
+    private static final int MAX_PERSON_KNOWN_FOR = 3;
+    private static final int MAX_RESULTS = 10;
 
     private final RestClient restClient;
     private final RestClient imageClient;
     private final ConcurrentHashMap<String, List<TmdbMovieResponse>> cache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Optional<TmdbMovieDetailsResponse>> detailsCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<TmdbPersonResponse>> personSearchCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Optional<TmdbActorResponse>> actorCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, CachedImage> imageCache = new ConcurrentHashMap<>();
 
@@ -204,6 +208,48 @@ public class TmdbClient {
                 c.character(),
                 c.profilePath() != null ? PROFILE_IMAGE_BASE + c.profilePath() : null
             ))
+            .toList();
+    }
+
+    public List<TmdbPersonResponse> searchPeople(String query, String lang) {
+        String locale = LOCALES.getOrDefault(lang, LOCALES.get(DEFAULT_LANG));
+        return personSearchCache.computeIfAbsent(locale + "|" + query,
+            key -> fetchPeopleFromTmdb(query, locale));
+    }
+
+    private List<TmdbPersonResponse> fetchPeopleFromTmdb(String query, String locale) {
+        try {
+            TmdbPersonSearchResult result = restClient.get()
+                .uri("/search/person?query={q}&language={locale}&page=1", query, locale)
+                .retrieve()
+                .body(TmdbPersonSearchResult.class);
+
+            if (result == null || result.results() == null) {
+                return List.of();
+            }
+
+            return result.results().stream()
+                .limit(MAX_RESULTS)
+                .map(p -> new TmdbPersonResponse(
+                    p.id(),
+                    p.name(),
+                    p.profilePath() != null ? PROFILE_IMAGE_BASE + p.profilePath() : null,
+                    knownForTitles(p.knownFor())
+                ))
+                .toList();
+        } catch (RestClientException e) {
+            return List.of();
+        }
+    }
+
+    private static List<String> knownForTitles(List<TmdbMultiSearchItem> knownFor) {
+        if (knownFor == null) {
+            return List.of();
+        }
+        return knownFor.stream()
+            .map(k -> MEDIA_TYPE_TV.equals(k.mediaType()) ? k.name() : k.title())
+            .filter(title -> title != null && !title.isBlank())
+            .limit(MAX_PERSON_KNOWN_FOR)
             .toList();
     }
 
