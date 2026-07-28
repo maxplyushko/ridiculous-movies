@@ -105,7 +105,8 @@
     "sectionLanguage": "App language",
     "sectionTmdbLang": "Movies/Actors info",
     "sectionPrivacy": "Privacy",
-    "labelPublicList": "My movie list is public"
+    "labelPublicList": "My movie list is public",
+    "confirmDiscard": "There are unsaved changes. Continue?"
   },
   "userPage": {
     "headingSettings": "Settings",
@@ -125,7 +126,6 @@
     "btnShowMovieList": "Show movie list",
     "listRestricted": "User restricted access to personal list",
     "sectionStats": "Your statistics",
-    "statMoviesRated": "Movies rated",
     "statAvgGiven": "Avg rating given",
     "statAvgAsHost": "Avg as host",
     "statHostRank": "Host rank",

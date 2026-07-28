@@ -9,6 +9,7 @@ import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { Presence } from "@/components/Presence.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -410,7 +411,9 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
           )}
         </div>
       )}
-      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      <Presence show={showGuestLimit}>
+        {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      </Presence>
     </div>
   );
 }

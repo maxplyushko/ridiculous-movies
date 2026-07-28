@@ -105,7 +105,8 @@
     "sectionLanguage": "Язык приложения",
     "sectionTmdbLang": "Информация о фильмах/актерах",
     "sectionPrivacy": "Приватность",
-    "labelPublicList": "Мой список фильмов видно всем"
+    "labelPublicList": "Мой список фильмов видно всем",
+    "confirmDiscard": "Есть несохранённые изменения. Продолжить?"
   },
   "userPage": {
     "headingSettings": "Настройки",
@@ -125,9 +126,8 @@
     "btnShowMovieList": "Показать список фильмов",
     "listRestricted": "Пользователь ограничил доступ к списку",
     "sectionStats": "Ваша статистика",
-    "statMoviesRated": "Оценено фильмов",
-    "statAvgGiven": "Средняя оценка",
-    "statAvgAsHost": "Средняя оценка в качестве хоста",
+    "statAvgGiven": "Ср. рейтинг зрителя",
+    "statAvgAsHost": "Ср. рейтинг хоста",
     "statHostRank": "Ранг хоста",
     "statFavHost": "Любимый хост",
     "statLeastFavHost": "Нелюбимый хост"

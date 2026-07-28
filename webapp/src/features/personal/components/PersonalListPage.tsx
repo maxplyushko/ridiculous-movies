@@ -19,6 +19,10 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll.ts";
+import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
+import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
+import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
 
 type DetailEntry =
   | { kind: "personal"; movieId: string }
@@ -46,6 +50,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
+  const { setEl: setHeroEl, collapsed: heroCollapsed } = useCollapseOnScroll<HTMLDivElement>();
 
   useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -53,6 +58,8 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
   const moviePicker = useSpinPicker<string>();
+
+  useRegisterSubPage(showForm);
 
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
@@ -76,8 +83,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
 
   const closeForm = () => {
     setShowForm(false);
-    setEditingMovie(undefined);
-    loadMovies();
+    loadMovies(true);
   };
 
   useSwipeBack(closeForm, formEl);
@@ -89,16 +95,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const resolvePersonalMovie = (movieId: string): PersonalMovie | null =>
     movies.find((m) => m.id === movieId) ?? lastKnownMoviesRef.current.get(movieId) ?? null;
 
-  useEffect(() => {
-    if (openSwipeId === null) return;
-    const close = (e: TouchEvent) => {
-      if (!(e.target as HTMLElement).closest('.movie-item-wrapper')) {
-        setOpenSwipeId(null);
-      }
-    };
-    document.addEventListener('touchstart', close, { passive: true });
-    return () => document.removeEventListener('touchstart', close);
-  }, [openSwipeId]);
+  useCloseSwipeOnOutsideTap(openSwipeId, () => setOpenSwipeId(null));
 
   const handleEdit = (movie: PersonalMovie) => {
     setOpenSwipeId(null);
@@ -196,7 +193,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
 
   return (
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
-      <div className="mlp__hero">
+      <div className={`mlp__hero${heroCollapsed ? " mlp__hero--collapsed" : ""}`} ref={setHeroEl}>
         <div className="mlp__cards">
           <button
             type="button"
@@ -264,58 +261,64 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         )}
       </div>
 
-      {movieToDelete && (
-        <ConfirmDialog
-          message={t('personalList.confirmDelete', { title: movieToDelete.title })}
-          error={deleteError}
-          isLoading={isDeleting}
-          cancelLabel={t('personalList.btnCancel')}
-          confirmLabel={t('personalList.btnDelete')}
-          onCancel={cancelDelete}
-          onConfirm={executeDelete}
-        />
-      )}
+      <Presence show={movieToDelete !== null}>
+        {movieToDelete && (
+          <ConfirmDialog
+            message={t('personalList.confirmDelete', { title: movieToDelete.title })}
+            error={deleteError}
+            isLoading={isDeleting}
+            cancelLabel={t('personalList.btnCancel')}
+            confirmLabel={t('personalList.btnDelete')}
+            onCancel={cancelDelete}
+            onConfirm={executeDelete}
+          />
+        )}
+      </Presence>
 
-      {moviePicker.result && (
-        <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
-          <div className="confirm-dialog confirm-dialog--fireworks" onClick={(e) => e.stopPropagation()}>
-            <FireworkSparks key={moviePicker.result} />
-            <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
-            <p><strong>{moviePicker.result}</strong></p>
-            <div className="confirm-dialog__actions">
-              <button type="button" onClick={moviePicker.clear}>OK</button>
+      <Presence show={moviePicker.result !== null}>
+        {moviePicker.result && (
+          <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
+            <div className="confirm-dialog confirm-dialog--fireworks" onClick={(e) => e.stopPropagation()}>
+              <FireworkSparks key={moviePicker.result} />
+              <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
+              <p><strong>{moviePicker.result}</strong></p>
+              <div className="confirm-dialog__actions">
+                <button type="button" onClick={moviePicker.clear}>OK</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Presence>
 
-      {ratingMovie && (
-        <RatingModal
-          title={t('personalList.rateDialog', { title: ratingMovie.title })}
-          initialScore={ratingMovie.rating}
-          defaultMode="classic"
-          cancelLabel={t('personalList.btnSkip')}
-          saveLabel={t('personalList.btnSave')}
-          onCancel={() => {
-            const movie = ratingMovie;
-            setRatingMovie(null);
-            if (!ratingOnly && !movie.watched) {
-              applyToggle(movie);
-              celebrate(movie.id);
-            }
-          }}
-          onSave={async (rating) => {
-            const movie = ratingMovie;
-            setRatingMovie(null);
-            if (ratingOnly || movie.watched) {
-              await updateRating(movie, rating);
-            } else {
-              applyToggle(movie, rating);
-              celebrate(movie.id);
-            }
-          }}
-        />
-      )}
+      <Presence show={ratingMovie !== null}>
+        {ratingMovie && (
+          <RatingModal
+            title={t('personalList.rateDialog', { title: ratingMovie.title })}
+            initialScore={ratingMovie.rating}
+            defaultMode="classic"
+            cancelLabel={t('personalList.btnSkip')}
+            saveLabel={t('personalList.btnSave')}
+            onCancel={() => {
+              const movie = ratingMovie;
+              setRatingMovie(null);
+              if (!ratingOnly && !movie.watched) {
+                applyToggle(movie);
+                celebrate(movie.id);
+              }
+            }}
+            onSave={async (rating) => {
+              const movie = ratingMovie;
+              setRatingMovie(null);
+              if (ratingOnly || movie.watched) {
+                await updateRating(movie, rating);
+              } else {
+                applyToggle(movie, rating);
+                celebrate(movie.id);
+              }
+            }}
+          />
+        )}
+      </Presence>
 
       {detailStack.stack.map((entry, i) => {
         const isTop = i === detailStack.stack.length - 1;
@@ -359,15 +362,17 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         );
       })}
 
-      {showForm && (
-        <div className="movie-list__add__movie" ref={setFormEl}>
-          <AddPersonalMoviePage
-            key={editingMovie?.id ?? "new"}
-            movie={editingMovie}
-            onBack={closeForm}
-          />
-        </div>
-      )}
+      <Presence show={showForm} exitMs={PAGE_EXIT_MS}>
+        {showForm && (
+          <div className="movie-list__add__movie" ref={setFormEl}>
+            <AddPersonalMoviePage
+              key={editingMovie?.id ?? "new"}
+              movie={editingMovie}
+              onBack={closeForm}
+            />
+          </div>
+        )}
+      </Presence>
     </div>
   );
 };

@@ -71,15 +71,6 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
     setFinal(null);
   };
 
-  const resetHostResult = () => {
-    hapticTabTap();
-    clearInterval(hostIntervalRef.current);
-    stopHaptics();
-    setHostSpinning(false);
-    setHostDisplay(null);
-    setHostFinal(null);
-  };
-
   const pick = () => {
     if (spinning) return;
     hapticTabTap();
@@ -193,7 +184,12 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
                     </Slider.Root>
                   </div>
 
-                  <div className="mlp__action-row mlp__action-row--gap-top">
+                  <div className="mlp__action-row mlp__action-row--gap-top mlp__action-row--split">
+                    {!spinning && (
+                      <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={() => { hapticTabTap(); onClose(); }}>
+                        {t('groupList.btnCancel')}
+                      </button>
+                    )}
                     <button type="button" className="misc-page__generate" onClick={pick}>
                       {t('groupList.btnGenerate')}
                     </button>
@@ -230,7 +226,12 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
           {mode === "host" && (
             <>
               {hostDisplay === null ? (
-                <div className="mlp__action-row mlp__action-row--gap-top">
+                <div className="mlp__action-row mlp__action-row--gap-top mlp__action-row--split">
+                  {!hostSpinning && (
+                    <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={() => { hapticTabTap(); onClose(); }}>
+                      {t('groupList.btnCancel')}
+                    </button>
+                  )}
                   <button type="button" className="misc-page__generate" onClick={pickHost}>
                     {t('groupList.btnGenerate')}
                   </button>
@@ -253,7 +254,7 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
                   </div>
                   {!hostSpinning && hostFinal !== null && (
                     <div className="mlp__action-row mlp__action-row--split">
-                      <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={resetHostResult}>
+                      <button type="button" className="misc-page__generate misc-page__generate--secondary" onClick={pickHost}>
                         {t('groupList.btnTryAgain')}
                       </button>
                       <button type="button" className="mlp__result-ok" onClick={() => { hapticTabTap(); onClose(); }}>{t('groupList.btnOk')}</button>

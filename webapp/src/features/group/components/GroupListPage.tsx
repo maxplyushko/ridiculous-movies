@@ -20,6 +20,10 @@ import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
+import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll.ts";
+import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
+import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
+import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
 
 type DetailEntry =
   | { kind: "group"; movieId: string }
@@ -34,6 +38,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
+  const { setEl: setHeroEl, collapsed: heroCollapsed } = useCollapseOnScroll<HTMLDivElement>();
 
   useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showMovieForm, setShowMovieForm] = useState(false);
@@ -49,12 +54,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   const [npSliderMax, setNpSliderMax] = useState(10);
   const [npUsers, setNpUsers] = useState<User[]>([]);
 
-  useEffect(() => {
-    if (openSwipeId === null) return;
-    const close = () => setOpenSwipeId(null);
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, [openSwipeId]);
+  useCloseSwipeOnOutsideTap(openSwipeId, () => setOpenSwipeId(null));
+  useRegisterSubPage(showMovieForm);
 
   const ensureUsers = async (): Promise<User[]> => {
     if (users.length > 0) return users;
@@ -75,8 +76,8 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     setNpOpen(true);
   };
 
-  const loadMovieGroups = useCallback(() => {
-    setLoading(true);
+  const loadMovieGroups = useCallback((silent?: boolean) => {
+    if (!silent) setLoading(true);
     setError(null);
     fetchMovieGroups({ sort: "desc" })
       .then((data) => {
@@ -95,8 +96,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
 
   const closeMovieForm = () => {
     setShowMovieForm(false);
-    setEditingMovie(undefined);
-    loadMovieGroups();
+    loadMovieGroups(true);
   };
 
   useSwipeBack(closeMovieForm, addMovieEl);
@@ -137,7 +137,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
 
   return (
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
-      <div className="mlp__hero">
+      <div className={`mlp__hero${heroCollapsed ? " mlp__hero--collapsed" : ""}`} ref={setHeroEl}>
         <div className="mlp__cards">
           <button type="button" className="mlp__card" onClick={openRandomizer}>
             <Dices size={20} className="mlp__card-icon" />
@@ -212,55 +212,63 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         );
       })}
 
-      {showMovieForm && (
-        <div className="movie-list__add__movie" ref={setAddMovieEl}>
-          <AddMoviePage
-            key={editingMovie?.id ?? "new"}
-            currentRound={currentRound}
-            maxRound={maxRound}
-            currentUserId={currentUserId}
-            movie={editingMovie}
-            users={users}
-            onBack={closeMovieForm}
+      <Presence show={showMovieForm} exitMs={PAGE_EXIT_MS}>
+        {showMovieForm && (
+          <div className="movie-list__add__movie" ref={setAddMovieEl}>
+            <AddMoviePage
+              key={editingMovie?.id ?? "new"}
+              currentRound={currentRound}
+              maxRound={maxRound}
+              currentUserId={currentUserId}
+              movie={editingMovie}
+              users={users}
+              onBack={closeMovieForm}
+            />
+          </div>
+        )}
+      </Presence>
+
+      <Presence show={movieToDelete !== null}>
+        {movieToDelete && (
+          <ConfirmDialog
+            message={t('groupList.confirmDelete', { title: movieToDelete.title })}
+            error={deleteError}
+            isLoading={isDeleting}
+            cancelLabel={t('groupList.btnCancel')}
+            confirmLabel={t('groupList.btnDelete')}
+            onCancel={cancelDelete}
+            onConfirm={executeDelete}
           />
-        </div>
-      )}
+        )}
+      </Presence>
 
-      {movieToDelete && (
-        <ConfirmDialog
-          message={t('groupList.confirmDelete', { title: movieToDelete.title })}
-          error={deleteError}
-          isLoading={isDeleting}
-          cancelLabel={t('groupList.btnCancel')}
-          confirmLabel={t('groupList.btnDelete')}
-          onCancel={cancelDelete}
-          onConfirm={executeDelete}
-        />
-      )}
+      <Presence show={ratingMovie !== null}>
+        {ratingMovie && (
+          <RatingModal
+            title={ratingMovie.title}
+            cancelLabel={t('groupList.btnCancel')}
+            saveLabel={t('personalList.btnSave')}
+            onCancel={() => setRatingMovie(null)}
+            onSave={async (score) => {
+              await rateMovie(ratingMovie.id, score);
+              setRatingMovie(null);
+              loadMovieGroups(true);
+            }}
+          />
+        )}
+      </Presence>
 
-      {ratingMovie && (
-        <RatingModal
-          title={ratingMovie.title}
-          cancelLabel={t('groupList.btnCancel')}
-          saveLabel={t('personalList.btnSave')}
-          onCancel={() => setRatingMovie(null)}
-          onSave={async (score) => {
-            await rateMovie(ratingMovie.id, score);
-            setRatingMovie(null);
-            loadMovieGroups();
-          }}
-        />
-      )}
-
-      {npOpen && (
-        <RandomizerDialog
-          sliderMax={npSliderMax}
-          users={npUsers}
-          movieGroups={movieGroups}
-          currentRound={currentRound}
-          onClose={() => setNpOpen(false)}
-        />
-      )}
+      <Presence show={npOpen}>
+        {npOpen && (
+          <RandomizerDialog
+            sliderMax={npSliderMax}
+            users={npUsers}
+            movieGroups={movieGroups}
+            currentRound={currentRound}
+            onClose={() => setNpOpen(false)}
+          />
+        )}
+      </Presence>
     </div>
   );
 };

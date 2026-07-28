@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { useTranslation } from "react-i18next";
 import "../profile.css";
 import { Check, ChevronRight, Copy, Link as LinkIcon, LogOut, Settings, User as UserIcon } from "lucide-react";
@@ -14,7 +14,9 @@ import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import i18n from "@/lib/i18n/index.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
+import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
+import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
 import { getInviteLink } from "@/features/onboarding/api/onboarding.ts";
 import { buildInviteLinks } from "@/features/onboarding/inviteLink.ts";
@@ -24,7 +26,7 @@ import { ProfileHero } from "./ProfileHero.tsx";
 import { ProfileStatGrid } from "./ProfileStatGrid.tsx";
 import { MemberProfileView } from "./MemberProfileView.tsx";
 
-type Props = { session: AuthResponse };
+type Props = { session: AuthResponse; resetSignal?: number };
 
 function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation();
@@ -107,7 +109,9 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
           </button>
         }
       />
-      {showInvite && <InviteLinkDialog onClose={() => setShowInvite(false)} />}
+      <Presence show={showInvite}>
+        {showInvite && <InviteLinkDialog onClose={() => setShowInvite(false)} />}
+      </Presence>
 
       <ProfileStatGrid userId={session.userId} stats={stats} />
 
@@ -149,7 +153,12 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   );
 }
 
-function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () => void }) {
+function SettingsView({ session, onBack, dirtyRef, discardRef }: {
+  session: AuthResponse;
+  onBack: () => void;
+  dirtyRef: MutableRefObject<boolean>;
+  discardRef: MutableRefObject<(() => void) | null>;
+}) {
   const { t } = useTranslation();
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
   const [persistedDark, setPersistedDark] = useState(() =>
@@ -166,6 +175,19 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   const isDirty = isDark !== persistedDark || defaultPage !== persistedDefaultPage
     || selectedLang !== persistedLang || selectedTmdbLang !== persistedTmdbLang
     || isPublic !== persistedPublic;
+
+  useEffect(() => {
+    dirtyRef.current = isDirty;
+    discardRef.current = () => {
+      setIsDark(persistedDark);
+      applyColorScheme(persistedDark);
+      setDefaultPage(persistedDefaultPage);
+      setSelectedLang(persistedLang);
+      i18n.changeLanguage(persistedLang);
+      setSelectedTmdbLang(persistedTmdbLang);
+      setIsPublic(persistedPublic);
+    };
+  });
 
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const handleLogout = () => {
@@ -188,17 +210,19 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
           <LogOut size={18} />
         </button>
       </div>
-      {confirmingLogout && (
-        <ConfirmDialog
-          message={t('userPage.confirmLogout')}
-          error={null}
-          isLoading={false}
-          cancelLabel={t('userPage.btnNo')}
-          confirmLabel={t('userPage.btnYes')}
-          onCancel={() => setConfirmingLogout(false)}
-          onConfirm={handleLogout}
-        />
-      )}
+      <Presence show={confirmingLogout}>
+        {confirmingLogout && (
+          <ConfirmDialog
+            message={t('userPage.confirmLogout')}
+            error={null}
+            isLoading={false}
+            cancelLabel={t('userPage.btnNo')}
+            confirmLabel={t('userPage.btnYes')}
+            onCancel={() => setConfirmingLogout(false)}
+            onConfirm={handleLogout}
+          />
+        )}
+      </Presence>
 
       <div className="user-page__section">
         <p className="user-page__section-title">{t('settings.sectionHomepage')}</p>
@@ -315,7 +339,8 @@ function SettingsView({ session, onBack }: { session: AuthResponse; onBack: () =
   );
 }
 
-const UserPage = ({ session }: Props) => {
+const UserPage = ({ session, resetSignal }: Props) => {
+  const { t } = useTranslation();
   const [view, setView] = useState<"profile" | "settings">("profile");
   const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -323,16 +348,54 @@ const UserPage = ({ session }: Props) => {
   const [memberOverlayEl, setMemberOverlayEl] = useState<HTMLDivElement | null>(null);
   const [viewingList, setViewingList] = useState(false);
   const [listOverlayEl, setListOverlayEl] = useState<HTMLDivElement | null>(null);
-  const closeSettings = () => setView("profile");
+  const settingsDirtyRef = useRef(false);
+  const settingsDiscardRef = useRef<(() => void) | null>(null);
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+
+  useRegisterSubPage(view === "settings" || viewingMember !== null || viewingList);
+
+  const closeSettings = () => {
+    settingsDirtyRef.current = false;
+    settingsDiscardRef.current = null;
+    setView("profile");
+  };
+  const requestCloseSettings = () => {
+    if (settingsDirtyRef.current) {
+      setConfirmingDiscard(true);
+      return;
+    }
+    closeSettings();
+  };
+  const cancelDiscard = () => {
+    hapticTabTap();
+    setConfirmingDiscard(false);
+    if (overlayEl) {
+      // eslint-disable-next-line react-hooks/immutability
+      overlayEl.style.transition = "transform 0.28s cubic-bezier(0.25, 1, 0.5, 1)";
+      overlayEl.style.transform = "";
+    }
+  };
+  const confirmDiscard = () => {
+    hapticTabTap();
+    settingsDiscardRef.current?.();
+    setConfirmingDiscard(false);
+    closeSettings();
+  };
   const closeMember = () => setViewingMember(null);
   const closeList = () => setViewingList(false);
-  useSwipeBack(closeSettings, overlayEl);
+  useSwipeBack(requestCloseSettings, overlayEl);
   useSwipeBack(closeMember, memberOverlayEl);
   useSwipeBack(closeList, listOverlayEl);
 
   useEffect(() => {
     fetchStats().then(setStats).catch(() => setStats(null));
   }, []);
+
+  useEffect(() => {
+    setViewingMember(null);
+    setViewingList(false);
+    requestCloseSettings();
+  }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -342,31 +405,55 @@ const UserPage = ({ session }: Props) => {
         onSettings={() => setView("settings")}
         onOpenMember={(member) => { setViewingList(false); setViewingMember(member); }}
       />
-      {view === "settings" && (
-        <div className="user-page__settings-overlay" ref={setOverlayEl}>
-          <SettingsView session={session} onBack={closeSettings} />
-        </div>
-      )}
-      {viewingMember && (
-        <div className="user-page__settings-overlay" ref={setMemberOverlayEl}>
-          <MemberProfileView
-            member={viewingMember}
-            groupName={session.groupName ?? ""}
-            stats={stats}
-            onBack={closeMember}
-            onOpenList={() => setViewingList(true)}
+      <Presence show={view === "settings"} exitMs={PAGE_EXIT_MS}>
+        {view === "settings" && (
+          <div className="user-page__settings-overlay" ref={setOverlayEl}>
+            <SettingsView
+              session={session}
+              onBack={requestCloseSettings}
+              dirtyRef={settingsDirtyRef}
+              discardRef={settingsDiscardRef}
+            />
+          </div>
+        )}
+      </Presence>
+      <Presence show={confirmingDiscard}>
+        {confirmingDiscard && (
+          <ConfirmDialog
+            message={t('settings.confirmDiscard')}
+            error={null}
+            isLoading={false}
+            cancelLabel={t('userPage.btnNo')}
+            confirmLabel={t('userPage.btnYes')}
+            onCancel={cancelDiscard}
+            onConfirm={confirmDiscard}
           />
-        </div>
-      )}
-      {viewingMember && viewingList && (
-        <div className="user-page__settings-overlay" ref={setListOverlayEl}>
-          <MemberListPage
-            targetUserId={viewingMember.id}
-            targetName={viewingMember.name}
-            onBack={closeList}
-          />
-        </div>
-      )}
+        )}
+      </Presence>
+      <Presence show={viewingMember !== null} exitMs={PAGE_EXIT_MS}>
+        {viewingMember && (
+          <div className="user-page__settings-overlay" ref={setMemberOverlayEl}>
+            <MemberProfileView
+              member={viewingMember}
+              groupName={session.groupName ?? ""}
+              stats={stats}
+              onBack={closeMember}
+              onOpenList={() => setViewingList(true)}
+            />
+          </div>
+        )}
+      </Presence>
+      <Presence show={viewingMember !== null && viewingList} exitMs={PAGE_EXIT_MS}>
+        {viewingMember && viewingList && (
+          <div className="user-page__settings-overlay" ref={setListOverlayEl}>
+            <MemberListPage
+              targetUserId={viewingMember.id}
+              targetName={viewingMember.name}
+              onBack={closeList}
+            />
+          </div>
+        )}
+      </Presence>
     </>
   );
 };

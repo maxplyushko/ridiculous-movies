@@ -14,6 +14,7 @@ import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset.ts";
+import { useSubPageOpen } from "@/hooks/useSubPage.ts";
 import { getKeyboardViewportHeight, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
 
 type Tab = "group" | "personal" | "misc";
@@ -38,6 +39,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [groupResetSignal, setGroupResetSignal] = useState(0);
   const [personalResetSignal, setPersonalResetSignal] = useState(0);
+  const [miscResetSignal, setMiscResetSignal] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResetSignal, setSearchResetSignal] = useState(0);
@@ -45,7 +47,10 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [searchClosing, setSearchClosing] = useState(false);
   const searchCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAdmin = session.role === "admin";
-  const keyboardOffset = useKeyboardOffset(searchOpen && !searchDetailOpen && !searchClosing);
+  const subPageOpen = useSubPageOpen();
+  const searchInputHidden =
+    searchDetailOpen || subPageOpen || currentPage === "stat" || currentPage === "personalStat";
+  const keyboardOffset = useKeyboardOffset(searchOpen && !searchInputHidden && !searchClosing);
 
   useEffect(() => () => {
     if (searchCloseTimerRef.current) clearTimeout(searchCloseTimerRef.current);
@@ -115,6 +120,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
     if (tab === currentPage) {
       if (tab === "group") setGroupResetSignal((n) => n + 1);
       if (tab === "personal") setPersonalResetSignal((n) => n + 1);
+      if (tab === "misc") setMiscResetSignal((n) => n + 1);
     }
     setCurrentPage(tab);
   };
@@ -138,7 +144,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         <div hidden={searchShowingResults || currentPage !== "stat"}><StatPage active={!searchShowingResults && currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
         <div hidden={searchShowingResults || (currentPage !== "personal" && currentPage !== "personalStat")}><PersonalListPage active={!searchShowingResults && currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
         <div hidden={searchShowingResults || currentPage !== "personalStat"}><PersonalStatPage active={!searchShowingResults && currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
-        <div hidden={searchShowingResults || currentPage !== "misc"}><UserPage session={session} /></div>
+        <div hidden={searchShowingResults || currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
         <div hidden={!searchShowingResults}>
           <SearchResults
             query={searchQuery}
@@ -149,7 +155,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
           />
         </div>
       </main>
-      {searchOpen && !searchDetailOpen && (
+      {searchOpen && !searchInputHidden && (
         <SearchInput
           closing={searchClosing}
           value={searchQuery}

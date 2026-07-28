@@ -1,6 +1,6 @@
 export function StatPageSkeleton() {
   return (
-    <section className="stat-page">
+    <>
       {/* two podiums */}
       {[0, 1].map((p) => (
         <div key={p} className="sk-block">
@@ -24,6 +24,6 @@ export function StatPageSkeleton() {
           ))}
         </div>
       </div>
-    </section>
+    </>
   );
 }

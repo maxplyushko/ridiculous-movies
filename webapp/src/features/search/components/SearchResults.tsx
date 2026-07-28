@@ -12,6 +12,7 @@ import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { Presence } from "@/components/Presence.tsx";
 import { fetchMovieGroups, rateMovie } from "@/features/group/api/movies.ts";
 import { addPersonalMovie, editPersonalMovie, fetchPersonalList } from "@/features/personal/api/personalList.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
@@ -200,46 +201,52 @@ const SearchResults = ({ query, active, currentUserId, resetSignal, onDetailOpen
         );
       })}
 
-      {ratingGroupMovie && (
-        <RatingModal
-          title={ratingGroupMovie.title}
-          cancelLabel={t('groupList.btnCancel')}
-          saveLabel={t('personalList.btnSave')}
-          onCancel={() => setRatingGroupMovie(null)}
-          onSave={async (score) => {
-            await rateMovie(ratingGroupMovie.id, score);
-            setRatingGroupMovie(null);
-            loadGroupMovies();
-          }}
-        />
-      )}
+      <Presence show={ratingGroupMovie !== null}>
+        {ratingGroupMovie && (
+          <RatingModal
+            title={ratingGroupMovie.title}
+            cancelLabel={t('groupList.btnCancel')}
+            saveLabel={t('personalList.btnSave')}
+            onCancel={() => setRatingGroupMovie(null)}
+            onSave={async (score) => {
+              await rateMovie(ratingGroupMovie.id, score);
+              setRatingGroupMovie(null);
+              loadGroupMovies();
+            }}
+          />
+        )}
+      </Presence>
 
-      {ratingPersonalMovie && (
-        <RatingModal
-          title={t('personalList.rateDialog', { title: ratingPersonalMovie.title })}
-          initialScore={ratingPersonalMovie.rating}
-          defaultMode="classic"
-          cancelLabel={t('personalList.btnSkip')}
-          saveLabel={t('personalList.btnSave')}
-          onCancel={() => setRatingPersonalMovie(null)}
-          onSave={async (rating) => {
-            const movie = ratingPersonalMovie;
-            setRatingPersonalMovie(null);
-            const updated = await editPersonalMovie(movie.id, {
-              title: movie.title,
-              description: movie.description,
-              tagline: movie.tagline,
-              rating,
-              watched: movie.watched,
-              tmdbId: movie.tmdbId,
-              tmdbMediaType: movie.tmdbMediaType,
-            });
-            setPersonalMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
-          }}
-        />
-      )}
+      <Presence show={ratingPersonalMovie !== null}>
+        {ratingPersonalMovie && (
+          <RatingModal
+            title={t('personalList.rateDialog', { title: ratingPersonalMovie.title })}
+            initialScore={ratingPersonalMovie.rating}
+            defaultMode="classic"
+            cancelLabel={t('personalList.btnSkip')}
+            saveLabel={t('personalList.btnSave')}
+            onCancel={() => setRatingPersonalMovie(null)}
+            onSave={async (rating) => {
+              const movie = ratingPersonalMovie;
+              setRatingPersonalMovie(null);
+              const updated = await editPersonalMovie(movie.id, {
+                title: movie.title,
+                description: movie.description,
+                tagline: movie.tagline,
+                rating,
+                watched: movie.watched,
+                tmdbId: movie.tmdbId,
+                tmdbMediaType: movie.tmdbMediaType,
+              });
+              setPersonalMovies((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+            }}
+          />
+        )}
+      </Presence>
 
-      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      <Presence show={showGuestLimit}>
+        {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      </Presence>
     </div>
   );
 };

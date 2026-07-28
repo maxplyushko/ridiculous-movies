@@ -6,6 +6,7 @@ import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { Presence } from "@/components/Presence.tsx";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
@@ -182,7 +183,9 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
           </button>
         </div>
       )}
-      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      <Presence show={showGuestLimit}>
+        {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      </Presence>
     </section>
   );
 };

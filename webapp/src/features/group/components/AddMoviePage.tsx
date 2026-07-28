@@ -9,6 +9,7 @@ import { useRatingForm, roundHalf, type DetailedScores, type RatingMode } from "
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { Presence } from "@/components/Presence.tsx";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import { fetchTmdbMovieDetails } from "../api/tmdb.ts";
@@ -324,7 +325,9 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
           </button>
         </div>
       )}
-      {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      <Presence show={showGuestLimit}>
+        {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      </Presence>
     </section>
   );
 };

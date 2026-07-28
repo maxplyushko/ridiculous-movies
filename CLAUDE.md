@@ -11,12 +11,21 @@ Telegram Mini App for a private movie club. Members add films by round, rate eac
 All new features and UI/UX changes must be fully consistent with existing patterns:
 - **Components**: mirror structure, props, and state management of analogous existing components
 - **Haptics**: `hapticTabTap` on every interactive tap (buttons, toggles, checkboxes); spin/reveal haptics only for spinner
-- **Swipe actions**: reuse `useSwipeGesture` with same `ACTIONS_WIDTH`/`OPEN_THRESHOLD` constants; clicking outside open swipe must close it
+- **Swipe actions**: reuse `useSwipeGesture` with same `ACTIONS_WIDTH`/`OPEN_THRESHOLD` constants; a tap anywhere outside the open row must close it — wire that with `useCloseSwipeOnOutsideTap(openSwipeId, close)`, never a page-local listener
 - **CSS**: reuse existing classes (`mlp__*`, `movie-item-*`, `rating-card__*`, etc.) before adding new ones
 - **Icons**: lucide-react only, consistent sizing (`size={30}` nav, `size={20}` cards, `size={16}` inline)
 - **API layer**: all calls through `apiFetch` in `webapp/src/api/client.ts`; feature API modules are colocated under `features/*/api/` (e.g. `features/group/api/movies.ts`) — mirror the nearest existing one
 - **Backend**: new controllers/DTOs follow `MovieController`/`MovieResponse` pattern; storage via `DataStore` with read/write lock + `persist()`
 - **i18n**: all user-visible strings via `useTranslation()` hook; add keys to both `webapp/src/lib/i18n/locales/en.json` and `ru.json`
+- **Motion**: every state change is animated — nothing appears, disappears, or resizes instantly. Reuse the existing keyframes/curves in `components.css` instead of inventing new ones:
+  - **enter** is a CSS `animation` (runs on mount), **exit** is a CSS `transition` driven by a class — so a gesture that already moved the element with an inline `transform` (see `useSwipeBack`) wins over the exit rule and never jumps back
+  - full-screen pages (`.movie-list__add__movie`, `.stat-page`, `.user-page__settings-overlay`) slide in from the right with `page-slide-in 0.3s cubic-bezier(0.25, 1, 0.5, 1)` and slide out via `transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1)`
+  - modals (`.confirm-dialog-overlay` / `.confirm-dialog`) fade + pop in with `dialog-overlay-in` / `dialog-pop-in`, fade + shrink out over `0.18s ease-in`
+  - unmounting anything animated goes through `<Presence show={…} exitMs={…}>` (`components/Presence.tsx`) — it keeps the last children mounted for the exit and adds `presence--exiting` to its wrapper imperatively on the next frame; `PAGE_EXIT_MS` for pages, default `DIALOG_EXIT_MS` for modals
+  - when the element is already in the DOM (detail stacks, stat pages), close it with `useAnimatedClose(el, closingClass, ms, onClosed)` — it toggles the class on the node directly, so the closing tap triggers **no React render** and the transition doesn't lose its first frames. `useDetailStack.pop` and `StatPage`/`PersonalStatPage` back buttons use it; swipe-back skips it (the gesture already moved the element)
+  - in-place size/opacity changes (e.g. `.mlp__hero--collapsed` on scroll) use `transition … 0.28s cubic-bezier(0.4, 0, 0.2, 1)`; nav/bar transitions use `0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+  - animate only `transform`/`opacity` where possible; every animation needs a `@media (prefers-reduced-motion: reduce)` opt-out
+  - don't flash a skeleton where a page is already open — reload silently (`load…(true)`) after closing a form, and keep a page's container element stable (swap the body, not the container) so its enter animation can't replay mid-view
 
 ## Testing
 
