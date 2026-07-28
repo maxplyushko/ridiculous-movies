@@ -33,10 +33,10 @@ public class AppData {
   public record UserRecord(String id, String name, String group, String role, String theme, String defaultPage,
                            String lang, String tmdbLang, String oauthSub, Boolean personalListPublic) {}
   public record RatingRecord(String id, String userId, BigDecimal score) {}
-  public record MovieRecord(String id, String title, String description,
+  public record MovieRecord(String id, String title, String description, String tagline,
                             String ownerId, Integer round, Instant createdAt, Instant updatedAt,
                             List<RatingRecord> ratings, Long tmdbId, String tmdbMediaType) {}
-  public record PersonalMovieRecord(String id, String userId, String title, String description,
+  public record PersonalMovieRecord(String id, String userId, String title, String description, String tagline,
                                     BigDecimal rating, boolean watched, Boolean inList,
                                     Instant createdAt, Instant updatedAt,
                                     Long tmdbId, String tmdbMediaType) {}

@@ -107,6 +107,7 @@ public class DataStore implements AppRepository {
       m.setId(r.id());
       m.setTitle(r.title());
       m.setDescription(r.description() != null ? r.description() : "");
+      m.setTagline(r.tagline() != null ? r.tagline() : "");
       AppUser owner = usersById.get(r.ownerId());
       if (owner == null) continue;
       m.setOwner(owner);
@@ -141,6 +142,7 @@ public class DataStore implements AppRepository {
         pm.setUserId(r.userId());
         pm.setTitle(r.title());
         pm.setDescription(r.description() != null ? r.description() : "");
+        pm.setTagline(r.tagline() != null ? r.tagline() : "");
         pm.setRating(r.rating());
         pm.setWatched(r.watched());
         pm.setInList(r.inList());
@@ -759,7 +761,7 @@ public class DataStore implements AppRepository {
             u.getLang(), u.getTmdbLang(), u.getOauthSub(), u.getPersonalListPublic()))
         .toList());
     data.setMovies(moviesById.values().stream()
-        .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(),
+        .map(m -> new AppData.MovieRecord(m.getId(), m.getTitle(), m.getDescription(), m.getTagline(),
             m.getOwner().getId(), m.getRound(), m.getCreatedAt(), m.getUpdatedAt(),
             m.getRatings().stream()
                 .map(r -> new AppData.RatingRecord(r.getId(), r.getUser().getId(), r.getScore()))
@@ -768,7 +770,7 @@ public class DataStore implements AppRepository {
         .toList());
     data.setPersonalMovies(personalMoviesById.values().stream()
         .map(pm -> new AppData.PersonalMovieRecord(pm.getId(), pm.getUserId(), pm.getTitle(),
-            pm.getDescription(), pm.getRating(), pm.isWatched(), pm.getInList(),
+            pm.getDescription(), pm.getTagline(), pm.getRating(), pm.isWatched(), pm.getInList(),
             pm.getCreatedAt(), pm.getUpdatedAt(),
             pm.getTmdbId(), pm.getTmdbMediaType()))
         .toList());

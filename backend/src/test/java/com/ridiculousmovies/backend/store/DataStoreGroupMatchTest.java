@@ -20,7 +20,7 @@ class DataStoreGroupMatchTest {
   }
 
   private AppData.PersonalMovieRecord pm(String id, String userId, String title, Long tmdbId, Instant createdAt) {
-    return new AppData.PersonalMovieRecord(id, userId, title, "", BigDecimal.ZERO, false, true, createdAt, createdAt,
+    return new AppData.PersonalMovieRecord(id, userId, title, "", "", BigDecimal.ZERO, false, true, createdAt, createdAt,
         tmdbId, "movie");
   }
 

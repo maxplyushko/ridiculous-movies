@@ -31,6 +31,14 @@ export function calcDetailedScore(d: DetailedScores): number | null {
 
 const SCORE_MAX = 10;
 
+function clampScore(n: number): number {
+  return Math.min(SCORE_MAX, Math.max(0, n));
+}
+
+function seedDetailed(score: number): DetailedScores {
+  return score > 0 ? { r1: score, r2: score, r3: score } : { r1: null, r2: null, r3: null };
+}
+
 function initialForms(movie: Movie | undefined): RatingForm[] {
   return movie
     ? movie.ratings.map((r) => ({
@@ -38,7 +46,7 @@ function initialForms(movie: Movie | undefined): RatingForm[] {
         userId: r.user.id,
         scoreInput: String(r.score),
         mode: "detailed" as RatingMode,
-        detailed: { r1: null, r2: null, r3: null },
+        detailed: seedDetailed(r.score),
       }))
     : [];
 }
@@ -99,8 +107,8 @@ export function useRatingForm(movie: Movie | undefined) {
         userId: f.userId,
         score:
           f.mode === "detailed"
-            ? (calcDetailedScore(f.detailed) ?? 0)
-            : Math.min(SCORE_MAX, Math.max(0, parseScoreInput(f.scoreInput))),
+            ? (calcDetailedScore(f.detailed) ?? clampScore(parseScoreInput(f.scoreInput)))
+            : clampScore(parseScoreInput(f.scoreInput)),
       }));
 
   return { forms, add, remove, updateUser, updateScore, updateMode, updateDetailed, buildRatings };
