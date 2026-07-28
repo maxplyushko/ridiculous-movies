@@ -35,8 +35,10 @@ export function useTelegramMainButton(
     if (!btn) return;
     const handler = () => cbRef.current();
     btn.setText(text).show().onClick(handler);
+    document.body.classList.add("tg-main-button-open");
     return () => {
       btn.offClick(handler).hide();
+      document.body.classList.remove("tg-main-button-open");
     };
   }, [text]);
 

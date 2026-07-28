@@ -131,10 +131,15 @@ h1 {
   }
 }
 
-.bottom-bar--hidden {
+.bottom-bar--hidden,
+body.tg-main-button-open .bottom-bar {
   opacity: 0;
   pointer-events: none;
   transform: translateY(200%);
+}
+
+body.tg-main-button-open .app-main {
+  padding-bottom: 1rem;
 }
 
 .bottom-bar button {
