@@ -116,6 +116,10 @@ public class PersonalListController {
       pm.setInList(false);
       pm.setWatched(false);
     }
+    if (req.tagline() != null && !req.tagline().isBlank()
+        && (pm.getTagline() == null || pm.getTagline().isBlank())) {
+      pm.setTagline(req.tagline());
+    }
     if (req.inList() != null) {
       pm.setInList(req.inList());
     }

@@ -7,6 +7,7 @@ interface Identity {
   tmdbId?: number | null;
   title: string;
   description?: string;
+  tagline?: string | null;
   tmdbMediaType?: TmdbMediaType | null;
   onChange?: () => void;
   onError?: (message: string) => void;
@@ -14,7 +15,7 @@ interface Identity {
 
 type Flags = { inList: boolean; watched: boolean };
 
-export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType, onChange, onError }: Identity) {
+export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdbMediaType, onChange, onError }: Identity) {
   const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
 
@@ -22,12 +23,12 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
   const desiredRef = useRef<Flags>({ inList: false, watched: false });
   const inFlightRef = useRef(false);
 
-  const identityRef = useRef({ tmdbId, title, description, tmdbMediaType });
+  const identityRef = useRef({ tmdbId, title, description, tagline, tmdbMediaType });
   const onChangeRef = useRef(onChange);
   const onErrorRef = useRef(onError);
 
   useEffect(() => {
-    identityRef.current = { tmdbId, title, description, tmdbMediaType };
+    identityRef.current = { tmdbId, title, description, tagline, tmdbMediaType };
     onChangeRef.current = onChange;
     onErrorRef.current = onError;
   });
@@ -56,11 +57,12 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
     if (desired.inList === confirmedRef.current.inList && desired.watched === confirmedRef.current.watched) return;
 
     inFlightRef.current = true;
-    const { tmdbId, title, description, tmdbMediaType } = identityRef.current;
+    const { tmdbId, title, description, tagline, tmdbMediaType } = identityRef.current;
     setPersonalState({
       tmdbId,
       title,
       description: description ?? "",
+      tagline: tagline ?? "",
       tmdbMediaType,
       inList: desired.inList,
       watched: desired.watched,
@@ -88,7 +90,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tmdbMediaType
         id: "",
         title,
         description: description ?? "",
-        tagline: "",
+        tagline: tagline ?? "",
         rating: null,
         createdAt: "",
         updatedAt: "",

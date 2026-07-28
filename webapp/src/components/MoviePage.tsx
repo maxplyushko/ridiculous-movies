@@ -70,6 +70,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
     tmdbId,
     title,
     description,
+    tagline,
     tmdbMediaType: mediaType,
     onChange: onPersonalStateChange,
     onError: (message) => { if (message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); },
