@@ -100,8 +100,8 @@
     "labelDarkMode": "Dark Mode",
     "btnSaving": "Saving…",
     "btnSave": "Save Changes",
-    "sectionLanguage": "Language",
-    "sectionTmdbLang": "TMDB Results",
+    "sectionLanguage": "App language",
+    "sectionTmdbLang": "Movies/Actors info",
     "sectionPrivacy": "Privacy",
     "labelPublicList": "My movie list is public"
   },
@@ -139,8 +139,8 @@
     "emptyHint": "Go ahead and watch some movies, yeeha!"
   },
   "tmdb": {
-    "section": "On TMDB",
-    "empty": "No TMDB results"
+    "section": "On Internet",
+    "empty": "No Internet results"
   },
   "moviePage": {
     "movie": "Movie",

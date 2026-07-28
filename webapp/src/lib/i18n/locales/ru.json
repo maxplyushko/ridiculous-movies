@@ -100,8 +100,8 @@
     "labelDarkMode": "Тёмная",
     "btnSaving": "Сохраняю...",
     "btnSave": "Сохранить",
-    "sectionLanguage": "Язык",
-    "sectionTmdbLang": "Результаты TMDB",
+    "sectionLanguage": "Язык приложения",
+    "sectionTmdbLang": "Информация о фильмах/актерах",
     "sectionPrivacy": "Приватность",
     "labelPublicList": "Мой список фильмов видно всем"
   },
@@ -138,7 +138,7 @@
     "emptyHint": "Вперёд смотреть фильмы, йиха!"
   },
   "tmdb": {
-    "section": "TMDB",
+    "section": "Интернет",
     "empty": "нет результатов"
   },
   "moviePage": {
