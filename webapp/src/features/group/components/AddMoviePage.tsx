@@ -11,6 +11,7 @@ import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
+import { fetchTmdbMovieDetails } from "../api/tmdb.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
@@ -199,6 +200,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
+  const latestSelectionRef = useRef<number | undefined>(undefined);
 
   const isSubmitDisabled = isSubmitting || !title.trim();
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
@@ -233,6 +235,12 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
                       setTmdbMediaType(s.mediaType);
                       if (s.overview) setDescription(s.overview);
                       setShowSuggestions(false);
+                      latestSelectionRef.current = s.id;
+                      fetchTmdbMovieDetails(s.id, s.mediaType)
+                        .then((d) => {
+                          if (latestSelectionRef.current === s.id && d.tagline) setTagline(d.tagline);
+                        })
+                        .catch(() => {});
                     }}
                   >
                     <span className="title-suggestions__title">{s.title}</span>
@@ -245,17 +253,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
         </div>
         <div className="add-movie__item">
           <input
-            id="add-movie-desc"
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            placeholder=" "
-          />
-          <label htmlFor="add-movie-desc">{t('addMovie.labelDescription')}</label>
-        </div>
-        <div className="add-movie__item">
-          <input
             id="add-movie-tagline"
             type="text"
             value={tagline}
@@ -264,6 +261,17 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
             placeholder=" "
           />
           <label htmlFor="add-movie-tagline">{t('addMovie.labelTagline')}</label>
+        </div>
+        <div className="add-movie__item">
+          <input
+            id="add-movie-desc"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
+            placeholder=" "
+          />
+          <label htmlFor="add-movie-desc">{t('addMovie.labelDescription')}</label>
         </div>
         <div className="add-movie__item">
           <p className="add-movie__item-title">{t('groupList.labelRound')}</p>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
@@ -10,6 +10,7 @@ import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
+import { fetchTmdbMovieDetails } from "@/features/group/api/tmdb.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
@@ -38,6 +39,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
+  const latestSelectionRef = useRef<number | undefined>(undefined);
   const isTg = isTelegramMiniApp();
   const rating = ratingMode === "detailed" ? calcDetailedScore(detailedRating) : classicRating;
 
@@ -110,7 +112,19 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => { setTitle(s.title); setTmdbId(s.id); setTmdbMediaType(s.mediaType); if (s.overview) setDescription(s.overview); setShowSuggestions(false); }}
+                    onClick={() => {
+                      setTitle(s.title);
+                      setTmdbId(s.id);
+                      setTmdbMediaType(s.mediaType);
+                      if (s.overview) setDescription(s.overview);
+                      setShowSuggestions(false);
+                      latestSelectionRef.current = s.id;
+                      fetchTmdbMovieDetails(s.id, s.mediaType)
+                        .then((d) => {
+                          if (latestSelectionRef.current === s.id && d.tagline) setTagline(d.tagline);
+                        })
+                        .catch(() => {});
+                    }}
                   >
                     <span className="title-suggestions__title">{s.title}</span>
                     {s.releaseYear && <span className="title-suggestions__year">{s.releaseYear}</span>}
@@ -122,17 +136,6 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
         </div>
         <div className="add-movie__item">
           <input
-            id="pl-movie-desc"
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            placeholder=" "
-          />
-          <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
-        </div>
-        <div className="add-movie__item">
-          <input
             id="pl-movie-tagline"
             type="text"
             value={tagline}
@@ -141,6 +144,17 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             placeholder=" "
           />
           <label htmlFor="pl-movie-tagline">{t('addPersonal.labelTagline')}</label>
+        </div>
+        <div className="add-movie__item">
+          <input
+            id="pl-movie-desc"
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
+            placeholder=" "
+          />
+          <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
         </div>
       </div>
 
