@@ -54,7 +54,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
   const tmdbScore = source.kind === "tmdb" ? source.movie.tmdbScore : details?.tmdbScore;
   const releaseYear = source.kind === "tmdb" ? source.movie.releaseYear : details?.releaseYear;
   const groupRating = source.kind === "group" ? source.movie.averageRating : null;
-  const tagline = details?.tagline ?? null;
+  const customTagline = source.kind !== "tmdb" ? source.movie.tagline : null;
+  const tagline = customTagline || details?.tagline || null;
   const numberOfSeasons = details?.numberOfSeasons ?? null;
   const durationMinutes = details?.durationMinutes ?? null;
   const genres = details?.genres ?? [];
@@ -195,7 +196,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
       </div>
       <div className="movie-page__header">
         <h1 className="movie-page__title">{title}</h1>
-        {!detailsLoading && tagline && <h2 className="movie-item-header__desc movie-page__tagline">{tagline}</h2>}
+        {(customTagline || !detailsLoading) && tagline && <h2 className="movie-item-header__desc movie-page__tagline">{tagline}</h2>}
         <div className="movie-page__subhead">
           {detailsLoading ? (
             <div className="movie-page__meta-skeleton">
