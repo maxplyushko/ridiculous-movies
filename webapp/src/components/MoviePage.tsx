@@ -27,7 +27,7 @@ type MoviePageProps = {
 };
 
 const POSTER_MAX_RETRIES = 2;
-const POSTER_TIMEOUT_MS = 8000;
+const POSTER_TIMEOUT_MS = 15000;
 
 function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -61,7 +61,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   const cast = details?.cast ?? [];
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterErrored, setPosterErrored] = useState(false);
-  const [posterAttempt, setPosterAttempt] = useState(0);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
@@ -118,24 +117,41 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPosterLoaded(false);
     setPosterErrored(false);
-    setPosterAttempt(0);
+
+    if (!posterUrl) return;
+
+    let cancelled = false;
+    let attempt = 0;
+    const img = new Image();
+
+    const succeed = () => { if (!cancelled) setPosterLoaded(true); };
+    const fail = () => {
+      if (cancelled) return;
+      if (attempt < POSTER_MAX_RETRIES) {
+        attempt += 1;
+        img.src = posterUrl;
+      } else {
+        setPosterErrored(true);
+      }
+    };
+
+    img.onload = succeed;
+    img.onerror = fail;
+    img.src = posterUrl;
+    if (img.complete && img.naturalWidth > 0) succeed();
+
+    const timer = setTimeout(() => { if (!cancelled) setPosterErrored(true); }, POSTER_TIMEOUT_MS);
+
+    return () => {
+      cancelled = true;
+      img.onload = null;
+      img.onerror = null;
+      clearTimeout(timer);
+    };
   }, [posterUrl]);
-
-  useEffect(() => {
-    if (!posterUrl || posterLoaded || posterErrored) return;
-    const timer = setTimeout(() => setPosterErrored(true), POSTER_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [posterUrl, posterAttempt, posterLoaded, posterErrored]);
-
-  const handlePosterError = () => {
-    setPosterAttempt((prev) => {
-      if (prev < POSTER_MAX_RETRIES) return prev + 1;
-      setPosterErrored(true);
-      return prev;
-    });
-  };
 
   const posterKnown = source.kind === "tmdb" || !detailsLoading;
   const showFallbackPoster = posterKnown && (!posterUrl || posterErrored);
@@ -157,13 +173,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
           {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}
           {displayPosterUrl && (
             <img
-              key={showFallbackPoster ? "fallback" : `poster-${posterAttempt}`}
               src={displayPosterUrl}
               alt={title}
               decoding="async"
               className={posterReady ? "movie-page__poster-img--loaded" : ""}
-              onLoad={() => setPosterLoaded(true)}
-              onError={handlePosterError}
+              onError={() => setPosterErrored(true)}
             />
           )}
         </div>

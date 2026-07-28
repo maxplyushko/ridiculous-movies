@@ -11,9 +11,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.net.http.HttpClient;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -46,12 +48,19 @@ public class TmdbClient {
     private record CachedImage(byte[] body, MediaType contentType) {}
 
     public TmdbClient(TmdbProperties props) {
+        HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(8));
         this.restClient = RestClient.builder()
+            .requestFactory(requestFactory)
             .baseUrl(BASE_URL)
             .defaultHeader("Authorization", "Bearer " + props.apiKey())
             .defaultHeader("Accept", "application/json")
             .build();
         this.imageClient = RestClient.builder()
+            .requestFactory(requestFactory)
             .baseUrl(TMDB_IMAGE_BASE)
             .build();
     }
@@ -64,7 +73,7 @@ public class TmdbClient {
             key -> fetchImageFromTmdb(size, filename));
         return ResponseEntity.ok()
             .contentType(cached.contentType())
-            .cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePublic())
+            .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
             .body(cached.body());
     }
 
@@ -146,7 +155,7 @@ public class TmdbClient {
             }
 
             String creator = result.createdBy() == null || result.createdBy().isEmpty() ? null
-                : result.createdBy().get(0).name();
+                : result.createdBy().getFirst().name();
 
             List<TmdbCastMemberResponse> cast = mapCast(result.credits());
 
