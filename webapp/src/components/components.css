@@ -1432,6 +1432,19 @@ button.actor-page__known-for-item {
   stroke: #f5a623;
 }
 
+.star-rating__glyph {
+  position: relative;
+  display: flex;
+}
+
+.star-rating__icon--half {
+  position: absolute;
+  inset: 0;
+  color: #f5a623;
+  stroke: #f5a623;
+  clip-path: inset(0 50% 0 0);
+}
+
 .add-movie__error {
   display: block;
   margin-top: 0.75rem;

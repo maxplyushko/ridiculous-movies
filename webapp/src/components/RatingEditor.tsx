@@ -49,7 +49,7 @@ export function RatingEditor({
         </div>
       ) : (
         <div className="rating-card__classic">
-          <StarRating value={classicValue} onChange={onClassicChange} />
+          <StarRating value={classicValue} onChange={onClassicChange} step={0.5} />
         </div>
       )}
     </>

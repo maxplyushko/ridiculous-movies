@@ -5,7 +5,7 @@ import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
-import { useRatingForm, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
+import { useRatingForm, roundHalf, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
@@ -127,7 +127,7 @@ function RatingCard({
       <RatingEditor
         mode={mode}
         detailed={detailed}
-        classicValue={clamped > 0 ? Math.round(clamped) : null}
+        classicValue={clamped > 0 ? roundHalf(clamped) : null}
         onToggleMode={toggleMode}
         onDetailedChange={(field, value) => onUpdateDetailed(formId, field, value)}
         onClassicChange={(value) => { if (value !== null) onUpdateScore(formId, String(value)); }}

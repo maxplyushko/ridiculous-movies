@@ -29,6 +29,10 @@ export function calcDetailedScore(d: DetailedScores): number | null {
   return Math.round(((d.r1 + d.r2 + d.r3) / 3) * 4) / 4;
 }
 
+export function roundHalf(n: number): number {
+  return Math.round(n * 2) / 2;
+}
+
 const SCORE_MAX = 10;
 
 function clampScore(n: number): number {
@@ -87,9 +91,9 @@ export function useRatingForm(movie: Movie | undefined) {
       let { scoreInput, detailed } = f;
       if (mode === "classic" && f.mode === "detailed") {
         const s = calcDetailedScore(f.detailed);
-        if (s !== null) scoreInput = String(Math.round(s));
+        if (s !== null) scoreInput = String(roundHalf(s));
       } else if (mode === "detailed" && f.mode === "classic") {
-        const v = parseScoreInput(f.scoreInput);
+        const v = Math.round(parseScoreInput(f.scoreInput));
         if (v > 0) detailed = { r1: v, r2: v, r3: v };
       }
       return { ...f, mode, scoreInput, detailed };

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Loader } from "lucide-react";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
-import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
+import { calcDetailedScore, roundHalf, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 type RatingModalProps = {
@@ -15,12 +15,13 @@ type RatingModalProps = {
 };
 
 export function RatingModal({ title, initialScore, defaultMode = "detailed", cancelLabel, saveLabel, onCancel, onSave }: Readonly<RatingModalProps>) {
-  const initVal = initialScore != null && initialScore > 0 ? Math.round(initialScore) : null;
+  const hasScore = initialScore != null && initialScore > 0;
+  const initDetailed = hasScore ? Math.round(initialScore) : null;
   const [mode, setMode] = useState<RatingMode>(defaultMode);
   const [detailed, setDetailed] = useState<DetailedScores>(
-    initVal ? { r1: initVal, r2: initVal, r3: initVal } : { r1: null, r2: null, r3: null }
+    initDetailed ? { r1: initDetailed, r2: initDetailed, r3: initDetailed } : { r1: null, r2: null, r3: null }
   );
-  const [classicValue, setClassicValue] = useState<number | null>(initVal);
+  const [classicValue, setClassicValue] = useState<number | null>(hasScore ? roundHalf(initialScore) : null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,9 +32,10 @@ export function RatingModal({ title, initialScore, defaultMode = "detailed", can
     const next = mode === "detailed" ? "classic" : "detailed";
     if (next === "classic") {
       const s = calcDetailedScore(detailed);
-      if (s !== null) setClassicValue(Math.round(s));
-    } else {
-      if (classicValue !== null) setDetailed({ r1: classicValue, r2: classicValue, r3: classicValue });
+      if (s !== null) setClassicValue(roundHalf(s));
+    } else if (classicValue !== null) {
+      const v = Math.round(classicValue);
+      setDetailed({ r1: v, r2: v, r3: v });
     }
     setMode(next);
   };
