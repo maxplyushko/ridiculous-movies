@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Star, Tv, User, Users } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Pencil, Star, Tv, User, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
@@ -22,6 +22,7 @@ type MoviePageProps = {
   currentUserId?: string;
   onBack: () => void;
   onRate?: () => void | Promise<unknown>;
+  onEdit?: () => void;
   onPersonalStateChange?: () => void;
   onOpenActor?: (personId: number) => void;
 };
@@ -35,7 +36,7 @@ function formatDuration(minutes: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalStateChange, onOpenActor }: Readonly<MoviePageProps>) {
+export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPersonalStateChange, onOpenActor }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
@@ -168,6 +169,16 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onPersonalSta
     <div className="movie-page">
       <div className="movie-page__poster-wrap">
         <PageBackButton onBack={onBack} />
+        {onEdit && (
+          <button
+            type="button"
+            className="movie-page__edit-btn"
+            aria-label={t('moviePage.actionEdit')}
+            onClick={() => { hapticTabTap(); onEdit(); }}
+          >
+            <Pencil size={20} />
+          </button>
+        )}
         <div className="movie-page__poster-backdrop" style={displayPosterUrl ? { backgroundImage: `url(${displayPosterUrl})` } : undefined} />
         <div className="movie-page__poster">
           {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}

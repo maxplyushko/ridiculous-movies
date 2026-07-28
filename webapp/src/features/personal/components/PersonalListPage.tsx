@@ -300,16 +300,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         )}
       </div>
 
-      {showForm && (
-        <div className="movie-list__add__movie" ref={setFormEl}>
-          <AddPersonalMoviePage
-            key={editingMovie?.id ?? "new"}
-            movie={editingMovie}
-            onBack={closeForm}
-          />
-        </div>
-      )}
-
       {movieToDelete && (
         <ConfirmDialog
           message={t('personalList.confirmDelete', { title: movieToDelete.title })}
@@ -397,12 +387,23 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
               source={{ kind: "personal", movie }}
               onBack={detailStack.pop}
               onRate={() => { setRatingOnly(true); setRatingMovie(movie); }}
+              onEdit={() => handleEdit(movie)}
               onPersonalStateChange={() => loadMovies(true)}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
           </div>
         );
       })}
+
+      {showForm && (
+        <div className="movie-list__add__movie" ref={setFormEl}>
+          <AddPersonalMoviePage
+            key={editingMovie?.id ?? "new"}
+            movie={editingMovie}
+            onBack={closeForm}
+          />
+        </div>
+      )}
       {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
     </div>
   );

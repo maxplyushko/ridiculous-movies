@@ -205,20 +205,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         {showTmdb && <TmdbSearchSection query={searchQuery} onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })} />}
       </div>
 
-      {showMovieForm && (
-        <div className="movie-list__add__movie" ref={setAddMovieEl}>
-          <AddMoviePage
-            key={editingMovie?.id ?? "new"}
-            currentRound={currentRound}
-            maxRound={maxRound}
-            currentUserId={currentUserId}
-            movie={editingMovie}
-            users={users}
-            onBack={closeMovieForm}
-          />
-        </div>
-      )}
-
       {detailStack.stack.map((entry, i) => {
         const isTop = i === detailStack.stack.length - 1;
         const ref = isTop ? detailStack.setTopEl : undefined;
@@ -253,11 +239,26 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
               currentUserId={currentUserId}
               onBack={detailStack.pop}
               onRate={() => setRatingMovie(movie)}
+              onEdit={() => handleEdit(movie)}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
           </div>
         );
       })}
+
+      {showMovieForm && (
+        <div className="movie-list__add__movie" ref={setAddMovieEl}>
+          <AddMoviePage
+            key={editingMovie?.id ?? "new"}
+            currentRound={currentRound}
+            maxRound={maxRound}
+            currentUserId={currentUserId}
+            movie={editingMovie}
+            users={users}
+            onBack={closeMovieForm}
+          />
+        </div>
+      )}
 
       {movieToDelete && (
         <ConfirmDialog

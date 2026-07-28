@@ -537,6 +537,30 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+.movie-page__edit-btn {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  padding: 0.375rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s;
+}
+
+.movie-page__edit-btn:active {
+  background: rgba(0, 0, 0, 0.5);
+}
+
 .movie-page__poster-backdrop {
   position: absolute;
   inset: -10%;
