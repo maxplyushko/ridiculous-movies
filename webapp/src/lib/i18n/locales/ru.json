@@ -18,8 +18,14 @@
     "placeholder": "Поиск фильмов и актёров…",
     "cancel": "Отмена",
     "noResults": "Ничего не найдено по запросу",
+    "emptyStart": "Начните поиск",
     "sectionClub": "В твоей группе",
-    "sectionPersonal": "В твоём списке"
+    "sectionPersonal": "В твоём списке",
+    "filterAll": "Все",
+    "filterApp": "Приложение",
+    "filterInternet": "Фильмы",
+    "filterPeople": "Люди",
+    "recentTitle": "Недавние запросы"
   },
   "addMovie": {
     "headingEdit": "Редактировать Фильм",
@@ -142,7 +148,8 @@
   "tmdb": {
     "section": "Интернет",
     "empty": "нет результатов",
-    "sectionPeople": "Люди"
+    "sectionPeople": "Люди",
+    "emptyPeople": "Никого не найдено"
   },
   "moviePage": {
     "movie": "Фильм",

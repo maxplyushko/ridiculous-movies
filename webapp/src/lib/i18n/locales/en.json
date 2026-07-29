@@ -18,8 +18,14 @@
     "placeholder": "Search movies and actors…",
     "cancel": "Cancel",
     "noResults": "Nothing found for",
+    "emptyStart": "Start searching",
     "sectionClub": "In your club",
-    "sectionPersonal": "In your personal list"
+    "sectionPersonal": "In your personal list",
+    "filterAll": "All",
+    "filterApp": "App",
+    "filterInternet": "Movies",
+    "filterPeople": "People",
+    "recentTitle": "Recent searches"
   },
   "addMovie": {
     "headingEdit": "Edit Movie",
@@ -143,7 +149,8 @@
   "tmdb": {
     "section": "On Internet",
     "empty": "No Internet results",
-    "sectionPeople": "People"
+    "sectionPeople": "People",
+    "emptyPeople": "No people found"
   },
   "moviePage": {
     "movie": "Movie",

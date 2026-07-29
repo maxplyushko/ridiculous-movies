@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import GroupListPage from "@/features/group/components/GroupListPage.tsx";
 import StatPage from "@/features/stats/components/StatPage.tsx";
 import PersonalStatPage from "@/features/personal/components/PersonalStatPage.tsx";
@@ -8,23 +8,16 @@ import { AuthGate } from "@/features/auth/components/AuthGate.tsx";
 import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal.tsx";
 import SearchResults from "@/features/search/components/SearchResults.tsx";
-import { SearchInput } from "@/components/SearchInput.tsx";
 import { CircleUser, Film, Search, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
-import { useKeyboardOffset } from "@/hooks/useKeyboardOffset.ts";
-import { useSubPageOpen } from "@/hooks/useSubPage.ts";
 import { getKeyboardViewportHeight, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
 
-type Tab = "group" | "personal" | "misc";
+type Tab = "group" | "personal" | "misc" | "search";
 type Page = Tab | "stat" | "personalStat";
-type NavId = Tab | "search";
 
-const SEARCH_NAV_INDEX = 3;
-const SEARCH_CLOSE_MS = 300;
-
-const TABS: Array<{ id: NavId; labelKey: string; icon: React.ReactNode }> = [
+const TABS: Array<{ id: Tab; labelKey: string; icon: React.ReactNode }> = [
   { id: "group", labelKey: "nav.groupList", icon: <Users size={30} /> },
   { id: "personal", labelKey: "nav.personalList", icon: <Film size={30} /> },
   { id: "misc", labelKey: "nav.profile", icon: <CircleUser size={30} /> },
@@ -40,21 +33,8 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [groupResetSignal, setGroupResetSignal] = useState(0);
   const [personalResetSignal, setPersonalResetSignal] = useState(0);
   const [miscResetSignal, setMiscResetSignal] = useState(0);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [searchResetSignal, setSearchResetSignal] = useState(0);
-  const [searchDetailOpen, setSearchDetailOpen] = useState(false);
-  const [searchClosing, setSearchClosing] = useState(false);
-  const searchCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAdmin = session.role === "admin";
-  const subPageOpen = useSubPageOpen();
-  const searchInputHidden =
-    searchDetailOpen || subPageOpen || currentPage === "stat" || currentPage === "personalStat";
-  const keyboardOffset = useKeyboardOffset(searchOpen && !searchInputHidden && !searchClosing);
-
-  useEffect(() => () => {
-    if (searchCloseTimerRef.current) clearTimeout(searchCloseTimerRef.current);
-  }, []);
 
   useEffect(() => {
     const isTextEntry = (el: EventTarget | null) =>
@@ -89,42 +69,20 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
     };
   }, []);
 
-  const searchShowingResults = searchOpen && searchQuery.length > 0;
-  const rawTabIndex = TABS.findIndex((tab) => tab.id === (currentPage as NavId));
-  const fallbackTab = currentPage === "personalStat" ? "personal" : "group";
-  const pageTabIndex = rawTabIndex === -1 ? TABS.findIndex((tab) => tab.id === fallbackTab) : rawTabIndex;
-  const currentTabIndex = searchOpen ? SEARCH_NAV_INDEX : pageTabIndex;
-
-  const closeSearch = () => {
-    if (searchClosing) return;
-    setSearchClosing(true);
-    searchCloseTimerRef.current = setTimeout(() => {
-      setSearchOpen(false);
-      setSearchClosing(false);
-      setSearchQuery("");
-      setSearchResetSignal((n) => n + 1);
-    }, SEARCH_CLOSE_MS);
-  };
-
-  const selectTab = (tab: NavId) => {
+  const selectTab = (tab: Tab) => {
     hapticTabTap();
-    if (tab === "search") {
-      if (searchOpen) {
-        closeSearch();
-        return;
-      }
-      setSearchOpen(true);
-      return;
-    }
-    if (searchOpen) closeSearch();
     if (tab === currentPage) {
       if (tab === "group") setGroupResetSignal((n) => n + 1);
       if (tab === "personal") setPersonalResetSignal((n) => n + 1);
       if (tab === "misc") setMiscResetSignal((n) => n + 1);
+      if (tab === "search") setSearchResetSignal((n) => n + 1);
     }
     setCurrentPage(tab);
   };
 
+  const rawTabIndex = TABS.findIndex((tab) => tab.id === (currentPage as Tab));
+  const fallbackTab = currentPage === "personalStat" ? "personal" : "group";
+  const currentTabIndex = rawTabIndex === -1 ? TABS.findIndex((tab) => tab.id === fallbackTab) : rawTabIndex;
   const { navRef, indicatorRef } = useNavDrag(TABS.length, currentTabIndex, (idx) => {
     selectTab(TABS[idx].id);
   });
@@ -140,48 +98,26 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   return (
     <div className="app-shell">
       <main className="app-main">
-        <div hidden={searchShowingResults || (currentPage !== "group" && currentPage !== "stat")}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} resetSignal={groupResetSignal} /></div>
-        <div hidden={searchShowingResults || currentPage !== "stat"}><StatPage active={!searchShowingResults && currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
-        <div hidden={searchShowingResults || (currentPage !== "personal" && currentPage !== "personalStat")}><PersonalListPage active={!searchShowingResults && currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
-        <div hidden={searchShowingResults || currentPage !== "personalStat"}><PersonalStatPage active={!searchShowingResults && currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
-        <div hidden={searchShowingResults || currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
-        <div hidden={!searchShowingResults}>
-          <SearchResults
-            query={searchQuery}
-            active={searchOpen}
-            currentUserId={session.userId}
-            resetSignal={searchResetSignal}
-            onDetailOpenChange={setSearchDetailOpen}
-          />
-        </div>
+        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} resetSignal={groupResetSignal} /></div>
+        <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
+        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
+        <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
+        <div hidden={currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
+        <div hidden={currentPage !== "search"}><SearchResults active={currentPage === "search"} currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
       </main>
-      {searchOpen && !searchInputHidden && (
-        <SearchInput
-          closing={searchClosing}
-          value={searchQuery}
-          onChange={setSearchQuery}
-          placeholder={t('search.placeholder')}
-          cancelLabel={t('search.cancel')}
-          onCancel={closeSearch}
-          keyboardOffset={keyboardOffset}
-        />
-      )}
-      <nav ref={navRef} className={`bottom-bar${keyboardOpen || (searchOpen && !searchClosing) ? " bottom-bar--hidden" : ""}`}>
+      <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />
-        {TABS.map(({ id, labelKey, icon }, idx) => {
-          const isActive = idx === currentTabIndex;
-          return (
-            <button
-              key={id}
-              className={`bottom-bar-button${isActive ? " active" : ""}`}
-              aria-label={t(labelKey)}
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => selectTab(id)}
-            >
-              {icon}
-            </button>
-          );
-        })}
+        {TABS.map(({ id, labelKey, icon }) => (
+          <button
+            key={id}
+            className={`bottom-bar-button${(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? " active" : ""}`}
+            aria-label={t(labelKey)}
+            aria-current={(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? "page" : undefined}
+            onClick={() => selectTab(id)}
+          >
+            {icon}
+          </button>
+        ))}
       </nav>
     </div>
   );

@@ -20,7 +20,6 @@ import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
-import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll.ts";
 import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
 import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
 import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
@@ -38,7 +37,6 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
-  const { setEl: setHeroEl, collapsed: heroCollapsed } = useCollapseOnScroll<HTMLDivElement>();
 
   useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showMovieForm, setShowMovieForm] = useState(false);
@@ -137,7 +135,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
 
   return (
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
-      <div className={`mlp__hero${heroCollapsed ? " mlp__hero--collapsed" : ""}`} ref={setHeroEl}>
+      <div className="mlp__hero">
         <div className="mlp__cards">
           <button type="button" className="mlp__card" onClick={openRandomizer}>
             <Dices size={20} className="mlp__card-icon" />

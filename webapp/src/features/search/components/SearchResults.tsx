@@ -1,21 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Loader } from "lucide-react";
 import "../search.css";
 import type { Movie } from "@/features/group/types/Movie.ts";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie.ts";
 import type { TmdbMovie } from "@/types/TmdbMovie.ts";
-import MovieItem from "@/features/group/components/MovieItem.tsx";
-import { PersonalSection } from "@/features/personal/components/PersonalSection.tsx";
-import TmdbSearchSection from "@/components/TmdbSearchSection.tsx";
+import { SearchInput } from "@/components/SearchInput.tsx";
+import SearchMovieItem from "./SearchMovieItem.tsx";
+import RecentSearchItem from "./RecentSearchItem.tsx";
 import TmdbPeopleSection from "@/components/TmdbPeopleSection.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
-import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
 import { fetchMovieGroups, rateMovie } from "@/features/group/api/movies.ts";
-import { addPersonalMovie, editPersonalMovie, fetchPersonalList } from "@/features/personal/api/personalList.ts";
+import { editPersonalMovie, fetchPersonalList } from "@/features/personal/api/personalList.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
+import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
+import { useTmdbPersonSearch } from "@/hooks/useTmdbPersonSearch.ts";
+import { useRecentSearches } from "@/hooks/useRecentSearches.ts";
+import type { RecentEntry } from "@/hooks/useRecentSearches.ts";
+import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset.ts";
+import { hapticTabTap } from "@/utils/haptics.ts";
 
 type DetailEntry =
   | { kind: "group"; movieId: string }
@@ -23,26 +30,36 @@ type DetailEntry =
   | { kind: "tmdb"; movie: TmdbMovie }
   | { kind: "actor"; personId: number };
 
+type Filter = "all" | "app" | "internet" | "people";
+
 type SearchResultsProps = {
-  query: string;
   active: boolean;
   currentUserId: string;
   resetSignal?: number;
-  onDetailOpenChange: (open: boolean) => void;
 };
 
-const noop = () => {};
-
-const SearchResults = ({ query, active, currentUserId, resetSignal, onDetailOpenChange }: Readonly<SearchResultsProps>) => {
+const SearchResults = ({ active, currentUserId, resetSignal }: Readonly<SearchResultsProps>) => {
   const { t } = useTranslation();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
   const [groupMovies, setGroupMovies] = useState<Movie[]>([]);
   const [personalMovies, setPersonalMovies] = useState<PersonalMovie[]>([]);
   const [ratingGroupMovie, setRatingGroupMovie] = useState<Movie | null>(null);
   const [ratingPersonalMovie, setRatingPersonalMovie] = useState<PersonalMovie | null>(null);
-  const [showGuestLimit, setShowGuestLimit] = useState(false);
+  const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
+  const { recent, addRecent, removeRecent } = useRecentSearches(currentUserId);
+  const dockVisible = detailStack.stack.length === 0;
+  const keyboardOffset = useKeyboardOffset(active && dockVisible);
 
-  useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+  useCloseSwipeOnOutsideTap(openSwipeId, () => setOpenSwipeId(null));
+
+  useEffect(() => {
+    detailStack.reset();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setQuery("");
+    setFilter("all");
+  }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadGroupMovies = useCallback(() => {
     fetchMovieGroups({ sort: "desc" })
@@ -56,40 +73,96 @@ const SearchResults = ({ query, active, currentUserId, resetSignal, onDetailOpen
       .catch(() => {});
   }, []);
 
-  const detailDepth = detailStack.stack.length;
-  useEffect(() => { onDetailOpenChange(detailDepth > 0); }, [detailDepth, onDetailOpenChange]);
-
-  const wasActiveRef = useRef(false);
   useEffect(() => {
-    if (active && !wasActiveRef.current) {
+    if (active) {
       loadGroupMovies();
       loadPersonalMovies();
     }
-    wasActiveRef.current = active;
   }, [active, loadGroupMovies, loadPersonalMovies]);
-
-  const bookmarkedTmdbIds = useMemo(
-    () => new Set(personalMovies.filter((m) => m.inList && m.tmdbId != null).map((m) => m.tmdbId as number)),
-    [personalMovies],
-  );
 
   const normalizedQuery = query.toLowerCase().trim();
   const matches = (title: string, description: string) =>
     title.toLowerCase().includes(normalizedQuery) || description.toLowerCase().includes(normalizedQuery);
 
-  const groupMatches = normalizedQuery ? groupMovies.filter((m) => matches(m.title, m.description)) : [];
-  const personalMatches = normalizedQuery ? personalMovies.filter((m) => matches(m.title, m.description)) : [];
-  const showTmdb = normalizedQuery.length >= 3;
+  const showApp = filter === "all" || filter === "app";
+  const showInternet = filter === "all" || filter === "internet";
+  const showPeople = filter === "all" || filter === "people";
 
-  const addToPersonalList = (m: TmdbMovie) =>
-    addPersonalMovie({ title: m.title, description: m.overview ?? "", tagline: "", rating: null, tmdbId: m.id, tmdbMediaType: m.mediaType })
-      .then((added) => { setPersonalMovies((prev) => [added, ...prev]); })
-      .catch((e) => { if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); });
+  const groupMatches = normalizedQuery && showApp ? groupMovies.filter((m) => matches(m.title, m.description)) : [];
+  const personalMatches = normalizedQuery && showApp ? personalMovies.filter((m) => matches(m.title, m.description)) : [];
+
+  const tmdbQuery = showInternet ? query : "";
+  const { results: tmdbResults, loading: tmdbLoading } = useTmdbSearch(tmdbQuery, { includeTv: true });
+  const showTmdb = showInternet && normalizedQuery.length >= 3
+    && (filter !== "all" || tmdbLoading || tmdbResults.length > 0);
+
+  const peopleQuery = showPeople ? query : "";
+  const { results: peopleResults, loading: peopleLoading } = useTmdbPersonSearch(peopleQuery);
+  const showPeopleSection = showPeople && normalizedQuery.length >= 3
+    && (filter !== "all" || peopleLoading || peopleResults.length > 0);
+
+  const openRecent = (entry: RecentEntry) => {
+    if (entry.kind === "query") {
+      setQuery(entry.label);
+      return;
+    }
+    addRecent(entry);
+    if (entry.kind === "actor") {
+      detailStack.push({ kind: "actor", personId: entry.personId });
+    } else if (entry.kind === "tmdb") {
+      detailStack.push({ kind: "tmdb", movie: entry.movie });
+    } else {
+      detailStack.push({ kind: entry.kind, movieId: entry.movieId });
+    }
+  };
+
+  const openGroupMovie = (movie: Movie) => {
+    addRecent({ kind: "group", label: movie.title, movieId: movie.id });
+    detailStack.push({ kind: "group", movieId: movie.id });
+  };
+
+  const openPersonalMovie = (movie: PersonalMovie) => {
+    addRecent({ kind: "personal", label: movie.title, movieId: movie.id });
+    detailStack.push({ kind: "personal", movieId: movie.id });
+  };
+
+  const openTmdbMovie = (movie: TmdbMovie) => {
+    addRecent({ kind: "tmdb", label: movie.title, movie });
+    detailStack.push({ kind: "tmdb", movie });
+  };
+
+  const noResults = normalizedQuery.length > 0
+    && groupMatches.length === 0
+    && personalMatches.length === 0
+    && (!showTmdb || (!tmdbLoading && tmdbResults.length === 0))
+    && (!showPeopleSection || (!peopleLoading && peopleResults.length === 0));
 
   return (
     <div className="mlp search-results">
       <div className="movie-list">
-        {normalizedQuery && groupMatches.length === 0 && personalMatches.length === 0 && !showTmdb && (
+        {!normalizedQuery && recent.length === 0 && (
+          <p className="movie-list__no-results">{t('search.emptyStart')}</p>
+        )}
+
+        {!normalizedQuery && recent.length > 0 && (
+          <div className="movie-group">
+            <div className="movie-group__header"><h3>{t('search.recentTitle')}</h3></div>
+            {recent.map((entry) => (
+              <RecentSearchItem
+                key={entry.label}
+                entry={entry}
+                isSwipeOpen={openSwipeId === entry.label}
+                onOpen={openRecent}
+                onDelete={removeRecent}
+                onSwipeOpen={() => setOpenSwipeId(entry.label)}
+                onSwipeClose={() => setOpenSwipeId((cur) => cur === entry.label ? null : cur)}
+                onSwipeBegin={() => { if (openSwipeId !== null && openSwipeId !== entry.label) setOpenSwipeId(null); }}
+              />
+            ))}
+          </div>
+        )}
+
+        {noResults && (
           <p className="movie-list__no-results">{t('search.noResults')} "{query}"</p>
         )}
 
@@ -97,53 +170,95 @@ const SearchResults = ({ query, active, currentUserId, resetSignal, onDetailOpen
           <div className="movie-group">
             <div className="movie-group__header"><h3>{t('search.sectionClub')}</h3></div>
             {groupMatches.map((movie) => (
-              <MovieItem
+              <SearchMovieItem
                 key={movie.id}
-                movie={movie}
-                isSwipeOpen={false}
-                canDelete={false}
-                readOnly
-                onOpen={() => detailStack.push({ kind: "group", movieId: movie.id })}
-                onEdit={noop}
-                onDelete={noop}
-                onSwipeOpen={noop}
-                onSwipeClose={noop}
-                onSwipeBegin={noop}
+                title={movie.title}
+                tmdbId={movie.tmdbId}
+                tmdbMediaType={movie.tmdbMediaType}
+                onOpen={() => openGroupMovie(movie)}
               />
             ))}
           </div>
         )}
 
-        <PersonalSection
-          title={t('search.sectionPersonal')}
-          movies={personalMatches}
-          openSwipeId={null}
-          celebratingId={null}
-          readOnly
-          onOpen={(movie) => detailStack.push({ kind: "personal", movieId: movie.id })}
-          onEdit={noop}
-          onDelete={noop}
-          onToggleWatched={noop}
-          onSwipeOpen={noop}
-          onSwipeClose={noop}
-          onSwipeBegin={noop}
-        />
+        {personalMatches.length > 0 && (
+          <div className="movie-group">
+            <div className="movie-group__header"><h3>{t('search.sectionPersonal')}</h3></div>
+            {personalMatches.map((movie) => (
+              <SearchMovieItem
+                key={movie.id}
+                title={movie.title}
+                tmdbId={movie.tmdbId}
+                tmdbMediaType={movie.tmdbMediaType}
+                onOpen={() => openPersonalMovie(movie)}
+              />
+            ))}
+          </div>
+        )}
 
         {showTmdb && (
-          <TmdbSearchSection
-            query={query}
-            onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-            onAddToPersonalList={addToPersonalList}
-            bookmarkedTmdbIds={bookmarkedTmdbIds}
-          />
+          <div className="tmdb-section">
+            <div className="movie-group__header">
+              <h3>{t('tmdb.section')}</h3>
+              {tmdbLoading && <Loader size={14} className="tmdb-section__spinner" />}
+            </div>
+            {filter !== "all" && !tmdbLoading && tmdbResults.length === 0 && (
+              <p className="movie-list__no-results">{t('tmdb.empty')}</p>
+            )}
+            {tmdbResults.map((movie) => (
+              <SearchMovieItem
+                key={movie.id}
+                title={movie.title}
+                year={movie.releaseYear}
+                posterUrl={movie.posterUrl}
+                onOpen={() => openTmdbMovie(movie)}
+              />
+            ))}
+          </div>
         )}
-        {showTmdb && (
+
+        {showPeopleSection && (
           <TmdbPeopleSection
-            query={query}
-            onOpenPerson={(p) => detailStack.push({ kind: "actor", personId: p.id })}
+            results={peopleResults}
+            loading={peopleLoading}
+            showEmptyMessage={filter !== "all" && !peopleLoading && peopleResults.length === 0}
+            onOpenPerson={(p) => { addRecent({ kind: "actor", label: p.name, personId: p.id }); detailStack.push({ kind: "actor", personId: p.id }); }}
           />
         )}
       </div>
+
+      {dockVisible && (
+        <div
+          className="search-bottom-bar"
+          style={keyboardOffset > 0 ? { bottom: `${keyboardOffset}px` } : undefined}
+        >
+          <div className="user-chip-row">
+            {([
+              ["all", t('search.filterAll')],
+              ["app", t('search.filterApp')],
+              ["internet", t('search.filterInternet')],
+              ["people", t('search.filterPeople')],
+            ] as Array<[Filter, string]>).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                className={`user-chip${filter === id ? " user-chip--selected" : ""}`}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { hapticTabTap(); setFilter(id); }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder={t('search.placeholder')}
+            cancelLabel={t('search.cancel')}
+          />
+        </div>
+      )}
 
       {detailStack.stack.map((entry, i) => {
         const isTop = i === detailStack.stack.length - 1;
@@ -242,10 +357,6 @@ const SearchResults = ({ query, active, currentUserId, resetSignal, onDetailOpen
             }}
           />
         )}
-      </Presence>
-
-      <Presence show={showGuestLimit}>
-        {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
       </Presence>
     </div>
   );

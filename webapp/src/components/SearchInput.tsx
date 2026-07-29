@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Search, X } from "lucide-react";
+import { useRef } from "react";
+import { X } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 type SearchInputProps = {
@@ -7,37 +7,14 @@ type SearchInputProps = {
   onChange: (value: string) => void;
   placeholder: string;
   cancelLabel: string;
-  onCancel: () => void;
-  keyboardOffset?: number;
-  closing?: boolean;
 };
 
-export function SearchInput({
-  value,
-  onChange,
-  placeholder,
-  cancelLabel,
-  onCancel,
-  keyboardOffset = 0,
-  closing = false,
-}: Readonly<SearchInputProps>) {
+export function SearchInput({ value, onChange, placeholder, cancelLabel }: Readonly<SearchInputProps>) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    if (closing) inputRef.current?.blur();
-  }, [closing]);
-
   return (
-    <div
-      className={`mlp__search-bar mlp__search-bar--docked${keyboardOffset > 0 ? " mlp__search-bar--lifted" : ""}${closing ? " mlp__search-bar--closing" : ""}`}
-      style={{ bottom: `${keyboardOffset}px` }}
-    >
-      <div className="mlp__search">
-        <Search size={18} className="mlp__search-icon" />
+    <div className="search-bottom-bar__input-row">
+      <div className="search-bottom-bar__input-wrap">
         <input
           ref={inputRef}
           type="search"
@@ -46,6 +23,20 @@ export function SearchInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
+        {value && (
+          <button
+            type="button"
+            className="mlp__search-clear"
+            aria-label={placeholder}
+            onClick={() => {
+              hapticTabTap();
+              onChange("");
+              inputRef.current?.focus();
+            }}
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
       <button
         type="button"
@@ -53,15 +44,10 @@ export function SearchInput({
         aria-label={cancelLabel}
         onClick={() => {
           hapticTabTap();
-          if (value) {
-            onChange("");
-            inputRef.current?.focus();
-            return;
-          }
-          onCancel();
+          inputRef.current?.blur();
         }}
       >
-        <X size={22} />
+        <X size={20} />
       </button>
     </div>
   );

@@ -19,7 +19,6 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
-import { useCollapseOnScroll } from "@/hooks/useCollapseOnScroll.ts";
 import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
 import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
 import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
@@ -50,7 +49,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const [celebratingId, setCelebratingId] = useState<string | null>(null);
   const [openSwipeId, setOpenSwipeId] = useState<string | null>(null);
   const detailStack = useDetailStack<DetailEntry>();
-  const { setEl: setHeroEl, collapsed: heroCollapsed } = useCollapseOnScroll<HTMLDivElement>();
 
   useEffect(() => { detailStack.reset(); }, [resetSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -193,7 +191,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
 
   return (
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
-      <div className={`mlp__hero${heroCollapsed ? " mlp__hero--collapsed" : ""}`} ref={setHeroEl}>
+      <div className="mlp__hero">
         <div className="mlp__cards">
           <button
             type="button"
