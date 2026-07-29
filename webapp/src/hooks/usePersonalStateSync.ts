@@ -104,10 +104,27 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
     flush();
   };
 
+  const setRating = async (score: number) => {
+    const { tmdbId, title, description, tagline, tmdbMediaType } = identityRef.current;
+    const next = await setPersonalState({
+      tmdbId,
+      title,
+      description: description ?? "",
+      tagline: tagline ?? "",
+      tmdbMediaType,
+      rating: score,
+    });
+    confirmedRef.current = { inList: next?.inList ?? false, watched: next?.watched ?? false };
+    desiredRef.current = { ...confirmedRef.current };
+    setSelfStatus(next);
+    onChangeRef.current?.();
+  };
+
   return {
     selfStatus,
     statusLoading,
     setInList: (next: boolean) => apply({ inList: next }),
     setWatched: (next: boolean) => apply({ watched: next }),
+    setRating,
   };
 }

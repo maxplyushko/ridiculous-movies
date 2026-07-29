@@ -12,7 +12,9 @@ import { CircleUser, Film, Search, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
-import { getKeyboardViewportHeight, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
+import { KEYBOARD_MIN_PX, getKeyboardOffsetPx, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
+import { useViewportPanGuard } from "@/hooks/useViewportPanGuard.ts";
+import { KeyboardDebugOverlay } from "@/components/KeyboardDebugOverlay.tsx";
 
 type Tab = "group" | "personal" | "misc" | "search";
 type Page = Tab | "stat" | "personalStat";
@@ -45,27 +47,24 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
     document.addEventListener('focusout', onFocusOut);
 
     let closeTimer: ReturnType<typeof setTimeout> | undefined;
-    let maxHeight = getKeyboardViewportHeight() ?? 0;
+    const clearCloseTimer = () => { if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; } };
     const onViewportChange = () => {
-      const height = getKeyboardViewportHeight();
-      if (height === undefined) return;
-      maxHeight = Math.max(maxHeight, height);
-      if (height < maxHeight - 100 && isTextEntry(document.activeElement)) {
-        if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; }
+      clearCloseTimer();
+      if (getKeyboardOffsetPx() > KEYBOARD_MIN_PX && isTextEntry(document.activeElement)) {
         setKeyboardOpen(true);
-      } else if (!isTextEntry(document.activeElement)) {
-        if (closeTimer) clearTimeout(closeTimer);
-        closeTimer = setTimeout(() => {
-          if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
-        }, 300);
+        return;
       }
+      closeTimer = setTimeout(() => {
+        closeTimer = undefined;
+        if (getKeyboardOffsetPx() <= KEYBOARD_MIN_PX) setKeyboardOpen(false);
+      }, 300);
     };
     const unsubscribe = onKeyboardViewportChange(onViewportChange);
     return () => {
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
       unsubscribe();
-      if (closeTimer) clearTimeout(closeTimer);
+      clearCloseTimer();
     };
   }, []);
 
@@ -124,10 +123,14 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
 }
 
 function App() {
+  useViewportPanGuard();
   return (
-    <AuthGate>
-      {(session) => <AppShell session={session} />}
-    </AuthGate>
+    <>
+      <KeyboardDebugOverlay />
+      <AuthGate>
+        {(session) => <AppShell session={session} />}
+      </AuthGate>
+    </>
   );
 }
 

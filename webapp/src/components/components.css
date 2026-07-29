@@ -328,6 +328,14 @@
   border-radius: 10px;
 }
 
+.movie-group__header + .movie-item-wrapper .movie-item-management {
+  border-top-left-radius: 0;
+}
+
+.movie-item-wrapper:last-child .movie-item-management {
+  border-bottom-left-radius: 0;
+}
+
 .movie-item-wrapper + .movie-item-wrapper {
   border-top: 1px solid var(--separator);
 }
@@ -370,6 +378,7 @@
 
 .movie-item-management__edit {
   background: var(--accent);
+  border-top-left-radius: 0;
 }
 
 .movie-item-management__edit:active {
@@ -378,6 +387,7 @@
 
 .movie-item-management__delete {
   background: var(--danger);
+  border-bottom-left-radius: 0;
 }
 
 .movie-item-management__delete:disabled {
@@ -1614,6 +1624,73 @@ button.actor-page__known-for-item {
 @media (prefers-reduced-motion: reduce) {
   .confirm-dialog-overlay,
   .confirm-dialog {
+    animation: none;
+    transition: none;
+  }
+}
+
+.movie-page__poster--tappable {
+  cursor: pointer;
+}
+
+.movie-page__poster-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: dialog-overlay-in 0.18s ease-out;
+  transition: opacity 0.18s ease-in;
+}
+
+.presence--exiting .movie-page__poster-fullscreen-overlay {
+  opacity: 0;
+}
+
+.movie-page__poster-fullscreen-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  animation: dialog-pop-in 0.26s cubic-bezier(0.34, 1.35, 0.64, 1);
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+}
+
+.presence--exiting .movie-page__poster-fullscreen-img {
+  opacity: 0;
+  transform: translateY(0.5rem) scale(0.96);
+}
+
+.movie-page__poster-fullscreen-close {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
+  padding: 0.375rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  backdrop-filter: blur(6px);
+  transition: background 0.15s;
+}
+
+.movie-page__poster-fullscreen-close:active {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .movie-page__poster-fullscreen-overlay,
+  .movie-page__poster-fullscreen-img {
     animation: none;
     transition: none;
   }

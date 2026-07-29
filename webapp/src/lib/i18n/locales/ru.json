@@ -175,7 +175,8 @@
     "alsoInWatchlist_other": "В списках у",
     "btnAddToPersonalList": "Добавить в личный список",
     "btnRemoveFromList": "Убрать из списка",
-    "confirmRemove": "Убрать фильм из вашего списка?"
+    "confirmRemove": "Убрать фильм из вашего списка?",
+    "closePoster": "Закрыть"
   },
   "actorPage": {
     "biography": "Биография",

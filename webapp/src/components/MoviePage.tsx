@@ -1,14 +1,16 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Pencil, Star, Tv, User, Users } from "lucide-react";
+import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Pencil, Star, Tv, User, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbMovie } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
 import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
+import { fetchGroupMovieMatch } from "@/features/group/api/movies.ts";
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
+import { RatingModal } from "@/components/RatingModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
@@ -54,7 +56,6 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
   const posterUrl = source.kind === "tmdb" ? source.movie.posterUrl : (details?.posterUrl ?? null);
   const tmdbScore = source.kind === "tmdb" ? source.movie.tmdbScore : details?.tmdbScore;
   const releaseYear = source.kind === "tmdb" ? source.movie.releaseYear : details?.releaseYear;
-  const groupRating = source.kind === "group" ? source.movie.averageRating : null;
   const customTagline = source.kind !== "tmdb" ? source.movie.tagline : null;
   const tagline = customTagline || details?.tagline || null;
   const numberOfSeasons = details?.numberOfSeasons ?? null;
@@ -65,9 +66,12 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterErrored, setPosterErrored] = useState(false);
   const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
+  const [groupMatch, setGroupMatch] = useState<Movie | null>(null);
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
-  const { selfStatus, statusLoading, setInList, setWatched } = usePersonalStateSync({
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [posterFullscreen, setPosterFullscreen] = useState(false);
+  const { selfStatus, statusLoading, setInList, setWatched, setRating } = usePersonalStateSync({
     tmdbId,
     title,
     description,
@@ -86,15 +90,34 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
     return () => { cancelled = true; };
   }, [tmdbId, title]);
 
+  useEffect(() => {
+    if (source.kind === "group") return;
+    if (tmdbId == null && !title) return;
+    let cancelled = false;
+    fetchGroupMovieMatch(tmdbId, title)
+      .then((match) => { if (!cancelled) setGroupMatch(match); })
+      .catch(() => { if (!cancelled) setGroupMatch(null); });
+    return () => { cancelled = true; };
+  }, [source.kind, tmdbId, title]);
+
   const inList = selfStatus?.inList ?? false;
   const watched = selfStatus?.watched ?? false;
   const ownRating = source.kind === "group"
     ? (source.movie.ratings.find((r) => r.user.id === currentUserId)?.score ?? null)
-    : source.kind === "personal"
-      ? source.movie.rating
-      : (selfStatus?.rating ?? null);
-  const groupRatings = source.kind === "group" ? source.movie.ratings : [];
+    : (selfStatus?.rating ?? null);
+  const groupRating = source.kind === "group" ? source.movie.averageRating : (groupMatch?.averageRating ?? null);
+  const groupRatings = source.kind === "group" ? source.movie.ratings : (groupMatch?.ratings ?? []);
   const hasGroupRatings = groupRatings.length > 0;
+
+  const canRate = source.kind === "group" ? !!onRate : true;
+  const handleRateTap = () => {
+    hapticTabTap();
+    if (source.kind === "group") {
+      onRate?.();
+    } else {
+      setShowRatingModal(true);
+    }
+  };
 
   const toggleInList = () => {
     hapticTabTap();
@@ -183,7 +206,10 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
           </button>
         )}
         <div className="movie-page__poster-backdrop" style={displayPosterUrl ? { backgroundImage: `url(${displayPosterUrl})` } : undefined} />
-        <div className="movie-page__poster">
+        <div
+          className={`movie-page__poster${posterReady ? " movie-page__poster--tappable" : ""}`}
+          onClick={() => { if (posterReady) { hapticTabTap(); setPosterFullscreen(true); } }}
+        >
           {!posterReady && <div className="movie-page__poster-skeleton sk-card" />}
           {displayPosterUrl && (
             <img
@@ -236,11 +262,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
       <div className="movie-page__divider" />
 
       <div className="movie-page__actions">
-        {onRate && (
+        {canRate && (
           <button
             type="button"
             className={`movie-page__action${ownRating != null ? " movie-page__action--rated" : ""}`}
-            onClick={() => { hapticTabTap(); onRate(); }}
+            onClick={handleRateTap}
           >
             <Star size={26} fill={ownRating != null ? "currentColor" : "none"} />
             <span className="movie-page__action-label">
@@ -413,6 +439,45 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
       )}
       <Presence show={showGuestLimit}>
         {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
+      </Presence>
+      <Presence show={showRatingModal}>
+        {showRatingModal && (
+          <RatingModal
+            title={t('personalList.rateDialog', { title })}
+            initialScore={ownRating}
+            defaultMode="classic"
+            cancelLabel={t('personalList.btnSkip')}
+            saveLabel={t('personalList.btnSave')}
+            onCancel={() => setShowRatingModal(false)}
+            onSave={async (score) => {
+              await setRating(score);
+              setShowRatingModal(false);
+            }}
+          />
+        )}
+      </Presence>
+      <Presence show={posterFullscreen}>
+        {posterFullscreen && displayPosterUrl && (
+          <div
+            className="movie-page__poster-fullscreen-overlay"
+            onClick={() => { hapticTabTap(); setPosterFullscreen(false); }}
+          >
+            <button
+              type="button"
+              className="movie-page__poster-fullscreen-close"
+              aria-label={t('moviePage.closePoster')}
+              onClick={(e) => { e.stopPropagation(); hapticTabTap(); setPosterFullscreen(false); }}
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={displayPosterUrl}
+              alt={title}
+              className="movie-page__poster-fullscreen-img"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
       </Presence>
     </div>
   );

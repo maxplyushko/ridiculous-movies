@@ -155,6 +155,13 @@ public class MovieService {
     return movieMapper.toResponse(movie, groupId);
   }
 
+  public MovieResponse findByTmdb(String userId, Long tmdbId, String title) {
+    AppUser actor = authService.requireUser(userId);
+    String groupId = actor.getUserGroup().getId();
+    Movie movie = dataStore.findGroupMovieMatch(userId, tmdbId, title);
+    return movie == null ? null : movieMapper.toResponse(movie, groupId);
+  }
+
   public void deleteMovie(String userId, String movieId) {
     AppUser actor = authService.requireUser(userId);
     authService.requireAdmin(actor);

@@ -627,6 +627,30 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public Movie findGroupMovieMatch(String callerId, Long tmdbId, String title) {
+    lock.readLock().lock();
+    try {
+      AppUser caller = usersById.get(callerId);
+      if (caller == null || caller.getUserGroup() == null) {
+        return null;
+      }
+      String groupId = caller.getUserGroup().getId();
+      String normTitle = title == null ? null : title.trim().toLowerCase();
+      return moviesById.values().stream()
+          .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
+          .filter(m -> {
+            boolean tmdbMatch = tmdbId != null && tmdbId.equals(m.getTmdbId());
+            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
+                && m.getTitle() != null && normTitle.equals(m.getTitle().trim().toLowerCase());
+            return tmdbMatch || titleMatch;
+          })
+          .findFirst()
+          .orElse(null);
+    } finally {
+      lock.readLock().unlock();
+    }
+  }
+
   public void savePersonalMovie(PersonalMovie movie) {
     lock.writeLock().lock();
     try {

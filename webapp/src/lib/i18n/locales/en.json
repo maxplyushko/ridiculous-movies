@@ -174,7 +174,8 @@
     "alsoInWatchlist_other": "In the watchlists of",
     "btnAddToPersonalList": "Add to personal list",
     "btnRemoveFromList": "Remove from watchlist",
-    "confirmRemove": "Do you want to remove movie from your list?"
+    "confirmRemove": "Do you want to remove movie from your list?",
+    "closePoster": "Close"
   },
   "actorPage": {
     "biography": "Biography",

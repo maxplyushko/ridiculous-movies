@@ -361,7 +361,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
             <MoviePage
               source={{ kind: "personal", movie }}
               onBack={detailStack.pop}
-              onRate={() => { setRatingOnly(true); setRatingMovie(movie); }}
               onEdit={() => handleEdit(movie)}
               onPersonalStateChange={() => loadMovies(true)}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}

@@ -71,6 +71,7 @@ declare global {
     version?: string;
     viewportHeight?: number;
     viewportStableHeight?: number;
+    isExpanded?: boolean;
     colorScheme?: "light" | "dark";
     themeParams?: TelegramThemeParams;
     HapticFeedback?: TelegramWebAppHapticFeedback;

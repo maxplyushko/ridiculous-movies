@@ -63,6 +63,8 @@ public interface AppRepository {
 
   PersonalMovie findPersonalMovieForCaller(String callerId, Long tmdbId, String title);
 
+  Movie findGroupMovieMatch(String callerId, Long tmdbId, String title);
+
   void deletePersonalMovieById(String id, String userId);
 
   void setGroupChatId(String groupId, Long chatId);

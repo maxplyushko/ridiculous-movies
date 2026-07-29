@@ -51,3 +51,11 @@ export async function deleteMovie(movieId: string): Promise<void> {
 export async function rateMovie(movieId: string, score: number): Promise<Movie> {
   return apiFetch<Movie>(`${BASE}/${movieId}/rating`, {method: "PUT", body: {score}});
 }
+
+export async function fetchGroupMovieMatch(tmdbId?: number | null, title?: string): Promise<Movie | null> {
+  const params = new URLSearchParams();
+  if (tmdbId != null) params.set("tmdbId", String(tmdbId));
+  if (title) params.set("title", title);
+  const res = await apiFetch<Movie | undefined>(`${BASE}/by-tmdb?${params.toString()}`);
+  return res ?? null;
+}

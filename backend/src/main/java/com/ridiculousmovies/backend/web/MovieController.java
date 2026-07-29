@@ -9,6 +9,7 @@ import com.ridiculousmovies.backend.web.dto.UpdateMovieRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,6 +38,16 @@ public class MovieController {
       @RequestParam(defaultValue = "false") boolean requireAllUsers
   ) {
     return movieService.listMovies(userId, filter, sort, minRatings, requireAllUsers);
+  }
+
+  @GetMapping("/by-tmdb")
+  public ResponseEntity<MovieResponse> findByTmdb(
+      @RequestHeader("User-Id") String userId,
+      @RequestParam(required = false) Long tmdbId,
+      @RequestParam(required = false) String title
+  ) {
+    MovieResponse res = movieService.findByTmdb(userId, tmdbId, title);
+    return res == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(res);
   }
 
   @GetMapping("/groups")
