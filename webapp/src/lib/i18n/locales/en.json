@@ -15,7 +15,7 @@
     "search": "Search"
   },
   "search": {
-    "placeholder": "Search movies and actors…",
+    "placeholder": "Search in the internet…",
     "cancel": "Cancel",
     "noResults": "Nothing found for",
     "emptyStart": "Start searching",
