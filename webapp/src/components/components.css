@@ -311,6 +311,7 @@
 
 .movie-item-wrapper {
   position: relative;
+  display: grid;
   overflow: hidden;
   background: var(--surface);
 }
@@ -332,17 +333,18 @@
 }
 
 .movie-item-management {
-  position: absolute;
-  top: 0;
-  right: 0;
+  grid-area: 1 / 1;
+  justify-self: end;
+  align-self: stretch;
   width: var(--actions-width, 3.5rem);
-  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 0;
   z-index: 0;
   visibility: hidden;
   pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .movie-item-wrapper--actions-visible .movie-item-management {
@@ -405,6 +407,7 @@
 }
 
 .movie-item {
+  grid-area: 1 / 1;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -2371,22 +2374,6 @@ button.actor-page__known-for-item {
 
 .overview-proposal__actions button:active {
   opacity: 0.7;
-}
-
-.mlp__search-cancel {
-  all: unset;
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.35rem;
-  flex-shrink: 0;
-  color: var(--text-secondary);
-}
-
-.mlp__search-cancel:active {
-  opacity: 0.6;
 }
 
 .tmdb-person-item {

@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { X } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
 import type { RecentEntry } from "@/hooks/useRecentSearches.ts";
@@ -68,7 +68,7 @@ const RecentSearchItem = ({
           className="movie-item-management__delete"
           onClick={() => { closeSwipe(); hapticTabTap(); onDelete(entry.label); }}
         >
-          <Trash2 size={16} />
+          <X size={16} />
         </button>
       </div>
       <article

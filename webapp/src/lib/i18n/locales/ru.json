@@ -19,12 +19,6 @@
     "cancel": "Отмена",
     "noResults": "Ничего не найдено по запросу",
     "emptyStart": "Начните поиск",
-    "sectionClub": "В твоей группе",
-    "sectionPersonal": "В твоём списке",
-    "filterAll": "Все",
-    "filterApp": "Приложение",
-    "filterInternet": "Фильмы",
-    "filterPeople": "Люди",
     "recentTitle": "Недавние запросы"
   },
   "addMovie": {
@@ -79,7 +73,9 @@
     "btnTryAgain": "Попробовать снова",
     "labelNextHost": "Следующий хост",
     "btnAddMovie": "Добавить",
-    "btnRate": "Оценить фильм"
+    "btnRate": "Оценить фильм",
+    "placeholderSearch": "Поиск фильмов…",
+    "noMatch": "Ничего не найдено по запросу"
   },
   "personalList": {
     "btnCancel": "Отмена",
@@ -94,7 +90,9 @@
     "sectionToWatch": "К просмотру",
     "sectionWatched": "Просмотрено",
     "empty": "Список пуст. Добавь что-нибудь!",
-    "randomTitle": "Рандомный фильм"
+    "randomTitle": "Рандомный фильм",
+    "placeholderSearch": "Поиск в списке…",
+    "noMatch": "Ничего не найдено по запросу"
   },
   "personalMovie": {
     "markWatched": "Пометить как просмотренное",

@@ -103,7 +103,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
         <div hidden={currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
-        <div hidden={currentPage !== "search"}><SearchResults active={currentPage === "search"} currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
+        <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
       </main>
       <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />

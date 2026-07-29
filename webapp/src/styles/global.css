@@ -32,7 +32,6 @@ button {
   --bottom-bar-height: 3.625rem;
   --bottom-bar-item-size: 3.125rem;
   --bottom-bar-offset: calc(var(--bottom-bar-height) + 0.75rem + var(--bottom-bar-inset));
-  --search-bar-offset: calc(var(--bottom-bar-offset) + 7.5rem);
   --tab-bar-glass: color-mix(in srgb, var(--tab-bar-bg) 72%, transparent);
   --tab-bar-glass-border: color-mix(in srgb, var(--text-primary) 7%, transparent);
   --tab-bar-glass-highlight: color-mix(in srgb, white 28%, transparent);
@@ -56,7 +55,7 @@ button {
   --page-bg: #212121;
   --text-primary: #ffffff;
   --text-secondary: #8e8e93;
-  --separator: #38383a;
+  --separator: color-mix(in srgb, white 20%, var(--page-bg));
   --surface: color-mix(in srgb, white 11%, var(--page-bg));
   --tab-bar-bg: color-mix(in srgb, white 8%, var(--page-bg));
   --accent-muted: color-mix(in srgb, white 7%, var(--page-bg));

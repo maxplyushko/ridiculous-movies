@@ -19,12 +19,6 @@
     "cancel": "Cancel",
     "noResults": "Nothing found for",
     "emptyStart": "Start searching",
-    "sectionClub": "In your club",
-    "sectionPersonal": "In your personal list",
-    "filterAll": "All",
-    "filterApp": "App",
-    "filterInternet": "Movies",
-    "filterPeople": "People",
     "recentTitle": "Recent searches"
   },
   "addMovie": {
@@ -79,7 +73,9 @@
     "btnTryAgain": "Try again",
     "labelNextHost": "Next host",
     "btnAddMovie": "Add movie",
-    "btnRate": "Rate the movie"
+    "btnRate": "Rate the movie",
+    "placeholderSearch": "Search movies…",
+    "noMatch": "No matches for"
   },
   "personalList": {
     "btnCancel": "Cancel",
@@ -94,7 +90,9 @@
     "sectionToWatch": "To Watch",
     "sectionWatched": "Watched",
     "empty": "Your personal list is empty. Add something!",
-    "randomTitle": "Random movie is"
+    "randomTitle": "Random movie is",
+    "placeholderSearch": "Search your list…",
+    "noMatch": "No matches for"
   },
   "personalMovie": {
     "markWatched": "Mark as watched",

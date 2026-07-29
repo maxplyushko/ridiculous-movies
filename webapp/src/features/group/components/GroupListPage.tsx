@@ -10,6 +10,7 @@ import { RandomizerDialog } from "./RandomizerDialog.tsx";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups, rateMovie } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
+import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
@@ -32,6 +33,7 @@ type DetailEntry =
 const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { isAdmin: boolean; currentUserId: string; onShowStats: () => void; resetSignal?: number }) => {
   const { t } = useTranslation();
   const [movieGroups, setMovieGroups] = useState<MovieGroup[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentRound, setCurrentRound] = useState(0);
   const [maxRound, setMaxRound] = useState(0);
   const [isLoading, setLoading] = useState(true);
@@ -133,6 +135,18 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     return <ErrorScreen error={error} />;
   }
 
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  const visibleGroups = normalizedQuery
+    ? movieGroups
+        .map((g) => ({
+          ...g,
+          movies: g.movies.filter((m) =>
+            m.title.toLowerCase().includes(normalizedQuery) || m.description.toLowerCase().includes(normalizedQuery)
+          ),
+        }))
+        .filter((g) => g.movies.length > 0)
+    : movieGroups;
+
   return (
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
       <div className="mlp__hero">
@@ -152,8 +166,13 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         </div>
       </div>
 
+      <ListSearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('groupList.placeholderSearch')} />
+
       <div className="movie-list">
-        {movieGroups.map((group) => (
+        {normalizedQuery && visibleGroups.length === 0 && (
+          <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
+        )}
+        {visibleGroups.map((group) => (
           <RoundSection
             key={group.groupId}
             movieGroup={group}

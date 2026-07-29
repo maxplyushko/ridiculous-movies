@@ -5,17 +5,17 @@ const MAX_RECENT = 10;
 
 export type RecentEntry =
   | { kind: "query"; label: string }
-  | { kind: "group"; label: string; movieId: string }
-  | { kind: "personal"; label: string; movieId: string }
   | { kind: "tmdb"; label: string; movie: TmdbMovie }
   | { kind: "actor"; label: string; personId: number };
+
+const VALID_KINDS = new Set(["query", "tmdb", "actor"]);
 
 function storageKey(userId: string): string {
   return `recent-searches-${userId}`;
 }
 
 function isRecentEntry(v: unknown): v is RecentEntry {
-  return typeof v === "object" && v !== null && "kind" in v && "label" in v;
+  return typeof v === "object" && v !== null && "kind" in v && "label" in v && VALID_KINDS.has((v as { kind: unknown }).kind as string);
 }
 
 function load(userId: string): RecentEntry[] {

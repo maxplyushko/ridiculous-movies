@@ -14,6 +14,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
+import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
@@ -39,6 +40,7 @@ function fireWatchedCelebration() {
 const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ active: boolean; onShowStats: () => void; resetSignal?: number }>) => {
   const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -180,8 +182,14 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
     }
   };
 
-  const toWatch = movies.filter((m) => m.inList && !m.watched);
-  const watched = movies.filter((m) => m.watched);
+  const normalizedQuery = searchQuery.toLowerCase().trim();
+  const filteredMovies = normalizedQuery
+    ? movies.filter((m) =>
+        m.title.toLowerCase().includes(normalizedQuery) || m.description.toLowerCase().includes(normalizedQuery)
+      )
+    : movies;
+  const toWatch = filteredMovies.filter((m) => m.inList && !m.watched);
+  const watched = filteredMovies.filter((m) => m.watched);
 
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
@@ -227,6 +235,8 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         </div>
       </div>
 
+      <ListSearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('personalList.placeholderSearch')} />
+
       <div className="movie-list">
         <PersonalSection
           title={t('personalList.sectionToWatch')}
@@ -254,7 +264,10 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
           onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
           onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
         />
-        {movies.length === 0 && (
+        {normalizedQuery && filteredMovies.length === 0 && (
+          <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
+        )}
+        {!normalizedQuery && movies.length === 0 && (
           <p className="movie-list__no-results">{t('personalList.empty')}</p>
         )}
       </div>
