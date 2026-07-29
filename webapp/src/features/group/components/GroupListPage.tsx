@@ -153,15 +153,12 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         <div className="mlp__cards">
           <button type="button" className="mlp__card" onClick={openRandomizer}>
             <Dices size={20} className="mlp__card-icon" />
-            <span className="mlp__card-label">{t('groupList.labelRandom')}</span>
           </button>
           <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); onShowStats(); }}>
             <ChartLine size={20} className="mlp__card-icon" />
-            <span className="mlp__card-label">{t('groupList.labelStatistics')}</span>
           </button>
           <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }}>
             <Plus size={20} className="mlp__card-icon" />
-            <span className="mlp__card-label">{t('groupList.btnAddMovie')}</span>
           </button>
         </div>
       </div>

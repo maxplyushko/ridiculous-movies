@@ -214,7 +214,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
             {moviePicker.spinning
               ? <Loader size={20} className="mlp__card-icon tmdb-section__spinner" />
               : <Dices size={20} className="mlp__card-icon" />}
-            <span className="mlp__card-label">{t('groupList.labelRandom')}</span>
           </button>
           <button
             type="button"
@@ -222,7 +221,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
             onClick={() => { hapticTabTap(); onShowStats(); }}
           >
             <ChartLine size={20} className="mlp__card-icon" />
-            <span className="mlp__card-label">{t('groupList.labelStatistics')}</span>
           </button>
           <button
             type="button"
@@ -230,7 +228,6 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
             <Plus size={20} className="mlp__card-icon" />
-            <span className="mlp__card-label">{t('personalList.btnAddMovie')}</span>
           </button>
         </div>
       </div>
