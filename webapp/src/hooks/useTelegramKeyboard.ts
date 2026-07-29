@@ -26,3 +26,14 @@ export function getKeyboardViewportHeight(): number | undefined {
   }
   return window.visualViewport?.height;
 }
+
+export function getKeyboardOffsetPx(): number {
+  if (isTelegramMiniApp()) {
+    const webApp = getTelegramWebApp();
+    const height = webApp?.viewportStableHeight ?? webApp?.viewportHeight;
+    if (height) return Math.max(0, Math.round(window.innerHeight - height));
+  }
+  const vv = window.visualViewport;
+  if (!vv) return 0;
+  return Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+}
