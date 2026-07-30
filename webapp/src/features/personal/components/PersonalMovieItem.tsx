@@ -88,6 +88,18 @@ const PersonalMovieItem = ({
     onOpen(movie);
   };
 
+  const handleHeaderKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (isRevealed) {
+      closeSwipe();
+      return;
+    }
+    hapticTabTap();
+    onOpen(movie);
+  };
+
   return (
     <div
       className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}${movie.watched ? " personal-item--watched" : ""}`}
@@ -99,6 +111,7 @@ const PersonalMovieItem = ({
             type="button"
             className="movie-item-management__edit"
             onClick={() => { closeSwipe(); onEdit(movie); }}
+            aria-label={t('personalMovie.edit')}
           >
             <Pencil size={16} />
           </button>
@@ -106,6 +119,7 @@ const PersonalMovieItem = ({
             type="button"
             className="movie-item-management__delete"
             onClick={() => { closeSwipe(); onDelete(movie); }}
+            aria-label={t('personalMovie.delete')}
           >
             <Trash2 size={16} />
           </button>
@@ -122,13 +136,17 @@ const PersonalMovieItem = ({
         onTransitionEnd={readOnly ? undefined : (e) => handleTransitionEnd(e.propertyName)}
         {...(readOnly ? {} : touchHandlers)}
       >
-        <div className="movie-item-header personal-item-header" onClick={handleHeaderClick}>
+        <div
+          className="movie-item-header personal-item-header"
+          onClick={handleHeaderClick}
+          {...(readOnly ? {} : { role: "button", tabIndex: 0, onKeyDown: handleHeaderKeyDown })}
+        >
           {readOnly ? (
             <span
               className={`personal-item__checkbox${movie.watched ? " personal-item__checkbox--checked" : ""}`}
               aria-hidden="true"
             >
-              {movie.watched && <Check size={14} strokeWidth={3} />}
+              {movie.watched && <Check size={16} strokeWidth={3} />}
             </span>
           ) : (
             <button
@@ -137,7 +155,7 @@ const PersonalMovieItem = ({
               onClick={handleCheckboxClick}
               aria-label={movie.watched ? t('personalMovie.markUnwatched') : t('personalMovie.markWatched')}
             >
-              {movie.watched && <Check size={14} strokeWidth={3} />}
+              {movie.watched && <Check size={16} strokeWidth={3} />}
             </button>
           )}
           <div className="movie-item-header__left">

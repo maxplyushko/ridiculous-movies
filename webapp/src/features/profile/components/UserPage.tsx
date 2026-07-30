@@ -58,7 +58,7 @@ function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
         {inviteCode && (
           <div className="onboarding__invite-row">
             <code className="onboarding__invite-code">{inviteCode}</code>
-            <button type="button" className="onboarding__copy-btn" onClick={handleCopy}>
+            <button type="button" className="onboarding__copy-btn" onClick={handleCopy} aria-label={t('userPage.btnCopyInvite')}>
               {copied ? <Check size={16} /> : <Copy size={16} />}
             </button>
           </div>
@@ -100,12 +100,12 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
             onClick={() => { hapticTabTap(); setShowInvite(true); }}
             aria-label={t('userPage.btnInviteLink')}
           >
-            <LinkIcon size={14} />
+            <LinkIcon size={16} />
           </button>
         )}
         action={
           <button className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
-            <Settings size={24} />
+            <Settings size={20} />
           </button>
         }
       />
@@ -207,7 +207,7 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: {
           onClick={() => { hapticTabTap(); setConfirmingLogout(true); }}
           aria-label={t('userPage.btnSignOut')}
         >
-          <LogOut size={18} />
+          <LogOut size={20} />
         </button>
       </div>
       <Presence show={confirmingLogout}>
@@ -249,7 +249,7 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: {
         <div className="user-page__card">
           <div className="user-page__row">
             <span className="user-page__row-label">{t('settings.labelDarkMode')}</span>
-            <label className="theme-toggle" aria-label="Toggle dark mode">
+            <label className="theme-toggle" aria-label={t('settings.labelDarkMode')}>
               <input
                 type="checkbox"
                 checked={isDark}

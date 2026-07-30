@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Bookmark, Calendar, ChevronDown, ChevronUp, Clapperboard, Clock, Eye, Globe, Info, Loader, Pencil, Star, Tv, User, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Movie } from "@/features/group/types/Movie";
@@ -12,6 +12,7 @@ import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
+import { useDialogA11y } from "@/hooks/useDialogA11y.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import noPosterFallback from "@/assets/no-poster.png";
 
@@ -71,6 +72,8 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [posterFullscreen, setPosterFullscreen] = useState(false);
+  const closePoster = useCallback(() => setPosterFullscreen(false), []);
+  const posterDialogRef = useDialogA11y(closePoster);
   const { selfStatus, statusLoading, setInList, setWatched, setRating } = usePersonalStateSync({
     tmdbId,
     title,
@@ -459,7 +462,11 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
       <Presence show={posterFullscreen}>
         {posterFullscreen && displayPosterUrl && (
           <div
+            ref={posterDialogRef}
             className="movie-page__poster-fullscreen-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             onClick={() => { hapticTabTap(); setPosterFullscreen(false); }}
           >
             <button

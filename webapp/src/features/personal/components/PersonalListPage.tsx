@@ -291,7 +291,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
               <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
               <p><strong>{moviePicker.result}</strong></p>
               <div className="confirm-dialog__actions">
-                <button type="button" onClick={moviePicker.clear}>OK</button>
+                <button type="button" onClick={moviePicker.clear}>{t('personalList.btnOk')}</button>
               </div>
             </div>
           </div>

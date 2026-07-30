@@ -8,18 +8,28 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 :root {
   --page-bg: #eaeaea;
   --surface: #ffffff;
   --accent: #3390ec;
   --text-primary: #000000;
-  --text-secondary: #8e8e93;
+  --text-secondary: #636366;
   --separator: #c6c6c8;
   --tab-bar-bg: #ffffff;
   --tab-inactive: #8e8e93;
   --danger: #ff3b30;
   --button-text: #ffffff;
 
+  --accent-button-bg: color-mix(in srgb, var(--accent) 78%, black);
   --accent-soft: color-mix(in srgb, var(--accent) 10%, var(--surface));
   --active-highlight: color-mix(in srgb, var(--text-primary) 5%, transparent);
   --accent-muted: color-mix(in srgb, var(--separator) 35%, var(--page-bg));

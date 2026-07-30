@@ -6,6 +6,7 @@ import type { User } from "@/types/User.ts";
 import type { MovieGroup } from "../types/MovieGroup.ts";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { hapticSpinReveal, hapticSpinStart, hapticSpinTick, hapticTabTap, stopHaptics } from "@/utils/haptics.ts";
+import { useDialogA11y } from "@/hooks/useDialogA11y.ts";
 
 const NP_TICK_MS = 65;
 const NP_TICK_COUNT = 20;
@@ -31,6 +32,7 @@ type RandomizerDialogProps = {
 
 export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, onClose }: Readonly<RandomizerDialogProps>) {
   const { t } = useTranslation();
+  const dialogRef = useDialogA11y(onClose);
   const [mode, setMode] = useState<"number" | "host">("number");
 
   const [npMin, setNpMin] = useState(1);
@@ -137,7 +139,13 @@ export function RandomizerDialog({ sliderMax, users, movieGroups, currentRound, 
 
   return (
     <div className="confirm-dialog-overlay" onClick={onClose}>
-      <div className="confirm-dialog mlp__number-picker" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={dialogRef}
+        className="confirm-dialog mlp__number-picker"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
 
         <div className="misc-page__default-page-row">
           <button

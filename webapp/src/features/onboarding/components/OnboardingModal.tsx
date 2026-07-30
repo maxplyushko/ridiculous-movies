@@ -44,7 +44,7 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
       setInviteCode(res.inviteCode);
       setStep("created");
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? e.message : t('onboarding.errorGeneric'));
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +69,7 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
       const res = await joinGroup(joinCode.trim());
       onGroupReady(res.groupId, res.groupName);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? e.message : t('onboarding.errorGeneric'));
     } finally {
       setIsJoining(false);
     }
@@ -85,7 +85,7 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
       tokenStore.setSession(res.accessToken);
       window.location.reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(e instanceof Error ? e.message : t('onboarding.errorGeneric'));
       setGuestPending(false);
     }
   };
@@ -187,7 +187,7 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
               <span className="confirm-dialog__subtitle">{t("onboarding.inviteHint")}</span>
               <div className="onboarding__invite-row">
                 <code className="onboarding__invite-code">{inviteCode}</code>
-                <button type="button" className="onboarding__copy-btn" onClick={handleCopy}>
+                <button type="button" className="onboarding__copy-btn" onClick={handleCopy} aria-label={t('onboarding.btnCopy')}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                 </button>
               </div>

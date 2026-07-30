@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader } from "lucide-react";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { calcDetailedScore, roundHalf, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
+import { useDialogA11y } from "@/hooks/useDialogA11y.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 type RatingModalProps = {
@@ -53,10 +54,19 @@ export function RatingModal({ title, initialScore, defaultMode = "detailed", can
     }
   };
 
+  const dialogRef = useDialogA11y(onCancel);
+
   return (
     <div className="confirm-dialog-overlay" onClick={onCancel}>
-      <div className="confirm-dialog personal-rating-dialog" onClick={(e) => e.stopPropagation()}>
-        <p className="rating-modal__title">{title}</p>
+      <div
+        ref={dialogRef}
+        className="confirm-dialog personal-rating-dialog"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rating-modal-title"
+      >
+        <p className="rating-modal__title" id="rating-modal-title">{title}</p>
         <RatingEditor
           mode={mode}
           detailed={detailed}
@@ -68,8 +78,9 @@ export function RatingModal({ title, initialScore, defaultMode = "detailed", can
         {error && <span className="confirm-dialog__error">{error}</span>}
         <div className="confirm-dialog__actions">
           <button type="button" onClick={onCancel} disabled={isSaving}>{cancelLabel}</button>
-          <button type="button" onClick={handleSave} disabled={score === null || isSaving}>
-            {isSaving ? <Loader size={14} className="tmdb-section__spinner" /> : saveLabel}
+          <button type="button" onClick={handleSave} disabled={score === null || isSaving} aria-busy={isSaving}>
+            {isSaving && <Loader size={14} className="tmdb-section__spinner" aria-hidden="true" />}
+            {saveLabel}
           </button>
         </div>
       </div>

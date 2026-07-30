@@ -218,3 +218,11 @@
   padding: 0.5rem 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .auth-screen__orb--1,
+  .auth-screen__orb--2,
+  .auth-screen__orb--3 {
+    animation: none;
+  }
+}
+

@@ -50,23 +50,35 @@
 
 .personal-item__checkbox {
   all: unset;
+  position: relative;
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  margin: -9px 0 -9px -9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.personal-item__checkbox::before {
+  content: "";
+  box-sizing: border-box;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   border: 2px solid var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1px;
-  cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.personal-item__checkbox--checked {
+.personal-item__checkbox--checked::before {
   background: var(--accent);
+}
+
+.personal-item__checkbox svg {
+  position: absolute;
   color: var(--button-text);
 }
 
@@ -83,6 +95,12 @@
 
 .personal-item__checkbox--pop {
   animation: personal-checkbox-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .personal-item__checkbox--pop {
+    animation: none;
+  }
 }
 
 .personal-item__title--watched {

@@ -31,7 +31,7 @@ export function SignInScreen({ onSuccess }: Readonly<Props>) {
         window.location.href = url;
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to get sign-in URL");
+      setError(e instanceof Error ? e.message : t('signIn.errorGeneric'));
     }
   };
 
@@ -44,7 +44,7 @@ export function SignInScreen({ onSuccess }: Readonly<Props>) {
       tokenStore.set(res.accessToken);
       onSuccess();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(e instanceof Error ? e.message : t('signIn.errorGeneric'));
       setGuestPending(false);
     }
   };

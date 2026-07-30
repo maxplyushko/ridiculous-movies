@@ -20,21 +20,21 @@ export function ProfileStatGrid({ userId, stats }: Readonly<{ userId: string; st
         <div className="user-page__stat-strip">
           <div className="user-page__stat-cell">
             <span className="user-page__stat-cell-top">
-              <TrendingUp size={13} className="user-page__stat-glyph--green" />
+              <TrendingUp size={16} className="user-page__stat-glyph--green" />
               <span className="user-page__stat-cell-value">{rating?.averageRatingGiven != null ? rating.averageRatingGiven.toFixed(1) : "—"}</span>
             </span>
             <span className="user-page__stat-cell-label">{t('userPage.statAvgGiven')}</span>
           </div>
           <div className="user-page__stat-cell">
             <span className="user-page__stat-cell-top">
-              <Clapperboard size={13} className="user-page__stat-glyph--blue" />
+              <Clapperboard size={16} className="user-page__stat-glyph--blue" />
               <span className="user-page__stat-cell-value">{rating?.averageRatingAsHost != null ? rating.averageRatingAsHost.toFixed(1) : "—"}</span>
             </span>
             <span className="user-page__stat-cell-label">{t('userPage.statAvgAsHost')}</span>
           </div>
           <div className="user-page__stat-cell">
             <span className="user-page__stat-cell-top">
-              <Trophy size={13} className="user-page__stat-glyph--purple" />
+              <Trophy size={16} className="user-page__stat-glyph--purple" />
               <span className="user-page__stat-cell-value">{hostRank > 0 ? `#${hostRank}` : "—"}</span>
             </span>
             <span className="user-page__stat-cell-label">{t('userPage.statHostRank')}</span>

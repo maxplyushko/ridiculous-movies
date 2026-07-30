@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useAnimatedClose } from "@/hooks/useAnimatedClose.ts";
 import { PAGE_EXIT_MS } from "@/components/Presence.tsx";
+import { StatPageSkeleton } from "@/features/stats/components/StatPageSkeleton.tsx";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,7 @@ const PersonalStatPage = ({ active, onBack }: PersonalStatPageProps) => {
   useSwipeBack(onBack, active ? sectionEl : null);
 
   const renderBody = () => {
-    if (state.status === "loading") return null;
+    if (state.status === "loading") return <StatPageSkeleton />;
     if (state.status === "error") {
       return (
         <>

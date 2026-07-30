@@ -151,13 +151,13 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
       <div className="mlp__hero">
         <div className="mlp__cards">
-          <button type="button" className="mlp__card" onClick={openRandomizer}>
+          <button type="button" className="mlp__card" onClick={openRandomizer} aria-label={t('groupList.labelRandom')}>
             <Dices size={20} className="mlp__card-icon" />
           </button>
-          <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); onShowStats(); }}>
+          <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); onShowStats(); }} aria-label={t('groupList.labelStatistics')}>
             <ChartLine size={20} className="mlp__card-icon" />
           </button>
-          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }}>
+          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }} aria-label={t('groupList.btnAddMovie')}>
             <Plus size={20} className="mlp__card-icon" />
           </button>
         </div>

@@ -455,6 +455,13 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .misc-page__result-number,
+  .misc-page__result-number--spinning {
+    animation: none;
+  }
+}
+
 .misc-page__default-page-row {
   display: flex;
   gap: 0;

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 
@@ -10,6 +11,7 @@ type ListSearchBarProps = {
 };
 
 export function ListSearchBar({ value, onChange, placeholder }: Readonly<ListSearchBarProps>) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -35,7 +37,7 @@ export function ListSearchBar({ value, onChange, placeholder }: Readonly<ListSea
           <button
             type="button"
             className="mlp__search-clear"
-            aria-label={placeholder}
+            aria-label={t('search.clearLabel')}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { hapticTabTap(); onChange(""); }}
           >

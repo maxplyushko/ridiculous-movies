@@ -71,7 +71,7 @@
 }
 
 .mlp__card--accent {
-  background: var(--accent);
+  background: var(--accent-button-bg);
 }
 
 .mlp__card--accent .mlp__card-icon,
@@ -377,7 +377,7 @@
 }
 
 .movie-item-management__edit {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   border-top-left-radius: 0;
 }
 
@@ -1365,7 +1365,7 @@ button.actor-page__known-for-item {
 }
 
 .user-chip--selected {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   color: var(--button-text);
 }
 
@@ -1555,7 +1555,7 @@ button.actor-page__known-for-item {
 }
 
 .add-movie__control button:last-child {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   color: var(--button-text);
   font-weight: 600;
 }
@@ -1764,7 +1764,7 @@ button.actor-page__known-for-item {
 }
 
 .confirm-dialog__actions button:last-child {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   color: var(--button-text);
 }
 
@@ -1909,7 +1909,7 @@ button.actor-page__known-for-item {
 }
 
 .onboarding__choice-btn:first-child {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   border-color: var(--accent);
   color: var(--button-text);
 }
@@ -1961,8 +1961,11 @@ button.actor-page__known-for-item {
   border: none;
   background: none;
   color: var(--accent);
-  padding: 0;
+  padding: 0.5rem;
+  margin: -0.5rem;
   display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
@@ -1997,7 +2000,7 @@ button.actor-page__known-for-item {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background: var(--accent);
+  background: var(--accent-button-bg);
   color: var(--button-text);
 }
 
@@ -2445,7 +2448,7 @@ button.actor-page__known-for-item {
 }
 
 .overview-proposal__actions button:last-child {
-  background: var(--accent);
+  background: var(--accent-button-bg);
   color: var(--button-text);
 }
 

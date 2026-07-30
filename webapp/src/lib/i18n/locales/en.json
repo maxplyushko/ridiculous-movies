@@ -1,9 +1,9 @@
 {
   "errors": {
-    "title": "Oops! Mayday Mayday"
+    "title": "Something went wrong"
   },
   "guestLimit": {
-    "message": "Like the app? Create your own group or ask yours friends to invite you.",
+    "message": "Like the app? Create your own group or ask your friends to invite you.",
     "ok": "OK"
   },
   "nav": {
@@ -17,6 +17,7 @@
   "search": {
     "placeholder": "Search in the internet…",
     "cancel": "Cancel",
+    "clearLabel": "Clear search",
     "noResults": "Nothing found for",
     "emptyStart": "Start searching",
     "recentTitle": "Recent searches"
@@ -92,11 +93,14 @@
     "empty": "Your personal list is empty. Add something!",
     "randomTitle": "Random movie is",
     "placeholderSearch": "Search your list…",
-    "noMatch": "No matches for"
+    "noMatch": "No matches for",
+    "btnOk": "OK"
   },
   "personalMovie": {
     "markWatched": "Mark as watched",
-    "markUnwatched": "Mark as unwatched"
+    "markUnwatched": "Mark as unwatched",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "settings": {
     "sectionHomepage": "Homepage",
@@ -118,6 +122,7 @@
     "badgeMember": "Member",
     "btnInviteLink": "Invite code",
     "inviteDialogHint": "Share this invite code so friends can join your club:",
+    "btnCopyInvite": "Copy invite link",
     "btnSignOut": "Sign out",
     "confirmLogout": "Do you want to log out?",
     "btnNo": "No",
@@ -194,7 +199,8 @@
     "btnGoogle": "Sign in with Google",
     "btnLoading": "Loading…",
     "btnGuest": "Continue as guest",
-    "or": "or"
+    "or": "or",
+    "errorGeneric": "Something went wrong"
   },
   "onboarding": {
     "title": "Welcome! How do you want to get started?",
@@ -210,6 +216,8 @@
     "btnCreate": "Create",
     "createdTitle": "\"{{name}}\" is ready!",
     "inviteHint": "Share this invite code so friends can join your club:",
-    "btnOk": "OK"
+    "btnOk": "OK",
+    "btnCopy": "Copy",
+    "errorGeneric": "Something went wrong"
   }
 }

@@ -19,6 +19,10 @@
     animation: none;
     transition: none;
   }
+
+  .user-page__member-row--tremble {
+    animation: none;
+  }
 }
 
 .user-page {
@@ -125,7 +129,6 @@
 
 .user-page__banner-avatar {
   color: rgba(255, 255, 255, 0.96);
-  fill: rgba(255, 255, 255, 0.96);
   margin-bottom: -2.75rem;
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.18));
 }
@@ -190,8 +193,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 6px;
   color: var(--text-secondary);
 }

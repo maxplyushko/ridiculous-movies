@@ -35,6 +35,7 @@ function UserChipSelector({ users, selectedId, onChange }: Readonly<UserChipSele
             type="button"
             className={`user-chip${selected ? " user-chip--selected" : ""}`}
             onClick={() => onChange(u.id)}
+            aria-pressed={selected}
           >
             <span className="user-chip__avatar">{u.name.split(/\s+/)[0]}</span>
           </button>
@@ -122,7 +123,7 @@ function RatingCard({
           onClick={() => { hapticTabTap(); onRemove(formId); }}
           aria-label={t('addMovie.btnRemoveRater')}
         >
-          <Trash2 size={18} />
+          <Trash2 size={16} />
         </button>
       </div>
       <RatingEditor

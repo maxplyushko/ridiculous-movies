@@ -49,8 +49,12 @@ export function StarRating({ value, onChange, step = 1 }: Readonly<StarRatingPro
             type="button"
             data-star={n}
             className={`star-rating__item${filled ? " star-rating__item--filled" : ""}`}
-            onClick={(e) => { hapticTabTap(); onChange(pointValue(e.currentTarget, e.clientX, n, step)); }}
-            aria-label={`Rate ${n}`}
+            onClick={(e) => {
+              hapticTabTap();
+              const isKeyboardActivation = e.detail === 0;
+              onChange(isKeyboardActivation ? n : pointValue(e.currentTarget, e.clientX, n, step));
+            }}
+            aria-label={`Rate ${n} out of 10${value !== null ? `, current rating ${value}` : ""}`}
           >
             <span className="star-rating__glyph">
               <Star size={22} className="star-rating__icon" strokeWidth={2.5} />
