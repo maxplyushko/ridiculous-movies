@@ -185,6 +185,7 @@
   "actorPage": {
     "biography": "Biography",
     "bornOn": "Born",
+    "yearsOld": "{{age}} y.o.",
     "placeOfBirth": "Place of birth",
     "knownFor": "Known for",
     "expand": "Show more",

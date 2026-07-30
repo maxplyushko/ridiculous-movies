@@ -186,6 +186,7 @@
   "actorPage": {
     "biography": "Биография",
     "bornOn": "Дата рождения",
+    "yearsOld": "{{age}} лет",
     "placeOfBirth": "Место рождения",
     "knownFor": "Известен по",
     "expand": "Показать больше",

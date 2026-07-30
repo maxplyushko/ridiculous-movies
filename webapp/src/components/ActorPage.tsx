@@ -12,6 +12,16 @@ type ActorPageProps = {
   onOpenMovie?: (movie: TmdbMovie) => void;
 };
 
+function calculateAge(birthday: string): number | null {
+  const birth = new Date(birthday);
+  if (Number.isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const monthDiff = now.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 export function ActorPage({ personId, onBack, onOpenMovie }: Readonly<ActorPageProps>) {
   const { t } = useTranslation();
   const { actor, loading } = useTmdbActor(personId);
@@ -21,6 +31,8 @@ export function ActorPage({ personId, onBack, onOpenMovie }: Readonly<ActorPageP
   const [photoLoaded, setPhotoLoaded] = useState(false);
 
   const knownFor = actor?.knownFor ?? [];
+
+  const age = actor?.birthday ? calculateAge(actor.birthday) : null;
 
   useLayoutEffect(() => {
     const el = bioRef.current;
@@ -58,7 +70,13 @@ export function ActorPage({ personId, onBack, onOpenMovie }: Readonly<ActorPageP
         <h1 className="movie-page__title">{loading ? "" : actor?.name}</h1>
         {!loading && (actor?.birthday || actor?.placeOfBirth) && (
           <div className="movie-page__meta">
-            {actor?.birthday && <span><Calendar size={14} />{actor.birthday}</span>}
+            {actor?.birthday && (
+              <span>
+                <Calendar size={14} />
+                {actor.birthday}
+                {age !== null && ` (${t("actorPage.yearsOld", { age })})`}
+              </span>
+            )}
             {actor?.placeOfBirth && <span><MapPin size={14} />{actor.placeOfBirth}</span>}
           </div>
         )}
