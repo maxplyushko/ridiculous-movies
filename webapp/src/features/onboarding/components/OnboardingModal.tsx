@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Check, Copy, Loader } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
-import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
+import { useCopyInviteLink } from "@/hooks/useCopyInviteLink.ts";
 import { createGroup, joinGroup } from "../api/onboarding.ts";
-import { buildInviteLinks } from "../inviteLink.ts";
 import { guestLogin } from "@/features/auth/api/auth.ts";
 import { tokenStore } from "@/api/client.ts";
 import iconSvg from "@/assets/icon.svg";
@@ -26,7 +25,7 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
   const [error, setError] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [createdGroup, setCreatedGroup] = useState<{ groupId: string; groupName: string } | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: handleCopy } = useCopyInviteLink(inviteCode);
   const [guestPending, setGuestPending] = useState(false);
 
   const goCreateForm = () => { hapticTabTap(); setStep("createForm"); };
@@ -48,16 +47,6 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleCopy = async () => {
-    if (!inviteCode) return;
-    hapticTabTap();
-    const links = buildInviteLinks(inviteCode);
-    const link = isTelegramMiniApp() && links.telegram ? links.telegram : links.web;
-    await navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleJoin = async () => {

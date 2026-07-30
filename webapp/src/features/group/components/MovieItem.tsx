@@ -1,4 +1,5 @@
 import type { Movie } from "../types/Movie";
+import type { CSSProperties, MouseEvent } from "react";
 import { Calendar, Pencil, Star, Trash2, User } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
@@ -56,7 +57,7 @@ const MovieItem = ({
     onBegin: onSwipeBegin,
   });
 
-  const handleHeaderClick = (e: React.MouseEvent) => {
+  const handleHeaderClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (suppressNextClickRef.current) {
       suppressNextClickRef.current = false;
@@ -73,7 +74,7 @@ const MovieItem = ({
   return (
     <div
       className={`movie-item-wrapper${showActions && !readOnly ? " movie-item-wrapper--actions-visible" : ""}`}
-      style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
+      style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as CSSProperties}
     >
       {!readOnly && (
       <div className="movie-item-management">

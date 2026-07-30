@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import GroupListPage from "@/features/group/components/GroupListPage.tsx";
 import StatPage from "@/features/stats/components/StatPage.tsx";
 import PersonalStatPage from "@/features/personal/components/PersonalStatPage.tsx";
@@ -19,7 +19,7 @@ import { KeyboardDebugOverlay } from "@/components/KeyboardDebugOverlay.tsx";
 type Tab = "group" | "personal" | "misc" | "search";
 type Page = Tab | "stat" | "personalStat";
 
-const TABS: Array<{ id: Tab; labelKey: string; icon: React.ReactNode }> = [
+const TABS: Array<{ id: Tab; labelKey: string; icon: ReactNode }> = [
   { id: "group", labelKey: "nav.groupList", icon: <Users size={30} /> },
   { id: "personal", labelKey: "nav.personalList", icon: <Film size={30} /> },
   { id: "misc", labelKey: "nav.profile", icon: <CircleUser size={30} /> },
@@ -109,6 +109,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         {TABS.map(({ id, labelKey, icon }) => (
           <button
             key={id}
+            type="button"
             className={`bottom-bar-button${(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? " active" : ""}`}
             aria-label={t(labelKey)}
             aria-current={(currentPage === id || (currentPage === "stat" && id === "group") || (currentPage === "personalStat" && id === "personal")) ? "page" : undefined}

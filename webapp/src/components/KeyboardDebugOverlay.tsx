@@ -34,9 +34,11 @@ export function KeyboardDebugOverlay() {
     const render = () => {
       const s = sample();
       const active = document.activeElement;
-      const activeLabel = active instanceof HTMLElement
-        ? `${active.tagName}${active.id ? `#${active.id}` : ""}`
-        : "none";
+      let activeLabel = "none";
+      if (active instanceof HTMLElement) {
+        const idSuffix = active.id ? `#${active.id}` : "";
+        activeLabel = `${active.tagName}${idSuffix}`;
+      }
       const inset = getComputedStyle(document.documentElement).getPropertyValue("--kb-inset").trim();
       node.textContent = [
         `inner   ${getLayoutViewportHeight()}`,

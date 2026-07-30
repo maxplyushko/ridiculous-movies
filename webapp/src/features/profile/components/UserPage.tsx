@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import "../profile.css";
 import { Check, ChevronRight, Copy, Link as LinkIcon, LogOut, Settings, User as UserIcon } from "lucide-react";
@@ -14,13 +14,13 @@ import type { AuthResponse } from "@/features/auth/api/auth.ts";
 import i18n from "@/lib/i18n/index.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
+import { Dialog } from "@/components/Dialog.tsx";
 import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
 import { setTmdbLang } from "@/utils/tmdbLang.ts";
 import { getInviteLink } from "@/features/onboarding/api/onboarding.ts";
-import { buildInviteLinks } from "@/features/onboarding/inviteLink.ts";
-import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
+import { useCopyInviteLink } from "@/hooks/useCopyInviteLink.ts";
 import MemberListPage from "@/features/personal/components/MemberListPage.tsx";
 import { ProfileHero } from "./ProfileHero.tsx";
 import { ProfileStatGrid } from "./ProfileStatGrid.tsx";
@@ -32,7 +32,7 @@ function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation();
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy: handleCopy } = useCopyInviteLink(inviteCode);
 
   useEffect(() => {
     getInviteLink()
@@ -40,34 +40,22 @@ function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  const handleCopy = async () => {
-    if (!inviteCode) return;
-    hapticTabTap();
-    const links = buildInviteLinks(inviteCode);
-    const link = isTelegramMiniApp() && links.telegram ? links.telegram : links.web;
-    await navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
-    <div className="confirm-dialog-overlay" onClick={onClose}>
-      <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-        <p>{t('userPage.inviteDialogHint')}</p>
-        {error && <span className="confirm-dialog__error">{error}</span>}
-        {inviteCode && (
-          <div className="onboarding__invite-row">
-            <code className="onboarding__invite-code">{inviteCode}</code>
-            <button type="button" className="onboarding__copy-btn" onClick={handleCopy} aria-label={t('userPage.btnCopyInvite')}>
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </button>
-          </div>
-        )}
-        <div className="confirm-dialog__actions">
-          <button type="button" onClick={() => { hapticTabTap(); onClose(); }}>{t('onboarding.btnOk')}</button>
+    <Dialog className="confirm-dialog" onClose={onClose}>
+      <p>{t('userPage.inviteDialogHint')}</p>
+      {error && <span className="confirm-dialog__error">{error}</span>}
+      {inviteCode && (
+        <div className="onboarding__invite-row">
+          <code className="onboarding__invite-code">{inviteCode}</code>
+          <button type="button" className="onboarding__copy-btn" onClick={handleCopy} aria-label={t('userPage.btnCopyInvite')}>
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+          </button>
         </div>
+      )}
+      <div className="confirm-dialog__actions">
+        <button type="button" onClick={() => { hapticTabTap(); onClose(); }}>{t('onboarding.btnOk')}</button>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -104,7 +92,7 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
           </button>
         )}
         action={
-          <button className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
+          <button type="button" className="user-page__banner-gear" onClick={() => { hapticTabTap(); onSettings(); }} aria-label={t('userPage.headingSettings')}>
             <Settings size={20} />
           </button>
         }
@@ -153,12 +141,12 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   );
 }
 
-function SettingsView({ session, onBack, dirtyRef, discardRef }: {
+function SettingsView({ session, onBack, dirtyRef, discardRef }: Readonly<{
   session: AuthResponse;
   onBack: () => void;
-  dirtyRef: MutableRefObject<boolean>;
-  discardRef: MutableRefObject<(() => void) | null>;
-}) {
+  dirtyRef: RefObject<boolean>;
+  discardRef: RefObject<(() => void) | null>;
+}>) {
   const { t } = useTranslation();
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
   const [persistedDark, setPersistedDark] = useState(() =>
@@ -183,7 +171,7 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: {
       applyColorScheme(persistedDark);
       setDefaultPage(persistedDefaultPage);
       setSelectedLang(persistedLang);
-      i18n.changeLanguage(persistedLang);
+      void i18n.changeLanguage(persistedLang);
       setSelectedTmdbLang(persistedTmdbLang);
       setIsPublic(persistedPublic);
     };
@@ -267,14 +255,14 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: {
             <button
               type="button"
               className={`user-page__seg-btn${selectedLang === "en" ? " user-page__seg-btn--active" : ""}`}
-              onClick={() => { hapticTabTap(); setSelectedLang("en"); i18n.changeLanguage("en"); }}
+              onClick={() => { hapticTabTap(); setSelectedLang("en"); void i18n.changeLanguage("en"); }}
             >
               English
             </button>
             <button
               type="button"
               className={`user-page__seg-btn${selectedLang === "ru" ? " user-page__seg-btn--active" : ""}`}
-              onClick={() => { hapticTabTap(); setSelectedLang("ru"); i18n.changeLanguage("ru"); }}
+              onClick={() => { hapticTabTap(); setSelectedLang("ru"); void i18n.changeLanguage("ru"); }}
             >
               Русский
             </button>

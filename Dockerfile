@@ -2,7 +2,9 @@
 FROM node:22-alpine AS web
 WORKDIR /repo
 COPY webapp/package.json webapp/package-lock.json ./webapp/
-RUN cd webapp && npm ci
+WORKDIR /repo/webapp
+RUN npm ci --ignore-scripts
+WORKDIR /repo
 COPY webapp ./webapp
 COPY backend ./backend
 WORKDIR /repo/webapp

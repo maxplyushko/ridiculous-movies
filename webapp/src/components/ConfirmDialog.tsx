@@ -1,5 +1,5 @@
 import { Loader } from "lucide-react";
-import { useDialogA11y } from "@/hooks/useDialogA11y.ts";
+import { useEffect, useRef, type ReactNode } from "react";
 
 type ConfirmDialogProps = {
   message: string;
@@ -9,7 +9,7 @@ type ConfirmDialogProps = {
   confirmLabel: string;
   onCancel: () => void;
   onConfirm: () => void;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export function ConfirmDialog({
@@ -22,29 +22,38 @@ export function ConfirmDialog({
   onConfirm,
   children,
 }: Readonly<ConfirmDialogProps>) {
-  const dialogRef = useDialogA11y(onCancel);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) return;
+    node.showModal();
+    return () => node.close();
+  }, []);
+
+  useEffect(() => {
+    const node = dialogRef.current;
+    if (!node) return;
+    const onNativeCancel = (e: Event) => {
+      e.preventDefault();
+      onCancel();
+    };
+    node.addEventListener("cancel", onNativeCancel);
+    return () => node.removeEventListener("cancel", onNativeCancel);
+  }, [onCancel]);
+
   return (
-    <div className="confirm-dialog-overlay">
-      <div
-        ref={dialogRef}
-        className="confirm-dialog"
-        style={children ? { position: "relative", overflow: "visible" } : undefined}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-describedby="confirm-dialog-message"
-      >
-        {children}
-        <p id="confirm-dialog-message">{message}</p>
-        {error && <span className="confirm-dialog__error">{error}</span>}
-        <div className="confirm-dialog__actions">
-          <button type="button" onClick={onCancel} disabled={isLoading}>{cancelLabel}</button>
-          <button type="button" onClick={onConfirm} disabled={isLoading} aria-busy={isLoading}>
-            {isLoading && <Loader size={14} className="confirm-dialog__spinner" aria-hidden="true" />}
-            {confirmLabel}
-          </button>
-        </div>
+    <dialog ref={dialogRef} className="confirm-dialog" aria-describedby="confirm-dialog-message">
+      {children}
+      <p id="confirm-dialog-message">{message}</p>
+      {error && <span className="confirm-dialog__error">{error}</span>}
+      <div className="confirm-dialog__actions">
+        <button type="button" onClick={onCancel} disabled={isLoading}>{cancelLabel}</button>
+        <button type="button" onClick={onConfirm} disabled={isLoading} aria-busy={isLoading}>
+          {isLoading && <Loader size={14} className="confirm-dialog__spinner" aria-hidden="true" />}
+          {confirmLabel}
+        </button>
       </div>
-    </div>
+    </dialog>
   );
 }

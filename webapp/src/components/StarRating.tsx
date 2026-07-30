@@ -43,6 +43,7 @@ export function StarRating({ value, onChange, step = 1 }: Readonly<StarRatingPro
       {STAR_INDICES.map((n) => {
         const filled = value !== null && n <= value;
         const half = value !== null && !filled && n - 0.5 <= value;
+        const currentRatingSuffix = value !== null ? `, current rating ${value}` : "";
         return (
           <button
             key={n}
@@ -54,7 +55,7 @@ export function StarRating({ value, onChange, step = 1 }: Readonly<StarRatingPro
               const isKeyboardActivation = e.detail === 0;
               onChange(isKeyboardActivation ? n : pointValue(e.currentTarget, e.clientX, n, step));
             }}
-            aria-label={`Rate ${n} out of 10${value !== null ? `, current rating ${value}` : ""}`}
+            aria-label={`Rate ${n} out of 10${currentRatingSuffix}`}
           >
             <span className="star-rating__glyph">
               <Star size={22} className="star-rating__icon" strokeWidth={2.5} />

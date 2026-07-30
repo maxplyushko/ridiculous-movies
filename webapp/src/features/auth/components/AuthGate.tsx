@@ -21,6 +21,74 @@ type State =
   | { mode: "error"; message: string }
   | { mode: "ok"; data: AuthResponse };
 
+function stripSearchParam(name: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.delete(name);
+  window.history.replaceState({}, "", url.toString());
+}
+
+async function exchangeUrlGoogleToken() {
+  const urlToken = new URLSearchParams(window.location.search).get("token");
+  if (!urlToken?.startsWith("gauth_") || tokenStore.get()) return;
+  try {
+    const res = await exchangeGoogleToken(urlToken);
+    tokenStore.set(res.accessToken);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    stripSearchParam("token");
+  }
+}
+
+async function exchangeStartParamGoogleToken(startParam: string | undefined) {
+  if (!startParam?.startsWith("gauth_") || tokenStore.get()) return;
+  try {
+    const res = await exchangeGoogleToken(startParam);
+    tokenStore.set(res.accessToken);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function resolveInviteCode(startParam: string | undefined) {
+  return startParam?.startsWith("invite_")
+    ? startParam.slice("invite_".length)
+    : new URLSearchParams(window.location.search).get("invite");
+}
+
+async function applyInviteCode(data: AuthResponse, inviteCode: string | null) {
+  if (data.groupId || !inviteCode) return;
+  try {
+    const joined = await joinGroup(inviteCode);
+    data.groupId = joined.groupId;
+    data.groupName = joined.groupName;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function applySessionPrefs(data: AuthResponse) {
+  if (data.lang) {
+    void i18n.changeLanguage(data.lang);
+    localStorage.setItem("i18n-lang", data.lang);
+  }
+  if (data.tmdbLang) setTmdbLang(data.tmdbLang);
+}
+
+class SignInRequiredError extends Error {}
+
+async function telegramAutoLogin() {
+  if (!isTelegramMiniApp() || tokenStore.get() || tokenStore.isLoggedOut()) return;
+  const tg = getTelegramWebApp();
+  if (!tg?.initData) return;
+  try {
+    const res = await telegramLogin(tg.initData);
+    tokenStore.set(res.accessToken);
+  } catch {
+    throw new SignInRequiredError();
+  }
+}
+
 export function AuthGate({ children }: Readonly<AuthGateProps>) {
   const [state, setState] = React.useState<State>({ mode: "loading" });
   const [retryKey, setRetryKey] = React.useState(0);
@@ -31,73 +99,31 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
     setState({ mode: "loading" });
 
     const run = async () => {
-      const urlToken = new URLSearchParams(window.location.search).get("token");
-      if (urlToken?.startsWith("gauth_") && !tokenStore.get()) {
-        try {
-          const res = await exchangeGoogleToken(urlToken);
-          tokenStore.set(res.accessToken);
-        } catch {
-          // consumed or expired — fall through to normal flow
-        } finally {
-          const url = new URL(window.location.href);
-          url.searchParams.delete("token");
-          window.history.replaceState({}, "", url.toString());
-        }
-      }
+      await exchangeUrlGoogleToken();
 
       const startParam = getTelegramWebApp()?.initDataUnsafe?.start_param;
-      if (startParam?.startsWith("gauth_") && !tokenStore.get()) {
-        try {
-          const res = await exchangeGoogleToken(startParam);
-          tokenStore.set(res.accessToken);
-        } catch {
-          // consumed or expired — fall through to normal flow
-        }
-      }
+      await exchangeStartParamGoogleToken(startParam);
+      const inviteCode = resolveInviteCode(startParam);
 
-      const inviteCode = startParam?.startsWith("invite_")
-        ? startParam.slice("invite_".length)
-        : new URLSearchParams(window.location.search).get("invite");
+      await telegramAutoLogin();
 
-      if (isTelegramMiniApp() && !tokenStore.get() && !tokenStore.isLoggedOut()) {
-        const tg = getTelegramWebApp();
-        if (tg?.initData) {
-          try {
-            const res = await telegramLogin(tg.initData);
-            tokenStore.set(res.accessToken);
-          } catch {
-            if (!cancelled) setState({ mode: "signin" });
-            return;
-          }
-        }
-      }
       const data = await checkAccess();
-      if (!data.groupId && inviteCode) {
-        try {
-          const joined = await joinGroup(inviteCode);
-          data.groupId = joined.groupId;
-          data.groupName = joined.groupName;
-        } catch {
-          // bad/expired invite — fall through to onboarding modal
-        }
-      }
+      await applyInviteCode(data, inviteCode);
+
       if (new URLSearchParams(window.location.search).has("invite")) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("invite");
-        window.history.replaceState({}, "", url.toString());
+        stripSearchParam("invite");
       }
-      if (!cancelled) {
-        if (data.lang) {
-          i18n.changeLanguage(data.lang);
-          localStorage.setItem("i18n-lang", data.lang);
-        }
-        if (data.tmdbLang) setTmdbLang(data.tmdbLang);
-        setState({ mode: "ok", data });
-      }
+      if (cancelled) return;
+      applySessionPrefs(data);
+      setState({ mode: "ok", data });
     };
 
     run().catch((e: Error) => {
       if (cancelled) return;
+      if (e instanceof SignInRequiredError) {
+        setState({ mode: "signin" });
+        return;
+      }
       const msg = e.message || "";
       if (msg.toLowerCase().includes("invalid or expired")) {
         tokenStore.clear();

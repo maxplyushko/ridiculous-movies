@@ -40,7 +40,7 @@ export function useAsync<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps); // deps control when to re-run; fn is accessed via ref
+  }, deps);
 
   return state;
 }

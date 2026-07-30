@@ -10,9 +10,8 @@ import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
+import { TmdbTitleField } from "@/components/TmdbTitleField.tsx";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
-import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
-import { fetchTmdbMovieDetails } from "../api/tmdb.ts";
 import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
@@ -200,10 +199,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
     }
   };
 
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const { results: suggestions } = useTmdbSearch(showSuggestions ? title : "", { minLen: 2, debounceMs: 200, includeTv: true });
-  const latestSelectionRef = useRef<number | undefined>(undefined);
-
   const isSubmitDisabled = isSubmitting || !title.trim();
   useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
 
@@ -212,47 +207,18 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
       <PageBackButton onBack={onBack} />
       <h1>{isEditMode ? t('addMovie.headingEdit') : t('addMovie.headingAdd')}</h1>
       <div className="add-movie__fields">
-        <div className="add-movie__item">
-          <input
-            id="add-movie-title"
-            type="text"
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); setTmdbId(undefined); setTmdbMediaType(undefined); setShowSuggestions(true); }}
-            onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
-            placeholder=" "
-            autoComplete="off"
-          />
-          <label htmlFor="add-movie-title">{t('addMovie.labelTitle')}</label>
-          {showSuggestions && suggestions.length > 0 && (
-            <ul className="title-suggestions">
-              {suggestions.map((s) => (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setTitle(s.title);
-                      setTmdbId(s.id);
-                      setTmdbMediaType(s.mediaType);
-                      if (s.overview) setDescription(s.overview);
-                      setShowSuggestions(false);
-                      latestSelectionRef.current = s.id;
-                      fetchTmdbMovieDetails(s.id, s.mediaType)
-                        .then((d) => {
-                          if (latestSelectionRef.current === s.id && d.tagline) setTagline(d.tagline);
-                        })
-                        .catch(() => {});
-                    }}
-                  >
-                    <span className="title-suggestions__title">{s.title}</span>
-                    {s.releaseYear && <span className="title-suggestions__year">{s.releaseYear}</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <TmdbTitleField
+          id="add-movie-title"
+          label={t('addMovie.labelTitle')}
+          title={title}
+          onTitleChange={(value) => { setTitle(value); setTmdbId(undefined); setTmdbMediaType(undefined); }}
+          onSelect={({ tmdbId: id, mediaType, description: overview }) => {
+            setTmdbId(id);
+            setTmdbMediaType(mediaType);
+            if (overview) setDescription(overview);
+          }}
+          onTagline={setTagline}
+        />
         <div className="add-movie__item">
           <input
             id="add-movie-tagline"

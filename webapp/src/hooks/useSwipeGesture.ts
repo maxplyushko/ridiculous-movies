@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 
 type UseSwipeGestureOptions = {
   actionsWidth: number;
@@ -61,7 +61,7 @@ export function useSwipeGesture({
   const showActions = offsetX < 0 || isDragging || keepActionsVisible;
 
   const touchHandlers = {
-    onTouchStart: (e: React.TouchEvent) => {
+    onTouchStart: (e: TouchEvent) => {
       suppressNextClickRef.current = false;
       startX.current = e.touches[0].clientX;
       startY.current = e.touches[0].clientY;
@@ -70,7 +70,7 @@ export function useSwipeGesture({
       swipeBeginNotified.current = false;
       isDraggingRef.current = true;
     },
-    onTouchMove: (e: React.TouchEvent) => {
+    onTouchMove: (e: TouchEvent) => {
       if (!isDraggingRef.current) return;
       const dx = e.touches[0].clientX - startX.current;
       const dy = e.touches[0].clientY - startY.current;

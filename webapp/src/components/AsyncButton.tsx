@@ -32,7 +32,7 @@ export function AsyncButton({
   };
 
   return (
-    <button {...rest} disabled={disabled || busy} aria-busy={busy} onClick={handleClick}>
+    <button type="button" {...rest} disabled={disabled || busy} aria-busy={busy} onClick={handleClick}>
       {busy && <Loader size={spinnerSize} className="async-btn__spinner" aria-hidden="true" />}
       {children}
     </button>

@@ -12,7 +12,7 @@ type PresenceProps = {
 };
 
 export function Presence({ show, exitMs = DIALOG_EXIT_MS, children }: Readonly<PresenceProps>) {
-  const [, forceRender] = useState(0);
+  const [_renderTick, setRenderTick] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<ReactNode>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -33,7 +33,7 @@ export function Presence({ show, exitMs = DIALOG_EXIT_MS, children }: Readonly<P
       timerRef.current = undefined;
       lastRef.current = null;
       wrapRef.current?.classList.remove(EXITING_CLASS);
-      forceRender((n) => n + 1);
+      setRenderTick((n) => n + 1);
     }, exitMs);
   }, [show, exitMs]);
 

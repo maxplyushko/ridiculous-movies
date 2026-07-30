@@ -16,7 +16,7 @@ import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
-import { ActorPage } from "@/components/ActorPage.tsx";
+import { DetailStackEntries } from "@/components/DetailStackEntries.tsx";
 import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
@@ -148,7 +148,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     : movieGroups;
 
   return (
-    <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
+    <div className="mlp">
       <div className="mlp__hero">
         <div className="mlp__cards">
           <button type="button" className="mlp__card" onClick={openRandomizer} aria-label={t('groupList.labelRandom')}>
@@ -185,35 +185,15 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         ))}
       </div>
 
-      {detailStack.stack.map((entry, i) => {
-        const isTop = i === detailStack.stack.length - 1;
-        const ref = isTop ? detailStack.setTopEl : undefined;
-        if (entry.kind === "actor") {
+      <DetailStackEntries
+        stack={detailStack.stack}
+        setTopEl={detailStack.setTopEl}
+        push={detailStack.push}
+        pop={detailStack.pop}
+        renderLocal={(entry) => {
+          const movie = movieGroups.flatMap((g) => g.movies).find((m) => m.id === entry.movieId);
+          if (!movie) return null;
           return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
-              <ActorPage
-                personId={entry.personId}
-                onBack={detailStack.pop}
-                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-              />
-            </div>
-          );
-        }
-        if (entry.kind === "tmdb") {
-          return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
-              <MoviePage
-                source={{ kind: "tmdb", movie: entry.movie }}
-                onBack={detailStack.pop}
-                onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
-              />
-            </div>
-          );
-        }
-        const movie = movieGroups.flatMap((g) => g.movies).find((m) => m.id === entry.movieId);
-        if (!movie) return null;
-        return (
-          <div className="movie-list__add__movie" key={i} ref={ref}>
             <MoviePage
               source={{ kind: "group", movie }}
               currentUserId={currentUserId}
@@ -222,9 +202,9 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
               onEdit={() => handleEdit(movie)}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
-          </div>
-        );
-      })}
+          );
+        }}
+      />
 
       <Presence show={showMovieForm} exitMs={PAGE_EXIT_MS}>
         {showMovieForm && (

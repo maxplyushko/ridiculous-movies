@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import type { CSSProperties, MouseEvent } from "react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture.ts";
 import type { RecentEntry } from "@/hooks/useRecentSearches.ts";
@@ -43,7 +44,7 @@ const RecentSearchItem = ({
     onBegin: onSwipeBegin,
   });
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (suppressNextClickRef.current) {
       suppressNextClickRef.current = false;
@@ -60,7 +61,7 @@ const RecentSearchItem = ({
   return (
     <div
       className={`movie-item-wrapper${showActions ? " movie-item-wrapper--actions-visible" : ""}`}
-      style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as React.CSSProperties}
+      style={{ "--actions-width": `${ACTIONS_WIDTH}px` } as CSSProperties}
     >
       <div className="movie-item-management">
         <button

@@ -11,6 +11,7 @@ import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
+import { Dialog } from "@/components/Dialog.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
@@ -22,6 +23,7 @@ import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
 import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
 import { useRegisterSubPage } from "@/hooks/useSubPage.ts";
+import { randomInt } from "@/utils/random.ts";
 import { PAGE_EXIT_MS, Presence } from "@/components/Presence.tsx";
 
 type DetailEntry =
@@ -130,7 +132,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
       title: movie.title,
       description: movie.description,
       tagline: movie.tagline,
-      rating: rating !== undefined ? rating : movie.rating,
+      rating: rating ?? movie.rating,
       watched: !movie.watched,
       tmdbId: movie.tmdbId,
       tmdbMediaType: movie.tmdbMediaType,
@@ -175,7 +177,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
 
   const handleToggleWatched = (movie: PersonalMovie) => {
     if (movie.watched) {
-      applyToggle(movie);
+      void applyToggle(movie);
     } else {
       setRatingOnly(false);
       setRatingMovie(movie);
@@ -198,7 +200,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   }
 
   return (
-    <div className="mlp" onClick={() => { if (openSwipeId !== null) setOpenSwipeId(null); }}>
+    <div className="mlp">
       <div className="mlp__hero">
         <div className="mlp__cards">
           <button
@@ -208,7 +210,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
             onClick={() => {
               if (toWatch.length === 0 || moviePicker.spinning) return;
               hapticTabTap();
-              moviePicker.spin(() => toWatch[Math.floor(Math.random() * toWatch.length)].title);
+              moviePicker.spin(() => toWatch[randomInt(toWatch.length)].title);
             }}
           >
             {moviePicker.spinning
@@ -285,16 +287,14 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
 
       <Presence show={moviePicker.result !== null}>
         {moviePicker.result && (
-          <div className="confirm-dialog-overlay" onClick={moviePicker.clear}>
-            <div className="confirm-dialog confirm-dialog--fireworks" onClick={(e) => e.stopPropagation()}>
-              <FireworkSparks key={moviePicker.result} />
-              <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
-              <p><strong>{moviePicker.result}</strong></p>
-              <div className="confirm-dialog__actions">
-                <button type="button" onClick={moviePicker.clear}>{t('personalList.btnOk')}</button>
-              </div>
+          <Dialog className="confirm-dialog confirm-dialog--fireworks" onClose={moviePicker.clear}>
+            <FireworkSparks key={moviePicker.result} />
+            <p className="confirm-dialog__subtitle">{t('personalList.randomTitle')}</p>
+            <p><strong>{moviePicker.result}</strong></p>
+            <div className="confirm-dialog__actions">
+              <button type="button" onClick={moviePicker.clear}>{t('personalList.btnOk')}</button>
             </div>
-          </div>
+          </Dialog>
         )}
       </Presence>
 
@@ -310,7 +310,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
               const movie = ratingMovie;
               setRatingMovie(null);
               if (!ratingOnly && !movie.watched) {
-                applyToggle(movie);
+                void applyToggle(movie);
                 celebrate(movie.id);
               }
             }}
@@ -320,7 +320,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
               if (ratingOnly || movie.watched) {
                 await updateRating(movie, rating);
               } else {
-                applyToggle(movie, rating);
+                void applyToggle(movie, rating);
                 celebrate(movie.id);
               }
             }}
@@ -333,7 +333,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         const ref = isTop ? detailStack.setTopEl : undefined;
         if (entry.kind === "actor") {
           return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
+            <div className="movie-list__add__movie" key={`actor-${entry.personId}`} ref={ref}>
               <ActorPage
                 personId={entry.personId}
                 onBack={detailStack.pop}
@@ -344,7 +344,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         }
         if (entry.kind === "tmdb") {
           return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
+            <div className="movie-list__add__movie" key={`tmdb-${entry.movie.id}`} ref={ref}>
               <MoviePage
                 source={{ kind: "tmdb", movie: entry.movie }}
                 onBack={detailStack.pop}
@@ -357,7 +357,7 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         const movie = resolvePersonalMovie(entry.movieId);
         if (!movie) return null;
         return (
-          <div className="movie-list__add__movie" key={i} ref={ref}>
+          <div className="movie-list__add__movie" key={`personal-${entry.movieId}`} ref={ref}>
             <MoviePage
               source={{ kind: "personal", movie }}
               onBack={detailStack.pop}

@@ -7,8 +7,7 @@ import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import SearchMovieItem from "./SearchMovieItem.tsx";
 import RecentSearchItem from "./RecentSearchItem.tsx";
 import TmdbPeopleSection from "@/components/TmdbPeopleSection.tsx";
-import { MoviePage } from "@/components/MoviePage.tsx";
-import { ActorPage } from "@/components/ActorPage.tsx";
+import { DetailStackEntries } from "@/components/DetailStackEntries.tsx";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
 import { useTmdbPersonSearch } from "@/hooks/useTmdbPersonSearch.ts";
@@ -129,30 +128,13 @@ const SearchResults = ({ currentUserId, resetSignal }: Readonly<SearchResultsPro
         )}
       </div>
 
-      {detailStack.stack.map((entry, i) => {
-        const isTop = i === detailStack.stack.length - 1;
-        const ref = isTop ? detailStack.setTopEl : undefined;
-        if (entry.kind === "actor") {
-          return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
-              <ActorPage
-                personId={entry.personId}
-                onBack={detailStack.pop}
-                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-              />
-            </div>
-          );
-        }
-        return (
-          <div className="movie-list__add__movie" key={i} ref={ref}>
-            <MoviePage
-              source={{ kind: "tmdb", movie: entry.movie }}
-              onBack={detailStack.pop}
-              onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
-            />
-          </div>
-        );
-      })}
+      <DetailStackEntries<never>
+        stack={detailStack.stack}
+        setTopEl={detailStack.setTopEl}
+        push={detailStack.push}
+        pop={detailStack.pop}
+        renderLocal={() => null}
+      />
     </div>
   );
 };

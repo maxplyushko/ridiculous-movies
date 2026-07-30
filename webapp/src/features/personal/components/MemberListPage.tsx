@@ -5,7 +5,7 @@ import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
-import { ActorPage } from "@/components/ActorPage.tsx";
+import { DetailStackEntries } from "@/components/DetailStackEntries.tsx";
 import { fetchPersonalListForUser } from "../api/personalList.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -92,43 +92,23 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
         </div>
       )}
 
-      {detailStack.stack.map((entry, i) => {
-        const isTop = i === detailStack.stack.length - 1;
-        const ref = isTop ? detailStack.setTopEl : undefined;
-        if (entry.kind === "actor") {
+      <DetailStackEntries
+        stack={detailStack.stack}
+        setTopEl={detailStack.setTopEl}
+        push={detailStack.push}
+        pop={detailStack.pop}
+        renderLocal={(entry) => {
+          const movie = movies.find((m) => m.id === entry.movieId);
+          if (!movie) return null;
           return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
-              <ActorPage
-                personId={entry.personId}
-                onBack={detailStack.pop}
-                onOpenMovie={(m) => detailStack.push({ kind: "tmdb", movie: m })}
-              />
-            </div>
-          );
-        }
-        if (entry.kind === "tmdb") {
-          return (
-            <div className="movie-list__add__movie" key={i} ref={ref}>
-              <MoviePage
-                source={{ kind: "tmdb", movie: entry.movie }}
-                onBack={detailStack.pop}
-                onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
-              />
-            </div>
-          );
-        }
-        const movie = movies.find((m) => m.id === entry.movieId);
-        if (!movie) return null;
-        return (
-          <div className="movie-list__add__movie" key={i} ref={ref}>
             <MoviePage
               source={{ kind: "personal", movie }}
               onBack={detailStack.pop}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />
-          </div>
-        );
-      })}
+          );
+        }}
+      />
     </div>
   );
 };
