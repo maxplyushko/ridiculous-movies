@@ -145,8 +145,6 @@ h1 {
   background: var(--tab-bar-glass);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  transform: translateZ(0);
-  will-change: transform, opacity;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -155,7 +153,8 @@ h1 {
   }
 }
 
-body.tg-main-button-open .bottom-bar {
+body.tg-main-button-open .bottom-bar,
+.bottom-bar--hidden {
   opacity: 0;
   pointer-events: none;
   transform: translateY(200%);

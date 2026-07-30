@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import GroupListPage from "@/features/group/components/GroupListPage.tsx";
 import StatPage from "@/features/stats/components/StatPage.tsx";
 import PersonalStatPage from "@/features/personal/components/PersonalStatPage.tsx";
@@ -29,11 +29,39 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [session, setSession] = useState(initialSession);
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Page>(defaultTab);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [groupResetSignal, setGroupResetSignal] = useState(0);
   const [personalResetSignal, setPersonalResetSignal] = useState(0);
   const [miscResetSignal, setMiscResetSignal] = useState(0);
   const [searchResetSignal, setSearchResetSignal] = useState(0);
   const isAdmin = session.role === "admin";
+
+  useEffect(() => {
+    const isTextEntry = (el: EventTarget | null) =>
+      el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    const clearCloseTimer = () => { if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; } };
+    const onFocusIn = (e: FocusEvent) => {
+      if (!isTextEntry(e.target)) return;
+      clearCloseTimer();
+      setKeyboardOpen(true);
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      if (!isTextEntry(e.target)) return;
+      clearCloseTimer();
+      closeTimer = setTimeout(() => {
+        closeTimer = undefined;
+        if (!isTextEntry(document.activeElement)) setKeyboardOpen(false);
+      }, 200);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+      clearCloseTimer();
+    };
+  }, []);
 
   const selectTab = (tab: Tab) => {
     hapticTabTap();
@@ -71,7 +99,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         <div hidden={currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
         <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
       </main>
-      <nav ref={navRef} className="bottom-bar">
+      <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />
         {TABS.map(({ id, labelKey, icon }) => (
           <button
