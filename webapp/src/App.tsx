@@ -54,6 +54,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         setKeyboardOpen(true);
         return;
       }
+      if (isTextEntry(document.activeElement)) return;
       closeTimer = setTimeout(() => {
         closeTimer = undefined;
         if (getKeyboardOffsetPx() <= KEYBOARD_MIN_PX) setKeyboardOpen(false);
