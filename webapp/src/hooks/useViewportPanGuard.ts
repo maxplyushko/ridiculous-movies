@@ -28,7 +28,7 @@ export function useViewportPanGuard(): void {
     };
 
     const applyInset = () => {
-      const offset = getKeyboardOffsetPx();
+      const offset = isTextEntry(document.activeElement) ? getKeyboardOffsetPx() : 0;
       const next = offset > KEYBOARD_MIN_PX ? offset : 0;
       if (next === lastInset) return;
       lastInset = next;
