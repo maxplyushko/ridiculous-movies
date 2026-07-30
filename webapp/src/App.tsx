@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import GroupListPage from "@/features/group/components/GroupListPage.tsx";
 import StatPage from "@/features/stats/components/StatPage.tsx";
 import PersonalStatPage from "@/features/personal/components/PersonalStatPage.tsx";
@@ -12,9 +12,7 @@ import { CircleUser, Film, Search, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
-import { KEYBOARD_MIN_PX, getKeyboardOffsetPx, onKeyboardViewportChange } from "@/hooks/useTelegramKeyboard.ts";
 import { useViewportPanGuard } from "@/hooks/useViewportPanGuard.ts";
-import { KeyboardDebugOverlay } from "@/components/KeyboardDebugOverlay.tsx";
 
 type Tab = "group" | "personal" | "misc" | "search";
 type Page = Tab | "stat" | "personalStat";
@@ -31,43 +29,11 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [session, setSession] = useState(initialSession);
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Page>(defaultTab);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [groupResetSignal, setGroupResetSignal] = useState(0);
   const [personalResetSignal, setPersonalResetSignal] = useState(0);
   const [miscResetSignal, setMiscResetSignal] = useState(0);
   const [searchResetSignal, setSearchResetSignal] = useState(0);
   const isAdmin = session.role === "admin";
-
-  useEffect(() => {
-    const isTextEntry = (el: EventTarget | null) =>
-      el instanceof HTMLElement && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-    const onFocusIn = (e: FocusEvent) => { if (isTextEntry(e.target)) setKeyboardOpen(true); };
-    const onFocusOut = (e: FocusEvent) => { if (isTextEntry(e.target)) setKeyboardOpen(false); };
-    document.addEventListener('focusin', onFocusIn);
-    document.addEventListener('focusout', onFocusOut);
-
-    let closeTimer: ReturnType<typeof setTimeout> | undefined;
-    const clearCloseTimer = () => { if (closeTimer) { clearTimeout(closeTimer); closeTimer = undefined; } };
-    const onViewportChange = () => {
-      clearCloseTimer();
-      if (getKeyboardOffsetPx() > KEYBOARD_MIN_PX && isTextEntry(document.activeElement)) {
-        setKeyboardOpen(true);
-        return;
-      }
-      if (isTextEntry(document.activeElement)) return;
-      closeTimer = setTimeout(() => {
-        closeTimer = undefined;
-        if (getKeyboardOffsetPx() <= KEYBOARD_MIN_PX) setKeyboardOpen(false);
-      }, 300);
-    };
-    const unsubscribe = onKeyboardViewportChange(onViewportChange);
-    return () => {
-      document.removeEventListener('focusin', onFocusIn);
-      document.removeEventListener('focusout', onFocusOut);
-      unsubscribe();
-      clearCloseTimer();
-    };
-  }, []);
 
   const selectTab = (tab: Tab) => {
     hapticTabTap();
@@ -105,7 +71,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         <div hidden={currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
         <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
       </main>
-      <nav ref={navRef} className={`bottom-bar${keyboardOpen ? " bottom-bar--hidden" : ""}`}>
+      <nav ref={navRef} className="bottom-bar">
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />
         {TABS.map(({ id, labelKey, icon }) => (
           <button
@@ -128,7 +94,6 @@ function App() {
   useViewportPanGuard();
   return (
     <>
-      <KeyboardDebugOverlay />
       <AuthGate>
         {(session) => <AppShell session={session} />}
       </AuthGate>

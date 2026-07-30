@@ -60,9 +60,13 @@ export function useViewportPanGuard(): void {
       arm(SCROLL_BURST_MS);
     };
     const onViewportChange = () => arm(FOCUS_BURST_MS);
+    const onTouchStart = (event: TouchEvent) => {
+      if (isTextEntry(event.target)) arm(FOCUS_BURST_MS);
+    };
 
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("focusout", onFocusOut);
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("scroll", onWindowScroll, { passive: true });
     const unsubscribe = onKeyboardViewportChange(onViewportChange);
     correct();
@@ -70,6 +74,7 @@ export function useViewportPanGuard(): void {
     return () => {
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
+      document.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("scroll", onWindowScroll);
       unsubscribe();
       if (frame !== 0) cancelAnimationFrame(frame);
