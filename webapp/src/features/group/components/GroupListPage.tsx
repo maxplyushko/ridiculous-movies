@@ -10,6 +10,7 @@ import { RandomizerDialog } from "./RandomizerDialog.tsx";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups, rateMovie } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
+import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -17,7 +18,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { DetailStackEntries } from "@/components/DetailStackEntries.tsx";
-import { ChartLine, Dices, Plus, Search } from "lucide-react";
+import { ChartLine, Dices, Plus } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
@@ -155,13 +156,13 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         .filter((g) => g.movies.length > 0)
     : [];
 
-  const renderRounds = (groups: MovieGroup[]) => groups.map((group) => (
+  const renderRounds = (groups: MovieGroup[], onOpened?: (title: string) => void) => groups.map((group) => (
     <RoundSection
       key={group.groupId}
       movieGroup={group}
       openSwipeId={openSwipeId}
       isAdmin={isAdmin}
-      onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "group", movieId: movie.id }); }}
+      onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } onOpened?.(movie.title); detailStack.push({ kind: "group", movieId: movie.id }); }}
       onEdit={handleEdit}
       onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
       onSwipeOpen={(id) => setOpenSwipeId(id)}
@@ -180,14 +181,16 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
           <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); onShowStats(); }} aria-label={t('groupList.labelStatistics')}>
             <ChartLine size={20} className="mlp__card-icon" />
           </button>
-          <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }} aria-label={t('groupList.btnAddMovie')}>
+          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }} aria-label={t('groupList.btnAddMovie')}>
             <Plus size={20} className="mlp__card-icon" />
-          </button>
-          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setShowSearch(true); }} aria-label={t('groupList.placeholderSearch')}>
-            <Search size={20} className="mlp__card-icon" />
           </button>
         </div>
       </div>
+
+      <ListSearchBar
+        placeholder={t('groupList.placeholderSearch')}
+        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
+      />
 
       <div className="movie-list">
         {renderRounds(movieGroups)}
@@ -202,12 +205,15 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
           containerRef={setSearchEl}
           userId={currentUserId}
           scope="group"
-          resultCount={matchedGroups.length}
         >
-          {normalizedQuery && matchedGroups.length === 0 && (
-            <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
+          {(recordRecent) => (
+            <>
+              {matchedGroups.length === 0 && (
+                <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
+              )}
+              {renderRounds(matchedGroups, recordRecent)}
+            </>
           )}
-          {renderRounds(matchedGroups)}
         </ListSearchPage>
       )}
 

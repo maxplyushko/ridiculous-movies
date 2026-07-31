@@ -8,16 +8,28 @@ type ListSearchBarProps = {
   onChange?: (value: string) => void;
   placeholder: string;
   autoFocus?: boolean;
+  onOpen?: () => void;
   onClose?: () => void;
 };
 
-export function ListSearchBar({ value = "", onChange, placeholder, autoFocus, onClose }: Readonly<ListSearchBarProps>) {
+export function ListSearchBar({ value = "", onChange, placeholder, autoFocus, onOpen, onClose }: Readonly<ListSearchBarProps>) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
 
   useLayoutEffect(() => {
     if (autoFocus) inputRef.current?.focus();
   }, [autoFocus]);
+
+  if (onOpen) {
+    return (
+      <div className="mlp__search-bar">
+        <button type="button" className="mlp__search mlp__search--trigger" onClick={onOpen}>
+          <Search size={18} className="mlp__search-icon" />
+          <span className="mlp__search-placeholder">{placeholder}</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="mlp__search-bar">

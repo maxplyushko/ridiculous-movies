@@ -11,7 +11,7 @@
 
 .mlp__cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.625rem;
   padding: 1rem 1rem 0.5rem;
 }
@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.1rem;
-  min-height: 2.75rem;
+  min-height: var(--mlp-card-height);
   padding: 0.5rem;
   border-radius: 14px;
   background: var(--surface);
@@ -2159,7 +2159,25 @@ dialog.confirm-dialog::backdrop {
   background-color: var(--page-bg);
   overflow-y: auto;
   will-change: transform;
+  padding-top: calc(1rem + var(--mlp-card-height) + 0.5rem);
   padding-bottom: 1rem;
+}
+
+.mlp__search--trigger {
+  appearance: none;
+  border: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mlp__search-placeholder {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mlp__search-close {
@@ -2183,7 +2201,9 @@ dialog.confirm-dialog::backdrop {
 }
 
 .list-search-page > .page-back-btn {
-  margin: 0.75rem 0 0 0.875rem;
+  position: absolute;
+  top: 0.75rem;
+  left: 0.875rem;
 }
 
 .page-back-btn {

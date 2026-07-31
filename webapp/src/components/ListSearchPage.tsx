@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
@@ -17,8 +17,8 @@ type ListSearchPageProps = {
   containerRef: (el: HTMLDivElement | null) => void;
   userId: string;
   scope: string;
-  resultCount: number;
-  children: ReactNode;
+  /** Receives a recorder the caller invokes with the picked item's name to store it as a recent. */
+  children: (recordRecent: (label: string) => void) => ReactNode;
 };
 
 /**
@@ -34,7 +34,6 @@ export function ListSearchPage({
   containerRef,
   userId,
   scope,
-  resultCount,
   children,
 }: Readonly<ListSearchPageProps>) {
   const { t } = useTranslation();
@@ -45,21 +44,33 @@ export function ListSearchPage({
   useHideBottomBar();
   useCloseSwipeOnOutsideTap(openSwipeId, () => setOpenSwipeId(null));
 
-  const pendingRef = useRef({ query: normalizedQuery, resultCount, addRecent });
-  useEffect(() => { pendingRef.current = { query: normalizedQuery, resultCount, addRecent }; });
+  const recordRecent = (label: string) => addRecent({ kind: "query", label });
 
-  useEffect(() => () => {
-    const { query: label, resultCount: count, addRecent: add } = pendingRef.current;
-    if (label && count > 0) add({ kind: "query", label });
-  }, []);
+  /**
+   * True when the gesture started while a swipe row was open. Captured on pointer-down
+   * because `useCloseSwipeOnOutsideTap` has already cleared `openSwipeId` by the time the
+   * click lands, and that tap must only close the swipe — never also leave the page.
+   */
+  const consumedBySwipeRef = useRef(false);
+
+  const armSwipeGuard = () => { consumedBySwipeRef.current = openSwipeId !== null; };
 
   const closeOnEmptySpace = (event: MouseEvent<HTMLDivElement>) => {
+    if (consumedBySwipeRef.current) {
+      consumedBySwipeRef.current = false;
+      return;
+    }
     if ((event.target as HTMLElement).closest(KEEP_OPEN_SELECTOR)) return;
     onBack();
   };
 
   return (
-    <div className="list-search-page" ref={containerRef} onClick={closeOnEmptySpace}>
+    <div
+      className="list-search-page"
+      ref={containerRef}
+      onPointerDownCapture={armSwipeGuard}
+      onClick={closeOnEmptySpace}
+    >
       <PageBackButton onBack={onBack} />
       <ListSearchBar
         value={query}
@@ -89,7 +100,7 @@ export function ListSearchPage({
             ))}
           </div>
         )}
-        {normalizedQuery && children}
+        {normalizedQuery && children(recordRecent)}
       </div>
     </div>
   );

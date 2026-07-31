@@ -6,7 +6,7 @@ import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
-import { ChartLine, Dices, Loader, Plus, Search } from "lucide-react";
+import { ChartLine, Dices, Loader, Plus } from "lucide-react";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
@@ -15,6 +15,7 @@ import { Dialog } from "@/components/Dialog.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
+import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -201,24 +202,27 @@ const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: R
   const toWatch = movies.filter((m) => m.inList && !m.watched);
   const watched = movies.filter((m) => m.watched);
 
-  const sectionProps = {
+  const buildSectionProps = (onOpened?: (title: string) => void) => ({
     openSwipeId,
     celebratingId,
     onEdit: handleEdit,
     onDelete: (movie: PersonalMovie) => { setDeleteError(null); setMovieToDelete(movie); },
     onToggleWatched: handleToggleWatched,
-    onOpen: (movie: PersonalMovie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); },
+    onOpen: (movie: PersonalMovie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } onOpened?.(movie.title); detailStack.push({ kind: "personal", movieId: movie.id }); },
     onSwipeOpen: (id: string) => setOpenSwipeId(id),
     onSwipeClose: (id: string) => setOpenSwipeId((cur) => (cur === id ? null : cur)),
     onSwipeBegin: (id: string) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); },
-  };
+  });
 
-  const renderSections = (toWatchItems: PersonalMovie[], watchedItems: PersonalMovie[]) => (
-    <>
-      <PersonalSection title={t('personalList.sectionToWatch')} movies={toWatchItems} {...sectionProps} />
-      <PersonalSection title={t('personalList.sectionWatched')} movies={watchedItems} {...sectionProps} />
-    </>
-  );
+  const renderSections = (toWatchItems: PersonalMovie[], watchedItems: PersonalMovie[], onOpened?: (title: string) => void) => {
+    const props = buildSectionProps(onOpened);
+    return (
+      <>
+        <PersonalSection title={t('personalList.sectionToWatch')} movies={toWatchItems} {...props} />
+        <PersonalSection title={t('personalList.sectionWatched')} movies={watchedItems} {...props} />
+      </>
+    );
+  };
 
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
@@ -253,21 +257,18 @@ const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: R
           </button>
           <button
             type="button"
-            className="mlp__card"
+            className="mlp__card mlp__card--accent"
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
             <Plus size={20} className="mlp__card-icon" />
           </button>
-          <button
-            type="button"
-            className="mlp__card mlp__card--accent"
-            aria-label={t('personalList.placeholderSearch')}
-            onClick={() => { hapticTabTap(); setShowSearch(true); }}
-          >
-            <Search size={20} className="mlp__card-icon" />
-          </button>
         </div>
       </div>
+
+      <ListSearchBar
+        placeholder={t('personalList.placeholderSearch')}
+        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
+      />
 
       <div className="movie-list">
         {renderSections(toWatch, watched)}
@@ -285,14 +286,18 @@ const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: R
           containerRef={setSearchEl}
           userId={currentUserId}
           scope="personal"
-          resultCount={matchedMovies.length}
         >
-          {renderSections(
-            matchedMovies.filter((m) => m.inList && !m.watched),
-            matchedMovies.filter((m) => m.watched)
-          )}
-          {normalizedQuery && matchedMovies.length === 0 && (
-            <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
+          {(recordRecent) => (
+            <>
+              {renderSections(
+                matchedMovies.filter((m) => m.inList && !m.watched),
+                matchedMovies.filter((m) => m.watched),
+                recordRecent
+              )}
+              {matchedMovies.length === 0 && (
+                <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
+              )}
+            </>
           )}
         </ListSearchPage>
       )}
