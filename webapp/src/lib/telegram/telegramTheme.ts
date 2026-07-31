@@ -130,10 +130,14 @@ function applyThemeParams(params: TelegramThemeParams, colorScheme: "light" | "d
   root.style.colorScheme = colorScheme;
 }
 
+/** TG's own fullscreen controls (minimize/close) overlap content; contentSafeAreaInset doesn't account for them. */
+const FULLSCREEN_TOP_BUFFER = 48;
+
 function syncTelegramSafeArea(): void {
   const webApp = getTelegramWebApp();
   const root = document.documentElement;
-  const top = (webApp?.contentSafeAreaInset?.top ?? 0) + (webApp?.safeAreaInset?.top ?? 0);
+  const fullscreenBuffer = webApp?.isFullscreen ? FULLSCREEN_TOP_BUFFER : 0;
+  const top = (webApp?.contentSafeAreaInset?.top ?? 0) + (webApp?.safeAreaInset?.top ?? 0) + fullscreenBuffer;
   const bottom = (webApp?.contentSafeAreaInset?.bottom ?? 0) + (webApp?.safeAreaInset?.bottom ?? 0);
   root.style.setProperty("--tg-content-safe-area-inset-top", `${top}px`);
   root.style.setProperty("--tg-content-safe-area-inset-bottom", `${bottom}px`);
@@ -194,6 +198,7 @@ export function initTelegramWebApp(): void {
     syncTelegramSafeArea();
     webApp.onEvent?.("safeAreaChanged", syncTelegramSafeArea);
     webApp.onEvent?.("contentSafeAreaChanged", syncTelegramSafeArea);
+    webApp.onEvent?.("fullscreenChanged", syncTelegramSafeArea);
     webApp.requestFullscreen?.();
   }
 }

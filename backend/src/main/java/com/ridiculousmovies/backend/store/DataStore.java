@@ -639,10 +639,11 @@ public class DataStore implements AppRepository {
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
           .filter(m -> {
-            boolean tmdbMatch = tmdbId != null && tmdbId.equals(m.getTmdbId());
-            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
+            if (tmdbId != null) {
+              return tmdbId.equals(m.getTmdbId());
+            }
+            return normTitle != null && !normTitle.isEmpty()
                 && m.getTitle() != null && normTitle.equals(m.getTitle().trim().toLowerCase());
-            return tmdbMatch || titleMatch;
           })
           .findFirst()
           .orElse(null);
