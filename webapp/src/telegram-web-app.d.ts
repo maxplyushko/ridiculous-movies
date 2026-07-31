@@ -64,20 +64,10 @@ declare global {
     | "themeChanged"
     | "viewportChanged"
     | "backButtonClicked"
-    | "mainButtonClicked"
-    | "fullscreenChanged"
-    | "safeAreaChanged"
-    | "contentSafeAreaChanged";
+    | "mainButtonClicked";
 
   interface TelegramViewportChangedEvent {
     isStateStable: boolean;
-  }
-
-  interface TelegramSafeAreaInset {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
   }
 
   interface TelegramWebApp {
@@ -86,9 +76,6 @@ declare global {
     viewportHeight?: number;
     viewportStableHeight?: number;
     isExpanded?: boolean;
-    isFullscreen?: boolean;
-    safeAreaInset?: TelegramSafeAreaInset;
-    contentSafeAreaInset?: TelegramSafeAreaInset;
     colorScheme?: "light" | "dark";
     themeParams?: TelegramThemeParams;
     HapticFeedback?: TelegramWebAppHapticFeedback;
@@ -98,8 +85,6 @@ declare global {
 
     ready(): void;
     expand(): void;
-    requestFullscreen?(): void;
-    exitFullscreen?(): void;
     disableVerticalSwipes?(): void;
     enableVerticalSwipes?(): void;
     isVersionAtLeast?(version: string): boolean;

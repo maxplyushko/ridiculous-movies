@@ -1,12 +1,13 @@
 import { useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ListSearchBar } from "@/components/ListSearchBar.tsx";
+import { PageBackButton } from "@/components/PageBackButton.tsx";
 import RecentSearchItem from "@/features/search/components/RecentSearchItem.tsx";
 import { useHideBottomBar } from "@/hooks/useSubPage.ts";
 import { useRecentSearches } from "@/hooks/useRecentSearches.ts";
 import { useCloseSwipeOnOutsideTap } from "@/hooks/useCloseSwipeOnOutsideTap.ts";
 
-const KEEP_OPEN_SELECTOR = ".movie-item-wrapper, .mlp__search-bar";
+const KEEP_OPEN_SELECTOR = ".movie-item-wrapper, .mlp__search-bar, .page-back-btn";
 
 type ListSearchPageProps = {
   placeholder: string;
@@ -70,6 +71,7 @@ export function ListSearchPage({
       onPointerDownCapture={armSwipeGuard}
       onClick={closeOnEmptySpace}
     >
+      <PageBackButton onBack={onBack} />
       <ListSearchBar
         value={query}
         onChange={onQueryChange}

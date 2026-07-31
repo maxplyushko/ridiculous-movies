@@ -39,7 +39,6 @@ input:focus-visible,
   --overlay: color-mix(in srgb, var(--text-primary) 40%, transparent);
 
   --bottom-bar-inset: max(env(safe-area-inset-bottom, 0px), var(--tg-content-safe-area-inset-bottom, 0px));
-  --top-safe-area-inset: max(env(safe-area-inset-top, 0px), var(--tg-content-safe-area-inset-top, 0px));
   --bottom-bar-height: 3.625rem;
   --bottom-bar-item-size: 3.125rem;
   --bottom-bar-offset: calc(var(--bottom-bar-height) + 0.75rem + var(--bottom-bar-inset));
@@ -112,7 +111,6 @@ h1 {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-top: var(--top-safe-area-inset);
   padding-bottom: var(--bottom-bar-offset);
 }
 
