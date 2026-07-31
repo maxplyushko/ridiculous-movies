@@ -20,6 +20,7 @@ export function useViewportPanGuard(): void {
     const root = document.documentElement;
     let frame = 0;
     let burstUntil = 0;
+    let forceHideUntil = 0;
     let lastInset = -1;
 
     const unpan = () => {
@@ -30,9 +31,9 @@ export function useViewportPanGuard(): void {
     const applyInset = () => {
       const offset = isTextEntry(document.activeElement) ? getKeyboardOffsetPx() : 0;
       const next = offset > KEYBOARD_MIN_PX ? offset : 0;
+      root.classList.toggle(KB_OPEN_CLASS, next > 0 || performance.now() < forceHideUntil);
       if (next === lastInset) return;
       lastInset = next;
-      root.classList.toggle(KB_OPEN_CLASS, next > 0);
       root.style.setProperty(KB_INSET_VAR, `${next}px`);
     };
 
@@ -52,7 +53,11 @@ export function useViewportPanGuard(): void {
     };
 
     const onFocusIn = (event: FocusEvent) => {
-      if (isTextEntry(event.target)) arm(FOCUS_BURST_MS);
+      if (isTextEntry(event.target)) {
+        forceHideUntil = performance.now() + FOCUS_BURST_MS;
+        root.classList.add(KB_OPEN_CLASS);
+        arm(FOCUS_BURST_MS);
+      }
     };
     const onFocusOut = () => arm(FOCUS_BURST_MS);
     const onWindowScroll = () => {
@@ -61,7 +66,11 @@ export function useViewportPanGuard(): void {
     };
     const onViewportChange = () => arm(FOCUS_BURST_MS);
     const onTouchStart = (event: TouchEvent) => {
-      if (isTextEntry(event.target)) arm(FOCUS_BURST_MS);
+      if (isTextEntry(event.target)) {
+        forceHideUntil = performance.now() + FOCUS_BURST_MS;
+        root.classList.add(KB_OPEN_CLASS);
+        arm(FOCUS_BURST_MS);
+      }
     };
 
     document.addEventListener("focusin", onFocusIn);
