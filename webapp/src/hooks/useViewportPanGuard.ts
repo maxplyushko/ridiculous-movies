@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   KEYBOARD_MIN_PX,
   getKeyboardOffsetPx,
@@ -30,9 +30,9 @@ export function useViewportPanGuard(): void {
     const applyInset = () => {
       const offset = isTextEntry(document.activeElement) ? getKeyboardOffsetPx() : 0;
       const next = offset > KEYBOARD_MIN_PX ? offset : 0;
+      root.classList.toggle(KB_OPEN_CLASS, next > 0);
       if (next === lastInset) return;
       lastInset = next;
-      root.classList.toggle(KB_OPEN_CLASS, next > 0);
       root.style.setProperty(KB_INSET_VAR, `${next}px`);
     };
 
@@ -82,19 +82,4 @@ export function useViewportPanGuard(): void {
       root.classList.remove(KB_OPEN_CLASS);
     };
   }, []);
-}
-
-export function useIsKeyboardOpen(): boolean {
-  const [open, setOpen] = useState(() => document.documentElement.classList.contains(KB_OPEN_CLASS));
-
-  useEffect(() => {
-    const root = document.documentElement;
-    const observer = new MutationObserver(() => {
-      setOpen(root.classList.contains(KB_OPEN_CLASS));
-    });
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
-
-  return open;
 }

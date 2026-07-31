@@ -120,17 +120,16 @@ h1 {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-bottom: var(--bottom-bar-offset);
-  transition: padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-bottom: 0.75rem;
 }
 
 .bottom-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 150;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -149,15 +148,12 @@ h1 {
   }
 }
 
-body.tg-main-button-open .bottom-bar,
-.bottom-bar--hidden {
+:root.kb-open .bottom-bar,
+body.tg-main-button-open .bottom-bar {
+  margin-bottom: calc(-1 * (var(--bottom-bar-height) + var(--bottom-bar-inset)));
+  transform: translateY(100%);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(200%);
-}
-
-body.tg-main-button-open .app-main {
-  padding-bottom: 1rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
