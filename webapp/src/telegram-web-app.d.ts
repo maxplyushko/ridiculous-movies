@@ -66,6 +66,10 @@ declare global {
     | "backButtonClicked"
     | "mainButtonClicked";
 
+  interface TelegramViewportChangedEvent {
+    isStateStable: boolean;
+  }
+
   interface TelegramWebApp {
     initData?: string;
     version?: string;
@@ -86,8 +90,10 @@ declare global {
     isVersionAtLeast?(version: string): boolean;
     openLink?(url: string): void;
 
-    onEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
-    offEvent?(eventType: TelegramWebAppEventType, eventHandler: () => void): void;
+    onEvent?(eventType: "viewportChanged", eventHandler: (event: TelegramViewportChangedEvent) => void): void;
+    onEvent?(eventType: Exclude<TelegramWebAppEventType, "viewportChanged">, eventHandler: () => void): void;
+    offEvent?(eventType: "viewportChanged", eventHandler: (event: TelegramViewportChangedEvent) => void): void;
+    offEvent?(eventType: Exclude<TelegramWebAppEventType, "viewportChanged">, eventHandler: () => void): void;
 
     setHeaderColor?(color: string): void;
     setBackgroundColor?(color: string): void;

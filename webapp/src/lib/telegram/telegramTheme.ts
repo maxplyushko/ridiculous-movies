@@ -185,7 +185,8 @@ export function initTelegramWebApp(): void {
   }
 }
 
-function syncViewportHeight(): void {
+function syncViewportHeight(event?: TelegramViewportChangedEvent): void {
+  if (event && !event.isStateStable) return;
   const webApp = getTelegramWebApp();
   const height = webApp?.viewportStableHeight ?? webApp?.viewportHeight;
   if (height) {
