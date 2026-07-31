@@ -11,6 +11,7 @@ import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups, rateMovie } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
 import { ListSearchBar } from "@/components/ListSearchBar.tsx";
+import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
@@ -49,13 +50,21 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [addMovieEl, setAddMovieEl] = useState<HTMLDivElement | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchEl, setSearchEl] = useState<HTMLDivElement | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [npOpen, setNpOpen] = useState(false);
   const [npSliderMax, setNpSliderMax] = useState(10);
   const [npUsers, setNpUsers] = useState<User[]>([]);
 
   useCloseSwipeOnOutsideTap(openSwipeId, () => setOpenSwipeId(null));
-  useRegisterSubPage(showMovieForm);
+  useRegisterSubPage(showMovieForm || showSearch);
+
+  const closeSearch = useCallback(() => {
+    setShowSearch(false);
+    setSearchQuery("");
+  }, []);
+  useSwipeBack(closeSearch, searchEl);
 
   const ensureUsers = async (): Promise<User[]> => {
     if (users.length > 0) return users;
@@ -136,7 +145,7 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
   }
 
   const normalizedQuery = searchQuery.toLowerCase().trim();
-  const visibleGroups = normalizedQuery
+  const matchedGroups = normalizedQuery
     ? movieGroups
         .map((g) => ({
           ...g,
@@ -145,7 +154,22 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
           ),
         }))
         .filter((g) => g.movies.length > 0)
-    : movieGroups;
+    : [];
+
+  const renderRounds = (groups: MovieGroup[]) => groups.map((group) => (
+    <RoundSection
+      key={group.groupId}
+      movieGroup={group}
+      openSwipeId={openSwipeId}
+      isAdmin={isAdmin}
+      onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "group", movieId: movie.id }); }}
+      onEdit={handleEdit}
+      onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
+      onSwipeOpen={(id) => setOpenSwipeId(id)}
+      onSwipeClose={(id) => setOpenSwipeId((cur) => cur === id ? null : cur)}
+      onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
+    />
+  ));
 
   return (
     <div className="mlp">
@@ -163,27 +187,32 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
         </div>
       </div>
 
-      <ListSearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('groupList.placeholderSearch')} />
+      <ListSearchBar
+        placeholder={t('groupList.placeholderSearch')}
+        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
+      />
 
       <div className="movie-list">
-        {normalizedQuery && visibleGroups.length === 0 && (
-          <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
-        )}
-        {visibleGroups.map((group) => (
-          <RoundSection
-            key={group.groupId}
-            movieGroup={group}
-            openSwipeId={openSwipeId}
-            isAdmin={isAdmin}
-            onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "group", movieId: movie.id }); }}
-            onEdit={handleEdit}
-            onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
-            onSwipeOpen={(id) => setOpenSwipeId(id)}
-            onSwipeClose={(id) => setOpenSwipeId((cur) => cur === id ? null : cur)}
-            onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
-          />
-        ))}
+        {renderRounds(movieGroups)}
       </div>
+
+      <Presence show={showSearch} exitMs={PAGE_EXIT_MS}>
+        {showSearch && (
+          <div className="list-search-page" ref={setSearchEl}>
+            <ListSearchPage
+              placeholder={t('groupList.placeholderSearch')}
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+              onBack={closeSearch}
+            >
+              {normalizedQuery && matchedGroups.length === 0 && (
+                <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
+              )}
+              {renderRounds(matchedGroups)}
+            </ListSearchPage>
+          </div>
+        )}
+      </Presence>
 
       <DetailStackEntries
         stack={detailStack.stack}

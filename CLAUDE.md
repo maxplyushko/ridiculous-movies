@@ -1,4 +1,4 @@
-/# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -23,9 +23,30 @@ All new features and UI/UX changes must be fully consistent with existing patter
   - modals (`.confirm-dialog-overlay` / `.confirm-dialog`) fade + pop in with `dialog-overlay-in` / `dialog-pop-in`, fade + shrink out over `0.18s ease-in`
   - unmounting anything animated goes through `<Presence show={…} exitMs={…}>` (`components/Presence.tsx`) — it keeps the last children mounted for the exit and adds `presence--exiting` to its wrapper imperatively on the next frame; `PAGE_EXIT_MS` for pages, default `DIALOG_EXIT_MS` for modals
   - when the element is already in the DOM (detail stacks, stat pages), close it with `useAnimatedClose(el, closingClass, ms, onClosed)` — it toggles the class on the node directly, so the closing tap triggers **no React render** and the transition doesn't lose its first frames. `useDetailStack.pop` and `StatPage`/`PersonalStatPage` back buttons use it; swipe-back skips it (the gesture already moved the element)
-  - in-place size/opacity changes (e.g. `.mlp__hero--collapsed` on scroll) use `transition … 0.28s cubic-bezier(0.4, 0, 0.2, 1)`; nav/bar transitions use `0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+  - in-place size/opacity changes use `transition … 0.28s cubic-bezier(0.4, 0, 0.2, 1)`; nav/bar transitions use `0.3s cubic-bezier(0.4, 0, 0.2, 1)`
   - animate only `transform`/`opacity` where possible; every animation needs a `@media (prefers-reduced-motion: reduce)` opt-out
   - don't flash a skeleton where a page is already open — reload silently (`load…(true)`) after closing a form, and keep a page's container element stable (swap the body, not the container) so its enter animation can't replay mid-view
+
+## Keyboard & viewport — ASK BEFORE TOUCHING
+
+**Never change keyboard, input-focus, or viewport logic without explicit permission — even as a side effect of an unrelated change.** This area cost weeks of regressions and is now in a known-good state. If a task seems to require touching it, stop and ask first.
+
+In scope (do not edit unprompted):
+- `hooks/useTelegramKeyboard.ts` — the only keyboard code in the repo
+- `html` / `body` / `#root` / `.app-shell` / `.app-main` / `.bottom-bar` rules in `styles/global.css`
+- the `<meta name="viewport">` tag in `webapp/index.html`
+- `initTelegramWebApp()` in `lib/telegram/telegramTheme.ts`
+- any `onFocus` / `onBlur` handler on a text input
+
+Invariants that must hold:
+- **`html, body` must never be `position: fixed` or `overflow: hidden`.** A non-scrollable document forces WKWebView to pan its internal scroll view to reveal the caret instead of scrolling, which throws content off-screen permanently. Commit `8c07c3d` added that rule incidentally in a search refactor and every "keyboard fix" commit after it (`e750dad` → `b355b7b`) was machinery fighting the resulting pan.
+- **Viewport handling stays passive.** `useKeyboardOpenClass()` observes and toggles a `kb-open` class on `<html>` — nothing else. No `window.scrollTo`, no rAF correction loops, no `--kb-inset`, no `el.scrollIntoView()`.
+- **Keyboard height is `innerHeight - visualViewport.height`, never minus `offsetTop`.** Telegram iOS pans the layout viewport, so `offsetTop ≈ keyboardHeight` and the terms cancel to zero.
+- **Never gate keyboard detection on `isTelegramMiniApp()`** — `visualViewport` is the only signal that works in both environments.
+- **The bottom bar hides in pure CSS** via `:root.kb-open .bottom-bar`, never through React state (a `MutationObserver` → `setState` round-trip lags the CSS by a frame and desyncs).
+- The meta viewport keeps `maximum-scale=1.0, user-scalable=no`. Sonar flags these as an a11y violation; removing them (commit `86ce3f0`) lets iOS auto-zoom on inputs under 16px and shift the viewport on focus. Leave them.
+
+`origin/stale-develop` is the reference for the last glitch-free state — it has zero keyboard code.
 
 ## Testing
 
@@ -70,7 +91,9 @@ npm run lint         # ESLint
 
 **Local dev auth**: Without Telegram, the sign-in screen appears. Use guest login (requires `"guest"` user in `scripts/data.json`) or Google OAuth.
 
-**Roles & groups**: Each user has a `role` (`user` or `admin`) and belongs to a `user_group`. Movies and stats are scoped to the caller's group. Only admins can delete movies they don't own.
+**Roles & groups**: Each user has a `role` (`user` or `admin`) and belongs to a `user_group`. Movies and stats are scoped to the caller's group. Only admins can delete movies they don't own. A user with no `groupId` gets `OnboardingModal` (`features/onboarding/`) instead of the app shell — create a group (caller becomes its admin) or join one with an invite code. Existing members share their group via `GET /api/groups/me/invite` (`useCopyInviteLink`).
+
+**Guest accounts**: The `guest` user is capped on how much it can add. The backend rejects the write with a `GUEST_LIMIT_REACHED` error message, which the add pages and `MoviePage` catch to show `GuestLimitModal` — check for that string, don't invent a status code.
 
 **Storage**: No SQL database. All data lives in a JSON file (`AppData`), loaded into memory at startup by `DataStoreInitializer`, held in `DataStore` with a `ReentrantReadWriteLock`. Every write rebuilds the full `AppData` object and calls `driveClient.upload()`.
 - **Dev** (`@Profile("dev")`): `LocalFileStorageClient` reads/writes `scripts/data.json`
@@ -78,9 +101,11 @@ npm run lint         # ESLint
 
 **Frontend API layer**: `webapp/src/api/client.ts` wraps `fetch` — injects `Authorization: Bearer <token>` from localStorage. Feature-scoped API modules live under `webapp/src/features/*/api/` and all call through `apiFetch`. Vite proxies `/api` to the backend in dev.
 
-**Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four bottom-bar buttons: Group List, Personal List, Search, Profile. Tab state lives in `App`; each page is always mounted but `hidden` when inactive.
+**Frontend routing**: Single-page, tab-based. `App.tsx` renders `AppShell` inside `AuthGate`. Four bottom-bar buttons, in order: Group List, Personal List, Profile, Search. Tab state lives in `App`; each page is always mounted but `hidden` when inactive. `useNavDrag` lets the nav pill be dragged between tabs and positions `.bottom-bar__indicator` imperatively.
 
-**Search**: Search is one of the four bottom-bar tabs (`SearchResults`, `features/search/`), not an overlay — the bottom bar stays visible and functional while search is open. Uses the same `ListSearchBar` as other list screens. Results cover TMDB movies/TV and TMDB people only (no club-movie or personal-watchlist result section); the trailing cross only clears the query, it doesn't close/leave the tab. Recent searches are shown when the query is empty (`useRecentSearches`).
+**Shell layout**: `.app-shell` is a `100svh` flex column; `.app-main` is the single scroll container for every tab; `.bottom-bar` is `position: fixed` over it, with `.app-main` reserving `--bottom-bar-offset` of padding. The bar hides itself whenever the on-screen keyboard is up (`:root.kb-open`) or a Telegram MainButton is showing (`body.tg-main-button-open`). See **Keyboard & viewport** above before changing any of this.
+
+**Search**: Search is one of the four bottom-bar tabs (`SearchResults`, `features/search/`), not an overlay — switching to it doesn't unmount anything, and the trailing cross only clears the query. Uses the same `ListSearchBar` as other list screens. Results cover TMDB movies/TV and TMDB people only (no club-movie or personal-watchlist result section). Recent searches are shown when the query is empty (`useRecentSearches`).
 
 **Personal list**: Per-user private watchlist (`PersonalListPage`, `/api/personal-list`). Items carry two **independent** booleans — `inList` (in the "to watch" list) and `watched` — plus an optional `rating`. A movie can be watched without being listed, and vice-versa; a record is deleted once both flags are false and no rating remains. `inList` is nullable in storage: legacy records (no field) deserialize as `null` and are treated as `true`. Stored in `DataStore.personalMoviesById`, keyed by user ID — fully isolated from group movies. `MovieDetail` (`MoviePage.tsx`) surfaces these as a shared icon action row (rate star, group-rating badge, bookmark=`inList`, eye=`watched`) that acts on the **caller's own** record via `GET /status` + `PUT /state`, consistent across every source (group / personal / TMDB / member).
 
@@ -88,7 +113,11 @@ npm run lint         # ESLint
 
 **Telegram bot**: Webhook at `/api/telegram/webhook` (secret-verified). Only handles `/start` — sends a Mini App launch button. Bot only activates when `telegram.bot.token` property is set (`@ConditionalOnProperty`).
 
-**TMDB**: Movie search via TMDB API (`GET /api/tmdb/search?query=`). Proxied through backend to keep the API key server-side. Requires `TMDB_API_KEY` env var.
+**TMDB**: Movie, TV and person search via TMDB API, plus movie/actor detail. Proxied through the backend to keep the API key server-side; requires `TMDB_API_KEY`. Artwork also goes through the backend (`GET /api/tmdb/image/{size}/{filename}`) rather than hitting `image.tmdb.org` directly — never build a raw TMDB image URL in the frontend. Client hooks: `useTmdbSearch`, `useTmdbPersonSearch`, `useTmdbMovieDetails`, `useTmdbActor`.
+
+**Detail stacks**: Movie/actor detail pages are not routes — they push onto a per-page stack via `useDetailStack` (`GroupListPage`, `PersonalListPage`, `MemberListPage`, `SearchResults`), rendered by `DetailStackEntries`. The hook wires up `useSwipeBack`, `useAnimatedClose` and `useRegisterSubPage` for you; use it rather than hand-rolling detail navigation.
+
+**Randomizer**: `RandomizerDialog` (group) and `PersonalListPage` pick a movie with a slot-machine animation — `useSpinPicker` / `useReelPicker` drive the reel, `FireworkSparks` the reveal. This is the one place spin/reveal haptics are allowed.
 
 **Ratings**: `CreateMovieRequest`/`UpdateMovieRequest` accept a full `ratings` list (used for movie creation and non-rating edits). Single-user rating submission goes through `PUT /api/movies/{id}/rating` (`RateMovieRequest{score}`) — a dedicated per-user upsert handled entirely inside `DataStore.rateMovie` under one write-lock acquisition, avoiding the lost-update race a full-list replace has under concurrent raters.
 
@@ -107,6 +136,7 @@ npm run lint         # ESLint
 | GET | `/api/auth/google/callback` | OAuth redirect callback (server-side) |
 | GET | `/api/auth/google/token` | Exchange one-time token → JWT |
 | GET | `/api/movies` | List movies (params: `filter`, `sort`, `minRatings`, `requireAllUsers`) |
+| GET | `/api/movies/by-tmdb` | Find a group movie by `tmdbId`/`title`, `204` if none |
 | GET | `/api/movies/groups` | List movies grouped by round |
 | POST | `/api/movies` | Create movie (with optional ratings) |
 | PUT | `/api/movies/{id}` | Update movie (with optional ratings) |
@@ -123,9 +153,14 @@ npm run lint         # ESLint
 | GET | `/api/stats` | Group stats |
 | GET | `/api/users` | List users in caller's group |
 | PUT | `/api/users/me/preferences` | Update caller's preferences (theme, defaultPage, lang) |
+| POST | `/api/groups` | Create a group; caller becomes its admin |
+| POST | `/api/groups/join` | Join a group by invite code |
+| GET | `/api/groups/me/invite` | Invite link + code for the caller's group |
 | GET | `/api/tmdb/search` | Search TMDB for movies |
 | GET | `/api/tmdb/search/person` | Search TMDB for people (actors) |
 | GET | `/api/tmdb/movie/{id}` | Fetch full TMDB movie detail (poster, director, cast) |
+| GET | `/api/tmdb/actor/{id}` | Fetch TMDB person detail + credits |
+| GET | `/api/tmdb/image/{size}/{filename}` | Image proxy — streams TMDB artwork through the backend |
 | POST | `/api/telegram/webhook` | Telegram bot webhook |
 
 ## Key env vars

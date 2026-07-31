@@ -139,7 +139,8 @@ h1 {
 }
 
 :root.kb-open .bottom-bar,
-body.tg-main-button-open .bottom-bar {
+body.tg-main-button-open .bottom-bar,
+body.search-page-open .bottom-bar {
   transform: translateY(200%);
   opacity: 0;
   pointer-events: none;

@@ -16,6 +16,7 @@ import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
 import { ListSearchBar } from "@/components/ListSearchBar.tsx";
+import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
 import { hapticSpinReveal, hapticTabTap } from "@/utils/haptics.ts";
@@ -58,10 +59,18 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [formEl, setFormEl] = useState<HTMLDivElement | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchEl, setSearchEl] = useState<HTMLDivElement | null>(null);
   const toggleVersionRef = useRef<Map<string, number>>(new Map());
   const moviePicker = useSpinPicker<string>();
 
-  useRegisterSubPage(showForm);
+  useRegisterSubPage(showForm || showSearch);
+
+  const closeSearch = useCallback(() => {
+    setShowSearch(false);
+    setSearchQuery("");
+  }, []);
+  useSwipeBack(closeSearch, searchEl);
 
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
@@ -185,13 +194,32 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
   };
 
   const normalizedQuery = searchQuery.toLowerCase().trim();
-  const filteredMovies = normalizedQuery
+  const matchedMovies = normalizedQuery
     ? movies.filter((m) =>
         m.title.toLowerCase().includes(normalizedQuery) || m.description.toLowerCase().includes(normalizedQuery)
       )
-    : movies;
-  const toWatch = filteredMovies.filter((m) => m.inList && !m.watched);
-  const watched = filteredMovies.filter((m) => m.watched);
+    : [];
+  const toWatch = movies.filter((m) => m.inList && !m.watched);
+  const watched = movies.filter((m) => m.watched);
+
+  const sectionProps = {
+    openSwipeId,
+    celebratingId,
+    onEdit: handleEdit,
+    onDelete: (movie: PersonalMovie) => { setDeleteError(null); setMovieToDelete(movie); },
+    onToggleWatched: handleToggleWatched,
+    onOpen: (movie: PersonalMovie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); },
+    onSwipeOpen: (id: string) => setOpenSwipeId(id),
+    onSwipeClose: (id: string) => setOpenSwipeId((cur) => (cur === id ? null : cur)),
+    onSwipeBegin: (id: string) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); },
+  };
+
+  const renderSections = (toWatchItems: PersonalMovie[], watchedItems: PersonalMovie[]) => (
+    <>
+      <PersonalSection title={t('personalList.sectionToWatch')} movies={toWatchItems} {...sectionProps} />
+      <PersonalSection title={t('personalList.sectionWatched')} movies={watchedItems} {...sectionProps} />
+    </>
+  );
 
   if (isLoading) return <MovieListSkeleton />;
   if (error) {
@@ -234,42 +262,38 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         </div>
       </div>
 
-      <ListSearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('personalList.placeholderSearch')} />
+      <ListSearchBar
+        placeholder={t('personalList.placeholderSearch')}
+        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
+      />
 
       <div className="movie-list">
-        <PersonalSection
-          title={t('personalList.sectionToWatch')}
-          movies={toWatch}
-          openSwipeId={openSwipeId}
-          celebratingId={celebratingId}
-          onEdit={handleEdit}
-          onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
-          onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); }}
-          onSwipeOpen={(id) => setOpenSwipeId(id)}
-          onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
-          onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
-        />
-        <PersonalSection
-          title={t('personalList.sectionWatched')}
-          movies={watched}
-          openSwipeId={openSwipeId}
-          celebratingId={celebratingId}
-          onEdit={handleEdit}
-          onDelete={(movie) => { setDeleteError(null); setMovieToDelete(movie); }}
-          onToggleWatched={handleToggleWatched}
-          onOpen={(movie) => { if (openSwipeId !== null) { setOpenSwipeId(null); return; } detailStack.push({ kind: "personal", movieId: movie.id }); }}
-          onSwipeOpen={(id) => setOpenSwipeId(id)}
-          onSwipeClose={(id) => setOpenSwipeId((cur) => (cur === id ? null : cur))}
-          onSwipeBegin={(id) => { if (openSwipeId !== null && openSwipeId !== id) setOpenSwipeId(null); }}
-        />
-        {normalizedQuery && filteredMovies.length === 0 && (
-          <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
-        )}
-        {!normalizedQuery && movies.length === 0 && (
+        {renderSections(toWatch, watched)}
+        {movies.length === 0 && (
           <p className="movie-list__no-results">{t('personalList.empty')}</p>
         )}
       </div>
+
+      <Presence show={showSearch} exitMs={PAGE_EXIT_MS}>
+        {showSearch && (
+          <div className="list-search-page" ref={setSearchEl}>
+            <ListSearchPage
+              placeholder={t('personalList.placeholderSearch')}
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+              onBack={closeSearch}
+            >
+              {renderSections(
+                matchedMovies.filter((m) => m.inList && !m.watched),
+                matchedMovies.filter((m) => m.watched)
+              )}
+              {normalizedQuery && matchedMovies.length === 0 && (
+                <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
+              )}
+            </ListSearchPage>
+          </div>
+        )}
+      </Presence>
 
       <Presence show={movieToDelete !== null}>
         {movieToDelete && (
