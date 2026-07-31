@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import {
   KEYBOARD_MIN_PX,
+  getKeyboardHeightPx,
   getKeyboardOffsetPx,
   onKeyboardViewportChange,
 } from "@/hooks/useTelegramKeyboard.ts";
@@ -28,9 +29,12 @@ export function useViewportPanGuard(): void {
     };
 
     const applyInset = () => {
-      const offset = isTextEntry(document.activeElement) ? getKeyboardOffsetPx() : 0;
+      const focused = isTextEntry(document.activeElement);
+      const open = focused && getKeyboardHeightPx() > KEYBOARD_MIN_PX;
+      root.classList.toggle(KB_OPEN_CLASS, open);
+
+      const offset = open ? getKeyboardOffsetPx() : 0;
       const next = offset > KEYBOARD_MIN_PX ? offset : 0;
-      root.classList.toggle(KB_OPEN_CLASS, next > 0);
       if (next === lastInset) return;
       lastInset = next;
       root.style.setProperty(KB_INSET_VAR, `${next}px`);

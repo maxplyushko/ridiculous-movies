@@ -107,8 +107,8 @@ h1 {
 
 .app-shell {
   position: relative;
-  height: calc(var(--tg-viewport-stable-height, 100svh) - var(--kb-inset, 0px));
-  min-height: calc(var(--tg-viewport-stable-height, 100svh) - var(--kb-inset, 0px));
+  height: calc(var(--tg-viewport-stable-height, 100%) - var(--kb-inset, 0px));
+  min-height: calc(var(--tg-viewport-stable-height, 100%) - var(--kb-inset, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
