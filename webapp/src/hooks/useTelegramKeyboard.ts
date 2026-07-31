@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { getTelegramWebApp, isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 
 export const KEYBOARD_MIN_PX = 80;
+const KB_OPEN_CLASS = "kb-open";
 
 export function onKeyboardViewportChange(callback: () => void): () => void {
   const cleanups: Array<() => void> = [];
@@ -34,14 +36,13 @@ export function getLayoutViewportHeight(): number {
 }
 
 /**
- * Space below the visual viewport that still belongs to the layout viewport.
- * Used to size the shell; zero on clients that pan instead of resize.
+ * Height of the on-screen keyboard. Deliberately ignores `visualViewport.offsetTop`:
+ * Telegram iOS pans the layout viewport rather than resizing it, so subtracting the
+ * offset would cancel out the shrunken height and always report zero.
  */
-export function getKeyboardOffsetPx(): number {
+export function getKeyboardHeightPx(): number {
   const vv = window.visualViewport;
-  if (vv) {
-    return Math.max(0, Math.round(getLayoutViewportHeight() - vv.height - vv.offsetTop));
-  }
+  if (vv) return Math.max(0, Math.round(getLayoutViewportHeight() - vv.height));
 
   if (isTelegramMiniApp()) {
     const height = getTelegramWebApp()?.viewportHeight;
@@ -51,21 +52,35 @@ export function getKeyboardOffsetPx(): number {
   return 0;
 }
 
+function isTextEntry(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement
+    && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+}
+
 /**
- * Height of the on-screen keyboard. Unlike {@link getKeyboardOffsetPx} this never
- * subtracts `visualViewport.offsetTop`: Telegram iOS pans the layout viewport rather
- * than resizing it, so the offset and the shrunken height would cancel each other out.
+ * Mirrors on-screen-keyboard visibility onto a `kb-open` class on the root element.
+ * Purely observational — it never scrolls, resizes or otherwise corrects the viewport.
  */
-export function getKeyboardHeightPx(): number {
-  const vv = window.visualViewport;
-  if (vv) {
-    return Math.max(0, Math.round(getLayoutViewportHeight() - vv.height));
-  }
+export function useKeyboardOpenClass(): void {
+  useEffect(() => {
+    const root = document.documentElement;
 
-  if (isTelegramMiniApp()) {
-    const height = getTelegramWebApp()?.viewportHeight;
-    if (height) return Math.max(0, Math.round(getLayoutViewportHeight() - height));
-  }
+    const sync = () => {
+      const open = isTextEntry(document.activeElement)
+        && getKeyboardHeightPx() > KEYBOARD_MIN_PX;
+      root.classList.toggle(KB_OPEN_CLASS, open);
+    };
 
-  return 0;
+    document.addEventListener("focusin", sync);
+    document.addEventListener("focusout", sync);
+    const unsubscribe = onKeyboardViewportChange(sync);
+    sync();
+
+    return () => {
+      document.removeEventListener("focusin", sync);
+      document.removeEventListener("focusout", sync);
+      unsubscribe();
+      root.classList.remove(KB_OPEN_CLASS);
+    };
+  }, []);
 }

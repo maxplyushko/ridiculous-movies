@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Check, Copy, Loader } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
-import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { useCopyInviteLink } from "@/hooks/useCopyInviteLink.ts";
 import { createGroup, joinGroup } from "../api/onboarding.ts";
 import { guestLogin } from "@/features/auth/api/auth.ts";
@@ -127,7 +126,6 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
                 type="text"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
-                onFocus={(e) => scrollIntoViewAfterKeyboard(e.currentTarget)}
                 placeholder={t("onboarding.joinCodePlaceholder")}
               />
               {error && <span className="confirm-dialog__error">{error}</span>}
@@ -154,7 +152,6 @@ export function OnboardingModal({ onGroupReady }: Readonly<OnboardingModalProps>
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onFocus={(e) => scrollIntoViewAfterKeyboard(e.currentTarget)}
                 placeholder={t("onboarding.groupNamePlaceholder")}
                 autoFocus
               />

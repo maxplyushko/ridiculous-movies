@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import type { TmdbMediaType, TmdbMovie } from "@/types/TmdbMovie.ts";
 import { fetchTmdbMovieDetails } from "@/features/group/api/tmdb.ts";
 import { useTmdbSearch } from "@/hooks/useTmdbSearch.ts";
-import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 
 type TmdbTitleFieldProps = {
   id: string;
@@ -37,7 +36,7 @@ export function TmdbTitleField({ id, label, title, onTitleChange, onSelect, onTa
         type="text"
         value={title}
         onChange={(e) => { onTitleChange(e.target.value); setShowSuggestions(true); }}
-        onFocus={(e) => { setShowSuggestions(true); scrollIntoViewAfterKeyboard(e.currentTarget); }}
+        onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
         placeholder=" "
         autoComplete="off"

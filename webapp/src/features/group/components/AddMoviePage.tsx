@@ -12,7 +12,6 @@ import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
 import { TmdbTitleField } from "@/components/TmdbTitleField.tsx";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
-import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 const SCORE_MAX = 10;
@@ -225,7 +224,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
             type="text"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder=" "
           />
           <label htmlFor="add-movie-tagline">{t('addMovie.labelTagline')}</label>
@@ -236,7 +234,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder=" "
           />
           <label htmlFor="add-movie-desc">{t('addMovie.labelDescription')}</label>

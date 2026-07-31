@@ -12,7 +12,7 @@ import { CircleUser, Film, Search, Users } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useTranslation } from "react-i18next";
 import { useNavDrag } from "@/hooks/useNavDrag.ts";
-import { useViewportPanGuard } from "@/hooks/useViewportPanGuard.ts";
+import { useKeyboardOpenClass } from "@/hooks/useTelegramKeyboard.ts";
 
 type Tab = "group" | "personal" | "misc" | "search";
 type Page = Tab | "stat" | "personalStat";
@@ -91,7 +91,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
 }
 
 function App() {
-  useViewportPanGuard();
+  useKeyboardOpenClass();
   return (
       <AuthGate>
         {(session) => <AppShell session={session} />}

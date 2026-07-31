@@ -2,7 +2,6 @@ import { useRef } from "react";
 import { Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hapticTabTap } from "@/utils/haptics.ts";
-import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 
 type ListSearchBarProps = {
   value: string;
@@ -29,7 +28,6 @@ export function ListSearchBar({ value, onChange, placeholder }: Readonly<ListSea
           spellCheck={false}
           placeholder={placeholder}
           value={value}
-          onFocus={(e) => scrollIntoViewAfterKeyboard(e.currentTarget)}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); inputRef.current?.blur(); } }}
         />

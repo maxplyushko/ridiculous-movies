@@ -11,7 +11,6 @@ import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { TmdbTitleField } from "@/components/TmdbTitleField.tsx";
 import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
-import scrollIntoViewAfterKeyboard from "@/hooks/useScrollIntoViewOnKeyboard.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 type AddPersonalMoviePageProps = {
@@ -107,7 +106,6 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             type="text"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder=" "
           />
           <label htmlFor="pl-movie-tagline">{t('addPersonal.labelTagline')}</label>
@@ -118,7 +116,6 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            onFocus={(e) => { scrollIntoViewAfterKeyboard(e.currentTarget); }}
             placeholder=" "
           />
           <label htmlFor="pl-movie-desc">{t('addPersonal.labelDescription')}</label>
