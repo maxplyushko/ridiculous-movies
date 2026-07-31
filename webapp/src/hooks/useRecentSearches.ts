@@ -10,17 +10,17 @@ export type RecentEntry =
 
 const VALID_KINDS = new Set(["query", "tmdb", "actor"]);
 
-function storageKey(userId: string): string {
-  return `recent-searches-${userId}`;
+function storageKey(userId: string, scope?: string): string {
+  return scope ? `recent-searches-${scope}-${userId}` : `recent-searches-${userId}`;
 }
 
 function isRecentEntry(v: unknown): v is RecentEntry {
   return typeof v === "object" && v !== null && "kind" in v && "label" in v && VALID_KINDS.has((v as { kind: unknown }).kind as string);
 }
 
-function load(userId: string): RecentEntry[] {
+function load(userId: string, scope?: string): RecentEntry[] {
   try {
-    const raw = localStorage.getItem(storageKey(userId));
+    const raw = localStorage.getItem(storageKey(userId, scope));
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -33,38 +33,38 @@ function load(userId: string): RecentEntry[] {
   }
 }
 
-function save(userId: string, entries: RecentEntry[]) {
+function save(userId: string, entries: RecentEntry[], scope?: string) {
   try {
-    localStorage.setItem(storageKey(userId), JSON.stringify(entries));
+    localStorage.setItem(storageKey(userId, scope), JSON.stringify(entries));
   } catch {
     // ignore storage failures
   }
 }
 
-export function useRecentSearches(userId: string) {
-  const [recent, setRecent] = useState<RecentEntry[]>(() => load(userId));
+export function useRecentSearches(userId: string, scope?: string) {
+  const [recent, setRecent] = useState<RecentEntry[]>(() => load(userId, scope));
 
   useEffect(() => {
-    setRecent(load(userId));
-  }, [userId]);
+    setRecent(load(userId, scope));
+  }, [userId, scope]);
 
   const addRecent = useCallback((entry: RecentEntry) => {
     const label = entry.label.trim();
     if (!label) return;
     setRecent((prev) => {
       const next = [{ ...entry, label }, ...prev.filter((e) => e.label !== label)].slice(0, MAX_RECENT);
-      save(userId, next);
+      save(userId, next, scope);
       return next;
     });
-  }, [userId]);
+  }, [userId, scope]);
 
   const removeRecent = useCallback((label: string) => {
     setRecent((prev) => {
       const next = prev.filter((e) => e.label !== label);
-      save(userId, next);
+      save(userId, next, scope);
       return next;
     });
-  }, [userId]);
+  }, [userId, scope]);
 
   return { recent, addRecent, removeRecent };
 }

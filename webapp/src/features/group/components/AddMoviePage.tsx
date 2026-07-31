@@ -6,12 +6,11 @@ import { RatingEditor } from "@/components/RatingEditor.tsx";
 import type { Movie } from "../types/Movie.ts";
 import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
 import { useRatingForm, roundHalf, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
-import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
+import { useHideBottomBar } from "@/hooks/useSubPage.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
 import { TmdbTitleField } from "@/components/TmdbTitleField.tsx";
-import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 const SCORE_MAX = 10;
@@ -161,7 +160,6 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
   const { t } = useTranslation();
   const { forms, add, remove, updateUser, updateScore, updateMode, updateDetailed, buildRatings } = useRatingForm(movie);
   const submitLabel = isEditMode ? t('addMovie.btnSave') : t('addMovie.btnAdd');
-  const isTg = isTelegramMiniApp();
 
   const sortedUsers = useMemo(
     () => [...users].sort((a, b) => a.name.localeCompare(b.name)),
@@ -199,7 +197,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
   };
 
   const isSubmitDisabled = isSubmitting || !title.trim();
-  useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
+  useHideBottomBar();
 
   return (
     <section className="add-movie">
@@ -282,13 +280,11 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
       </div>
 
       {error && <span className="add-movie__error">{error}</span>}
-      {!isTg && (
-        <div className="add-movie__control">
-          <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
-            {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
-          </button>
-        </div>
-      )}
+      <div className="add-movie__control">
+        <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
+          {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
+        </button>
+      </div>
       <Presence show={showGuestLimit}>
         {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
       </Presence>

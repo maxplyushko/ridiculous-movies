@@ -10,7 +10,6 @@ import { RandomizerDialog } from "./RandomizerDialog.tsx";
 import AddMoviePage from "./AddMoviePage.tsx";
 import { deleteMovie, fetchMovieGroups, rateMovie } from "../api/movies.ts";
 import { fetchUsers } from "../api/users.ts";
-import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -18,7 +17,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { DetailStackEntries } from "@/components/DetailStackEntries.tsx";
-import { ChartLine, Dices, Plus } from "lucide-react";
+import { ChartLine, Dices, Plus, Search } from "lucide-react";
 import { hapticTabTap } from "@/utils/haptics.ts";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useDetailStack } from "@/hooks/useDetailStack.ts";
@@ -181,38 +180,36 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
           <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); onShowStats(); }} aria-label={t('groupList.labelStatistics')}>
             <ChartLine size={20} className="mlp__card-icon" />
           </button>
-          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }} aria-label={t('groupList.btnAddMovie')}>
+          <button type="button" className="mlp__card" onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowMovieForm(true); }} aria-label={t('groupList.btnAddMovie')}>
             <Plus size={20} className="mlp__card-icon" />
+          </button>
+          <button type="button" className="mlp__card mlp__card--accent" onClick={() => { hapticTabTap(); setShowSearch(true); }} aria-label={t('groupList.placeholderSearch')}>
+            <Search size={20} className="mlp__card-icon" />
           </button>
         </div>
       </div>
-
-      <ListSearchBar
-        placeholder={t('groupList.placeholderSearch')}
-        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
-      />
 
       <div className="movie-list">
         {renderRounds(movieGroups)}
       </div>
 
-      <Presence show={showSearch} exitMs={PAGE_EXIT_MS}>
-        {showSearch && (
-          <div className="list-search-page" ref={setSearchEl}>
-            <ListSearchPage
-              placeholder={t('groupList.placeholderSearch')}
-              query={searchQuery}
-              onQueryChange={setSearchQuery}
-              onBack={closeSearch}
-            >
-              {normalizedQuery && matchedGroups.length === 0 && (
-                <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
-              )}
-              {renderRounds(matchedGroups)}
-            </ListSearchPage>
-          </div>
-        )}
-      </Presence>
+      {showSearch && (
+        <ListSearchPage
+          placeholder={t('groupList.placeholderSearch')}
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          onBack={closeSearch}
+          containerRef={setSearchEl}
+          userId={currentUserId}
+          scope="group"
+          resultCount={matchedGroups.length}
+        >
+          {normalizedQuery && matchedGroups.length === 0 && (
+            <p className="movie-list__no-results">{t('groupList.noMatch')} "{searchQuery}"</p>
+          )}
+          {renderRounds(matchedGroups)}
+        </ListSearchPage>
+      )}
 
       <DetailStackEntries
         stack={detailStack.stack}

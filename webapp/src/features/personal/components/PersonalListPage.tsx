@@ -6,7 +6,7 @@ import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import type { TmdbMovie } from "@/types/TmdbMovie.ts";
 import { PersonalSection } from "./PersonalSection.tsx";
 import AddPersonalMoviePage from "./AddPersonalMoviePage.tsx";
-import { ChartLine, Dices, Loader, Plus } from "lucide-react";
+import { ChartLine, Dices, Loader, Plus, Search } from "lucide-react";
 import { RatingModal } from "@/components/RatingModal.tsx";
 import { MoviePage } from "@/components/MoviePage.tsx";
 import { ActorPage } from "@/components/ActorPage.tsx";
@@ -15,7 +15,6 @@ import { Dialog } from "@/components/Dialog.tsx";
 import { FireworkSparks } from "@/components/FireworkSparks.tsx";
 import { useSpinPicker } from "@/hooks/useSpinPicker.ts";
 import { deletePersonalMovie, editPersonalMovie, fetchPersonalList } from "../api/personalList.ts";
-import { ListSearchBar } from "@/components/ListSearchBar.tsx";
 import { ListSearchPage } from "@/components/ListSearchPage.tsx";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -40,7 +39,7 @@ function fireWatchedCelebration() {
   confetti({ ...defaults, particleCount: 15, spread: 360, startVelocity: 36, ticks: 50, scalar: 0.55 });
 }
 
-const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ active: boolean; onShowStats: () => void; resetSignal?: number }>) => {
+const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: Readonly<{ active: boolean; currentUserId: string; onShowStats: () => void; resetSignal?: number }>) => {
   const { t } = useTranslation();
   const [movies, setMovies] = useState<PersonalMovie[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -254,18 +253,21 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
           </button>
           <button
             type="button"
-            className="mlp__card mlp__card--accent"
+            className="mlp__card"
             onClick={() => { hapticTabTap(); setEditingMovie(undefined); setShowForm(true); }}
           >
             <Plus size={20} className="mlp__card-icon" />
           </button>
+          <button
+            type="button"
+            className="mlp__card mlp__card--accent"
+            aria-label={t('personalList.placeholderSearch')}
+            onClick={() => { hapticTabTap(); setShowSearch(true); }}
+          >
+            <Search size={20} className="mlp__card-icon" />
+          </button>
         </div>
       </div>
-
-      <ListSearchBar
-        placeholder={t('personalList.placeholderSearch')}
-        onOpen={() => { hapticTabTap(); setShowSearch(true); }}
-      />
 
       <div className="movie-list">
         {renderSections(toWatch, watched)}
@@ -274,26 +276,26 @@ const PersonalListPage = ({ active, onShowStats, resetSignal }: Readonly<{ activ
         )}
       </div>
 
-      <Presence show={showSearch} exitMs={PAGE_EXIT_MS}>
-        {showSearch && (
-          <div className="list-search-page" ref={setSearchEl}>
-            <ListSearchPage
-              placeholder={t('personalList.placeholderSearch')}
-              query={searchQuery}
-              onQueryChange={setSearchQuery}
-              onBack={closeSearch}
-            >
-              {renderSections(
-                matchedMovies.filter((m) => m.inList && !m.watched),
-                matchedMovies.filter((m) => m.watched)
-              )}
-              {normalizedQuery && matchedMovies.length === 0 && (
-                <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
-              )}
-            </ListSearchPage>
-          </div>
-        )}
-      </Presence>
+      {showSearch && (
+        <ListSearchPage
+          placeholder={t('personalList.placeholderSearch')}
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          onBack={closeSearch}
+          containerRef={setSearchEl}
+          userId={currentUserId}
+          scope="personal"
+          resultCount={matchedMovies.length}
+        >
+          {renderSections(
+            matchedMovies.filter((m) => m.inList && !m.watched),
+            matchedMovies.filter((m) => m.watched)
+          )}
+          {normalizedQuery && matchedMovies.length === 0 && (
+            <p className="movie-list__no-results">{t('personalList.noMatch')} "{searchQuery}"</p>
+          )}
+        </ListSearchPage>
+      )}
 
       <Presence show={movieToDelete !== null}>
         {movieToDelete && (

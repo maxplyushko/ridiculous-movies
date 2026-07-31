@@ -11,7 +11,7 @@
 
 .mlp__cards {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.625rem;
   padding: 1rem 1rem 0.5rem;
 }
@@ -2160,43 +2160,30 @@ dialog.confirm-dialog::backdrop {
   overflow-y: auto;
   will-change: transform;
   padding-bottom: 1rem;
-  animation: page-slide-in 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.mlp__search-close {
+  all: unset;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+
+.mlp__search-close:active {
+  background: var(--active-highlight);
 }
 
 .list-search-page > .page-back-btn {
   margin: 0.75rem 0 0 0.875rem;
-}
-
-.list-search-page--closing,
-.presence--exiting .list-search-page {
-  transform: translateX(100%);
-  overflow-y: hidden;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .list-search-page {
-    animation: none;
-    transition: none;
-  }
-}
-
-.mlp__search--trigger {
-  appearance: none;
-  border: none;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mlp__search-placeholder {
-  flex: 1;
-  min-width: 0;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .page-back-btn {

@@ -19,34 +19,3 @@ export function useTelegramBackButton(onBack: () => void, active = true) {
     };
   }, [active]);
 }
-
-export function useTelegramMainButton(
-  text: string,
-  onClick: () => void,
-  disabled = false,
-  loading = false,
-) {
-  const cbRef = useRef(onClick);
-  // eslint-disable-next-line react-hooks/refs
-  cbRef.current = onClick;
-
-  useEffect(() => {
-    const btn = getTelegramWebApp()?.MainButton;
-    if (!btn) return;
-    const handler = () => cbRef.current();
-    btn.setText(text).show().onClick(handler);
-    document.body.classList.add("tg-main-button-open");
-    return () => {
-      btn.offClick(handler).hide();
-      document.body.classList.remove("tg-main-button-open");
-    };
-  }, [text]);
-
-  useEffect(() => {
-    const btn = getTelegramWebApp()?.MainButton;
-    if (!btn) return;
-    btn.setText(text);
-    if (disabled) btn.disable(); else btn.enable();
-    if (loading) btn.showProgress(false); else btn.hideProgress();
-  }, [text, disabled, loading]);
-}

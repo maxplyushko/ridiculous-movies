@@ -3,14 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import type { PersonalMovie } from "../types/PersonalMovie.ts";
 import { addPersonalMovie, editPersonalMovie, type PersonalMoviePayload } from "../api/personalList.ts";
-import { useTelegramMainButton } from "@/hooks/useTelegramButtons.ts";
+import { useHideBottomBar } from "@/hooks/useSubPage.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { Presence } from "@/components/Presence.tsx";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import { TmdbTitleField } from "@/components/TmdbTitleField.tsx";
 import { calcDetailedScore, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
-import { isTelegramMiniApp } from "@/lib/telegram/telegram.ts";
 import { hapticTabTap } from "@/utils/haptics.ts";
 
 type AddPersonalMoviePageProps = {
@@ -35,7 +34,6 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
-  const isTg = isTelegramMiniApp();
   const rating = ratingMode === "detailed" ? calcDetailedScore(detailedRating) : classicRating;
 
   const toggleRatingMode = () => {
@@ -81,7 +79,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const isSubmitDisabled = isSubmitting || !title.trim();
   const submitLabel = isEditMode ? t('addPersonal.btnSave') : t('addPersonal.btnAdd');
 
-  useTelegramMainButton(submitLabel, handleSubmit, isSubmitDisabled, isSubmitting);
+  useHideBottomBar();
 
   return (
     <section className="add-movie">
@@ -139,13 +137,11 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
       )}
 
       {error && <span className="add-movie__error">{error}</span>}
-      {!isTg && (
-        <div className="add-movie__control">
-          <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
-            {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
-          </button>
-        </div>
-      )}
+      <div className="add-movie__control">
+        <button type="button" onClick={handleSubmit} disabled={isSubmitDisabled}>
+          {isSubmitting ? <Loader2 className="add-movie__spinner" size={16} /> : submitLabel}
+        </button>
+      </div>
       <Presence show={showGuestLimit}>
         {showGuestLimit && <GuestLimitModal onClose={() => setShowGuestLimit(false)} />}
       </Presence>
