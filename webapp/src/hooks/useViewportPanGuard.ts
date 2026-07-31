@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   KEYBOARD_MIN_PX,
   getKeyboardOffsetPx,
@@ -82,4 +82,19 @@ export function useViewportPanGuard(): void {
       root.classList.remove(KB_OPEN_CLASS);
     };
   }, []);
+}
+
+export function useIsKeyboardOpen(): boolean {
+  const [open, setOpen] = useState(() => document.documentElement.classList.contains(KB_OPEN_CLASS));
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => {
+      setOpen(root.classList.contains(KB_OPEN_CLASS));
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return open;
 }
