@@ -200,7 +200,7 @@ const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: R
       )
     : [];
   const toWatch = movies.filter((m) => m.inList && !m.watched);
-  const watched = movies.filter((m) => m.watched);
+  const watched = movies.filter((m) => m.watched && m.inList);
 
   const buildSectionProps = (onOpened?: (title: string) => void) => ({
     openSwipeId,

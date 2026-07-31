@@ -47,7 +47,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
   }, [targetUserId]);
 
   const toWatch = movies.filter((m) => m.inList && !m.watched);
-  const watched = movies.filter((m) => m.watched);
+  const watched = movies.filter((m) => m.watched && m.inList);
 
   return (
     <div className="mlp">
@@ -103,6 +103,7 @@ const MemberListPage = ({ targetUserId, targetName, onBack }: Readonly<Props>) =
           return (
             <MoviePage
               source={{ kind: "personal", movie }}
+              readOnly
               onBack={detailStack.pop}
               onOpenActor={(personId) => detailStack.push({ kind: "actor", personId })}
             />

@@ -9,15 +9,16 @@ interface Identity {
   description?: string;
   tagline?: string | null;
   tmdbMediaType?: TmdbMediaType | null;
+  skip?: boolean;
   onChange?: () => void;
   onError?: (message: string) => void;
 }
 
 type Flags = { inList: boolean; watched: boolean };
 
-export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdbMediaType, onChange, onError }: Identity) {
+export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdbMediaType, skip, onChange, onError }: Identity) {
   const [selfStatus, setSelfStatus] = useState<PersonalMovie | null>(null);
-  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(!skip);
 
   const confirmedRef = useRef<Flags>({ inList: false, watched: false });
   const desiredRef = useRef<Flags>({ inList: false, watched: false });
@@ -34,6 +35,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
   });
 
   useEffect(() => {
+    if (skip) return;
     if (tmdbId == null && !title) return;
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -49,7 +51,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
       .catch(() => { if (!cancelled) setSelfStatus(null); })
       .finally(() => { if (!cancelled) setStatusLoading(false); });
     return () => { cancelled = true; };
-  }, [tmdbId, title]);
+  }, [tmdbId, title, skip]);
 
   const flush = () => {
     if (inFlightRef.current) return;

@@ -64,6 +64,9 @@ public class PersonalListController {
       @RequestBody CreatePersonalMovieRequest req
   ) {
     assertGuestLimit(userId);
+    if (dataStore.findPersonalMovieForCaller(userId, req.tmdbId(), req.title()) != null) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "PERSONAL_MOVIE_DUPLICATE");
+    }
     PersonalMovie pm = new PersonalMovie();
     pm.setUserId(userId);
     pm.setTitle(req.title());

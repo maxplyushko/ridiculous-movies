@@ -68,6 +68,8 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
     } catch (e) {
       if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") {
         setShowGuestLimit(true);
+      } else if (e instanceof Error && e.message === "PERSONAL_MOVIE_DUPLICATE") {
+        setError(t('addPersonal.errorDuplicate'));
       } else {
         setError(e instanceof Error ? e.message : "Something went wrong");
       }

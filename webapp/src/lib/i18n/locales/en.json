@@ -53,7 +53,8 @@
     "btnUse": "Use",
     "btnSave": "Save",
     "btnAdd": "Add",
-    "sectionMyRating": "My Rating"
+    "sectionMyRating": "My Rating",
+    "errorDuplicate": "This is already in your list"
   },
   "groupList": {
     "btnCancel": "Cancel",

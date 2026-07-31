@@ -25,6 +25,7 @@ export type MoviePageSource =
 type MoviePageProps = {
   source: MoviePageSource;
   currentUserId?: string;
+  readOnly?: boolean;
   onBack: () => void;
   onRate?: () => void | Promise<unknown>;
   onEdit?: () => void;
@@ -161,6 +162,7 @@ function MoviePageActions({
   statusLoading,
   inList,
   watched,
+  readOnly,
   onToggleInList,
   onToggleWatched,
   t,
@@ -175,10 +177,12 @@ function MoviePageActions({
   statusLoading: boolean;
   inList: boolean;
   watched: boolean;
+  readOnly?: boolean;
   onToggleInList: () => void;
   onToggleWatched: () => void;
   t: TFunction;
 }>) {
+  const StateTag = readOnly ? "div" : "button";
   return (
     <div className="movie-page__actions">
       {canRate && (
@@ -216,24 +220,24 @@ function MoviePageActions({
         </>
       ) : (
         <>
-          <button
-            type="button"
+          <StateTag
+            type={readOnly ? undefined : "button"}
             className={`movie-page__action${inList ? " movie-page__action--listed" : ""}`}
             aria-label={inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}
-            onClick={onToggleInList}
+            onClick={readOnly ? undefined : onToggleInList}
           >
             <Bookmark size={26} fill={inList ? "currentColor" : "none"} />
             <span className="movie-page__action-label">{inList ? t('moviePage.actionInList') : t('moviePage.actionToWatch')}</span>
-          </button>
-          <button
-            type="button"
+          </StateTag>
+          <StateTag
+            type={readOnly ? undefined : "button"}
             className={`movie-page__action${watched ? " movie-page__action--watched" : ""}`}
             aria-label={watched ? t('moviePage.actionWatched') : t('moviePage.actionNotWatched')}
-            onClick={onToggleWatched}
+            onClick={readOnly ? undefined : onToggleWatched}
           >
             <Eye size={26} />
             <span className="movie-page__action-label">{watched ? t('moviePage.actionWatched') : t('moviePage.actionNotWatched')}</span>
-          </button>
+          </StateTag>
         </>
       )}
     </div>
@@ -483,7 +487,7 @@ function deriveMovieFields(source: MoviePageSource, details: TmdbMovieDetails | 
   return { tmdbId, mediaType, title, description, posterUrl, tmdbScore, releaseYear, customTagline, tagline };
 }
 
-export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPersonalStateChange, onOpenActor }: Readonly<MoviePageProps>) {
+export function MoviePage({ source, currentUserId, readOnly, onBack, onRate, onEdit, onPersonalStateChange, onOpenActor }: Readonly<MoviePageProps>) {
   const { t } = useTranslation();
   const tmdbId = source.kind === "tmdb" ? source.movie.id : source.movie.tmdbId;
   const mediaType = source.kind === "tmdb"
@@ -515,6 +519,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
     description,
     tagline: resolvedTagline,
     tmdbMediaType: mediaType,
+    skip: readOnly,
     onChange: onPersonalStateChange,
     onError: (message) => { if (message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); },
   });
@@ -538,16 +543,18 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
     return () => { cancelled = true; };
   }, [source.kind, tmdbId, title]);
 
-  const inList = selfStatus?.inList ?? false;
-  const watched = selfStatus?.watched ?? false;
-  const ownRating = source.kind === "group"
-    ? (source.movie.ratings.find((r) => r.user.id === currentUserId)?.score ?? null)
-    : (selfStatus?.rating ?? null);
+  const inList = readOnly && source.kind === "personal" ? source.movie.inList : (selfStatus?.inList ?? false);
+  const watched = readOnly && source.kind === "personal" ? source.movie.watched : (selfStatus?.watched ?? false);
+  const ownRating = readOnly && source.kind === "personal"
+    ? source.movie.rating
+    : source.kind === "group"
+      ? (source.movie.ratings.find((r) => r.user.id === currentUserId)?.score ?? null)
+      : (selfStatus?.rating ?? null);
   const groupRating = source.kind === "group" ? source.movie.averageRating : (groupMatch?.averageRating ?? null);
   const groupRatings = source.kind === "group" ? source.movie.ratings : (groupMatch?.ratings ?? []);
   const hasGroupRatings = groupRatings.length > 0;
 
-  const canRate = source.kind === "group" ? !!onRate : true;
+  const canRate = readOnly ? false : source.kind === "group" ? !!onRate : true;
   const handleRateTap = () => {
     hapticTabTap();
     if (source.kind === "group") {
@@ -617,6 +624,7 @@ export function MoviePage({ source, currentUserId, onBack, onRate, onEdit, onPer
         statusLoading={statusLoading}
         inList={inList}
         watched={watched}
+        readOnly={readOnly}
         onToggleInList={toggleInList}
         onToggleWatched={toggleWatched}
         t={t}

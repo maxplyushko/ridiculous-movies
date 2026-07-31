@@ -53,7 +53,8 @@
     "btnUse": "Применить",
     "btnSave": "Сохранить",
     "btnAdd": "ОК",
-    "sectionMyRating": "Мой рейтинг"
+    "sectionMyRating": "Мой рейтинг",
+    "errorDuplicate": "Это уже есть в вашем списке"
   },
   "groupList": {
     "btnCancel": "Отмена",
