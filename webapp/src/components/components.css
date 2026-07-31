@@ -554,6 +554,10 @@
   transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
+:root.kb-open .movie-list__add__movie {
+  padding-bottom: 60vh;
+}
+
 .movie-list__add__movie--closing,
 .presence--exiting .movie-list__add__movie {
   transform: translateX(100%);
@@ -2159,7 +2163,7 @@ dialog.confirm-dialog::backdrop {
   background-color: var(--page-bg);
   overflow-y: auto;
   will-change: transform;
-  padding-top: calc(1rem + var(--mlp-card-height) + 0.5rem);
+  padding-top: 2.75rem;
   padding-bottom: 1rem;
 }
 
