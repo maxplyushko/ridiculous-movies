@@ -130,6 +130,15 @@ function applyThemeParams(params: TelegramThemeParams, colorScheme: "light" | "d
   root.style.colorScheme = colorScheme;
 }
 
+function syncTelegramSafeArea(): void {
+  const webApp = getTelegramWebApp();
+  const root = document.documentElement;
+  const top = (webApp?.contentSafeAreaInset?.top ?? 0) + (webApp?.safeAreaInset?.top ?? 0);
+  const bottom = (webApp?.contentSafeAreaInset?.bottom ?? 0) + (webApp?.safeAreaInset?.bottom ?? 0);
+  root.style.setProperty("--tg-content-safe-area-inset-top", `${top}px`);
+  root.style.setProperty("--tg-content-safe-area-inset-bottom", `${bottom}px`);
+}
+
 function syncTelegramChrome(): void {
   const webApp = getTelegramWebApp();
   if (!webApp) {
@@ -180,5 +189,11 @@ export function initTelegramWebApp(): void {
   webApp.expand();
   if (webApp.isVersionAtLeast?.("7.7")) {
     webApp.disableVerticalSwipes?.();
+  }
+  if (webApp.isVersionAtLeast?.("8.0")) {
+    syncTelegramSafeArea();
+    webApp.onEvent?.("safeAreaChanged", syncTelegramSafeArea);
+    webApp.onEvent?.("contentSafeAreaChanged", syncTelegramSafeArea);
+    webApp.requestFullscreen?.();
   }
 }

@@ -2163,7 +2163,7 @@ dialog.confirm-dialog::backdrop {
   background-color: var(--page-bg);
   overflow-y: auto;
   will-change: transform;
-  padding-top: 2.75rem;
+  padding-top: 0.5rem;
   padding-bottom: 1rem;
 }
 
@@ -2202,12 +2202,6 @@ dialog.confirm-dialog::backdrop {
 
 .mlp__search-close:active {
   background: var(--active-highlight);
-}
-
-.list-search-page > .page-back-btn {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.875rem;
 }
 
 .page-back-btn {
