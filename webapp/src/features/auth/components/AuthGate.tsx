@@ -1,6 +1,7 @@
 import "../auth.css";
 import { checkAccess, telegramLogin, exchangeGoogleToken, type AuthResponse } from "../api/auth.ts";
-import { tokenStore } from "@/api/client.ts";
+import { tokenStore, ApiError } from "@/api/client.ts";
+import { useTranslation } from "react-i18next";
 import { isTelegramMiniApp, getTelegramWebApp } from "@/lib/telegram/telegram.ts";
 import { MovieListSkeleton } from "@/components/MovieListSkeleton.tsx";
 import { ErrorScreen } from "@/components/ErrorScreen.tsx";
@@ -90,6 +91,7 @@ async function telegramAutoLogin() {
 }
 
 export function AuthGate({ children }: Readonly<AuthGateProps>) {
+  const { t } = useTranslation();
   const [state, setState] = React.useState<State>({ mode: "loading" });
   const [retryKey, setRetryKey] = React.useState(0);
   const tgRetriedRef = React.useRef(false);
@@ -124,8 +126,8 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
         setState({ mode: "signin" });
         return;
       }
-      const msg = e.message || "";
-      if (msg.toLowerCase().includes("invalid or expired")) {
+      const isAuthFailure = e instanceof ApiError && e.status === 401;
+      if (isAuthFailure) {
         tokenStore.clear();
         if (isTelegramMiniApp() && !tgRetriedRef.current) {
           tgRetriedRef.current = true;
@@ -134,7 +136,7 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
         }
         setState({ mode: "signin" });
       } else {
-        setState({ mode: "error", message: msg || "Access denied" });
+        setState({ mode: "error", message: e.message || "Access denied" });
       }
     });
 
@@ -144,7 +146,17 @@ export function AuthGate({ children }: Readonly<AuthGateProps>) {
   if (state.mode === "loading") return <MovieListSkeleton />;
 
   if (state.mode === "error") {
-    return <ErrorScreen error={new Error(state.message)} fullScreen />;
+    return (
+      <ErrorScreen
+        error={new Error(state.message)}
+        fullScreen
+        actionLabel={t('errors.signOutRetry')}
+        onAction={() => {
+          tokenStore.clear();
+          setRetryKey((k) => k + 1);
+        }}
+      />
+    );
   }
 
   if (state.mode === "signin") {

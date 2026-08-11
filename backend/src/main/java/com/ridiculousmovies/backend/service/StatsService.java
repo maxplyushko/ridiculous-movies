@@ -30,7 +30,7 @@ public class StatsService {
   }
 
   public StatsResponse getStats(String userId, String sort) {
-    AppUser user = authService.requireUser(userId);
+    AppUser user = authService.requireGroup(userId);
     String groupId = user.getUserGroup().getId();
     return new StatsResponse(
         mapMovieHighlights(dataStore.findTop3ForGroup(groupId, true)),

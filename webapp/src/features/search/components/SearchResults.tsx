@@ -65,7 +65,7 @@ const SearchResults = ({ currentUserId, resetSignal }: Readonly<SearchResultsPro
     detailStack.push({ kind: "tmdb", movie });
   };
 
-  const noResults = normalizedQuery.length > 0
+  const noResults = normalizedQuery.length >= 3
     && (!showTmdb || (!tmdbLoading && tmdbResults.length === 0))
     && (!showPeopleSection || (!peopleLoading && peopleResults.length === 0));
 
@@ -74,11 +74,11 @@ const SearchResults = ({ currentUserId, resetSignal }: Readonly<SearchResultsPro
       <ListSearchBar value={query} onChange={setQuery} placeholder={t('search.placeholder')} />
 
       <div className="movie-list">
-        {!normalizedQuery && recent.length === 0 && (
+        {normalizedQuery.length < 3 && recent.length === 0 && (
           <p className="movie-list__no-results">{t('search.emptyStart')}</p>
         )}
 
-        {!normalizedQuery && recent.length > 0 && (
+        {normalizedQuery.length < 3 && recent.length > 0 && (
           <div className="movie-group">
             <div className="movie-group__header"><h3>{t('search.recentTitle')}</h3></div>
             {recent.map((entry) => (

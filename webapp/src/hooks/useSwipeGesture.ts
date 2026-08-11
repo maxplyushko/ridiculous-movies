@@ -102,16 +102,22 @@ export function useSwipeGesture({
         return;
       }
 
-      setOffsetX((current) => {
-        const next = current <= -openThreshold ? -actionsWidth : 0;
-        if (next === -actionsWidth) {
-          onOpen();
-        } else {
-          if (current !== 0) setKeepActionsVisible(true);
-          onClose();
-        }
-        return next;
-      });
+      const current = offsetRef.current;
+      const next = current <= -openThreshold ? -actionsWidth : 0;
+      setOffsetX(next);
+      if (next === -actionsWidth) {
+        onOpen();
+      } else {
+        if (current !== 0) setKeepActionsVisible(true);
+        onClose();
+      }
+    },
+    onTouchCancel: () => {
+      touchAxis.current = null;
+      swipeBeginNotified.current = false;
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      setOffsetX(startOffset.current);
     },
   };
 

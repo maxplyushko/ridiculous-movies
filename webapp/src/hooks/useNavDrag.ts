@@ -21,9 +21,7 @@ export function useNavDrag(
   const dragRef = useRef<{ startX: number; startIdx: number } | null>(null);
   const currentIndexRef = useRef(currentIndex);
   const onSwitchRef = useRef(onSwitch);
-  // eslint-disable-next-line react-hooks/refs
   currentIndexRef.current = currentIndex;
-  // eslint-disable-next-line react-hooks/refs
   onSwitchRef.current = onSwitch;
 
   const move = (idx: number, animated: boolean) => {
@@ -39,6 +37,17 @@ export function useNavDrag(
   useEffect(() => {
     if (!dragRef.current) move(currentIndex, true);
   }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const ro = new ResizeObserver(() => {
+      if (!dragRef.current) move(currentIndexRef.current, false);
+    });
+    ro.observe(nav);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const nav = navRef.current;
@@ -76,13 +85,24 @@ export function useNavDrag(
       }
     };
 
+    const onCancel = () => {
+      const s = dragRef.current;
+      if (!s || !navRef.current || !indicatorRef.current) return;
+      dragRef.current = null;
+      indicatorRef.current.style.transition = "left 0.38s cubic-bezier(0.22,1,0.36,1)";
+      indicatorRef.current.style.left = `${calcLeft(navRef.current, s.startIdx, tabCount)}px`;
+      indicatorRef.current.style.transform = INDICATOR_TRANSFORM;
+    };
+
     nav.addEventListener("touchstart", onStart, { passive: true });
     nav.addEventListener("touchmove", onMove, { passive: false });
     nav.addEventListener("touchend", onEnd, { passive: true });
+    nav.addEventListener("touchcancel", onCancel, { passive: true });
     return () => {
       nav.removeEventListener("touchstart", onStart);
       nav.removeEventListener("touchmove", onMove);
       nav.removeEventListener("touchend", onEnd);
+      nav.removeEventListener("touchcancel", onCancel);
     };
   }, [tabCount]);
 

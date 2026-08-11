@@ -25,11 +25,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DataStore implements AppRepository {
+
+  private static final Logger log = LoggerFactory.getLogger(DataStore.class);
 
   private final ObjectMapper objectMapper;
   private final StorageClient driveClient;
@@ -109,7 +113,10 @@ public class DataStore implements AppRepository {
       m.setDescription(r.description() != null ? r.description() : "");
       m.setTagline(r.tagline() != null ? r.tagline() : "");
       AppUser owner = usersById.get(r.ownerId());
-      if (owner == null) continue;
+      if (owner == null) {
+        log.warn("Dropping movie id={} title={} — unresolvable ownerId={}", r.id(), r.title(), r.ownerId());
+        continue;
+      }
       m.setOwner(owner);
       m.setRound(r.round());
       m.setCreatedAt(r.createdAt());
@@ -120,7 +127,11 @@ public class DataStore implements AppRepository {
       if (r.ratings() != null) {
         for (AppData.RatingRecord rr : r.ratings()) {
           AppUser ratingUser = usersById.get(rr.userId());
-          if (ratingUser == null) continue;
+          if (ratingUser == null) {
+            log.warn("Dropping rating id={} on movie id={} — unresolvable userId={}",
+                rr.id(), r.id(), rr.userId());
+            continue;
+          }
           Rating rating = new Rating();
           rating.setId(rr.id());
           rating.setMovie(m);
@@ -198,6 +209,7 @@ public class DataStore implements AppRepository {
           .map(u -> {
             List<BigDecimal> scores = moviesById.values().stream()
                 .filter(this::isAfterStatsCutoff)
+                .filter(m -> m.getOwner() == null || !u.getId().equals(m.getOwner().getId()))
                 .flatMap(m -> m.getRatings().stream())
                 .filter(r -> u.getId().equals(r.getUser().getId()))
                 .map(Rating::getScore)
@@ -208,6 +220,7 @@ public class DataStore implements AppRepository {
                 .filter(this::isAfterStatsCutoff)
                 .filter(m -> m.getOwner() != null && u.getId().equals(m.getOwner().getId()))
                 .flatMap(m -> m.getRatings().stream())
+                .filter(r -> !u.getId().equals(r.getUser().getId()))
                 .map(Rating::getScore)
                 .toList();
             Double hostAvg = hostScores.isEmpty() ? null
@@ -241,6 +254,7 @@ public class DataStore implements AppRepository {
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
           .sorted(cmp)
+          .map(DataStore::copyMovie)
           .toList();
     } finally {
       lock.readLock().unlock();
@@ -255,10 +269,44 @@ public class DataStore implements AppRepository {
           .filter(m -> idSet.contains(m.getId())
               && groupId.equals(m.getOwner().getUserGroup().getId()))
           .sorted(Comparator.comparing(Movie::getId))
+          .map(DataStore::copyMovie)
           .toList();
     } finally {
       lock.readLock().unlock();
     }
+  }
+
+  private static Movie copyMovie(Movie src) {
+    Movie copy = new Movie();
+    copy.setId(src.getId());
+    copy.setTitle(src.getTitle());
+    copy.setDescription(src.getDescription());
+    copy.setTagline(src.getTagline());
+    copy.setOwner(src.getOwner());
+    copy.setRound(src.getRound());
+    copy.setCreatedAt(src.getCreatedAt());
+    copy.setUpdatedAt(src.getUpdatedAt());
+    copy.setTmdbId(src.getTmdbId());
+    copy.setTmdbMediaType(src.getTmdbMediaType());
+    List<Rating> ratings = new ArrayList<>();
+    for (Rating r : src.getRatings()) {
+      Rating rc = new Rating();
+      rc.setId(r.getId());
+      rc.setMovie(copy);
+      rc.setUser(r.getUser());
+      rc.setScore(r.getScore());
+      ratings.add(rc);
+    }
+    copy.setRatings(ratings);
+    return copy;
+  }
+
+  private static boolean matchesTmdbOrTitle(Long tmdbId, String normTitle, Long candidateTmdbId,
+      String candidateTitle) {
+    boolean tmdbMatch = tmdbId != null && tmdbId.equals(candidateTmdbId);
+    boolean titleMatch = normTitle != null && !normTitle.isEmpty()
+        && candidateTitle != null && normTitle.equals(candidateTitle.trim().toLowerCase());
+    return tmdbMatch || titleMatch;
   }
 
   public boolean existsByIdAndGroup(String movieId, String groupId) {
@@ -309,6 +357,7 @@ public class DataStore implements AppRepository {
           .map(m -> {
             List<Rating> rs = m.getRatings().stream()
                 .filter(r -> groupId.equals(r.getUser().getUserGroup().getId()))
+                .filter(r -> !r.getUser().getId().equals(m.getOwner().getId()))
                 .toList();
             if (rs.size() < minRatings) return null;
             if (requireAll && rs.size() < memberCount) return null;
@@ -333,19 +382,22 @@ public class DataStore implements AppRepository {
       Comparator<Movie> cmp = Comparator.comparingDouble(
           (Movie m) -> m.getRatings().stream()
               .filter(r -> groupId.equals(r.getUser().getUserGroup().getId()))
+              .filter(r -> !r.getUser().getId().equals(m.getOwner().getId()))
               .mapToDouble(r -> r.getScore().doubleValue()).average().orElse(0)
       );
       if (best) cmp = cmp.reversed();
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
           .filter(this::isAfterStatsCutoff)
-          .filter(m -> !m.getRatings().isEmpty())
+          .filter(m -> m.getRatings().stream()
+              .anyMatch(r -> !r.getUser().getId().equals(m.getOwner().getId())))
           .sorted(cmp.thenComparing(Movie::getCreatedAt,
               Comparator.nullsLast(Comparator.reverseOrder())))
           .limit(3)
           .map(m -> {
             double avg = m.getRatings().stream()
                 .filter(r -> groupId.equals(r.getUser().getUserGroup().getId()))
+                .filter(r -> !r.getUser().getId().equals(m.getOwner().getId()))
                 .mapToDouble(r -> r.getScore().doubleValue()).average().orElse(0);
             return new Object[]{m.getId(), m.getTitle(), m.getOwner().getName(), avg};
           })
@@ -364,7 +416,7 @@ public class DataStore implements AppRepository {
           .toList();
 
       return usersById.values().stream()
-          .filter(u -> groupId.equals(u.getUserGroup().getId()))
+          .filter(u -> u.getUserGroup() != null && groupId.equals(u.getUserGroup().getId()))
           .map(u -> {
             record HS(String host, double score) {}
             List<HS> hostScores = groupMovies.stream()
@@ -473,6 +525,35 @@ public class DataStore implements AppRepository {
           ur.setName("user");
           return ur;
         });
+  }
+
+  public String createGroupAndAssign(String userId, String groupId) {
+    lock.writeLock().lock();
+    try {
+      boolean taken = usersById.values().stream()
+          .anyMatch(u -> u.getUserGroup() != null && groupId.equals(u.getUserGroup().getId()));
+      if (taken) {
+        return null;
+      }
+      AppUser u = usersById.get(userId);
+      if (u == null) {
+        return null;
+      }
+      UserGroup ug = new UserGroup();
+      ug.setId(groupId);
+      ug.setName(groupId);
+      u.setUserGroup(ug);
+      u.setRole(resolveOrCreateAdminRole());
+      String code = groupInviteCodesMap.get(groupId);
+      if (code == null) {
+        code = UUID.randomUUID().toString().replace("-", "");
+        groupInviteCodesMap.put(groupId, code);
+      }
+      persist();
+      return code;
+    } finally {
+      lock.writeLock().unlock();
+    }
   }
 
   public void assignUserToNewGroup(String userId, String groupName) {
@@ -588,12 +669,7 @@ public class DataStore implements AppRepository {
             return owner != null && owner.getUserGroup() != null
                 && groupId.equals(owner.getUserGroup().getId());
           })
-          .filter(pm -> {
-            boolean tmdbMatch = tmdbId != null && tmdbId.equals(pm.getTmdbId());
-            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
-                && pm.getTitle() != null && normTitle.equals(pm.getTitle().trim().toLowerCase());
-            return tmdbMatch || titleMatch;
-          })
+          .filter(pm -> matchesTmdbOrTitle(tmdbId, normTitle, pm.getTmdbId(), pm.getTitle()))
           .sorted(Comparator.comparing(PersonalMovie::getCreatedAt,
               Comparator.nullsFirst(Comparator.naturalOrder())))
           .map(pm -> {
@@ -614,12 +690,7 @@ public class DataStore implements AppRepository {
       String normTitle = title == null ? null : title.trim().toLowerCase();
       return personalMoviesById.values().stream()
           .filter(pm -> callerId.equals(pm.getUserId()))
-          .filter(pm -> {
-            boolean tmdbMatch = tmdbId != null && tmdbId.equals(pm.getTmdbId());
-            boolean titleMatch = normTitle != null && !normTitle.isEmpty()
-                && pm.getTitle() != null && normTitle.equals(pm.getTitle().trim().toLowerCase());
-            return tmdbMatch || titleMatch;
-          })
+          .filter(pm -> matchesTmdbOrTitle(tmdbId, normTitle, pm.getTmdbId(), pm.getTitle()))
           .findFirst()
           .orElse(null);
     } finally {
@@ -638,14 +709,9 @@ public class DataStore implements AppRepository {
       String normTitle = title == null ? null : title.trim().toLowerCase();
       return moviesById.values().stream()
           .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
-          .filter(m -> {
-            if (tmdbId != null) {
-              return tmdbId.equals(m.getTmdbId());
-            }
-            return normTitle != null && !normTitle.isEmpty()
-                && m.getTitle() != null && normTitle.equals(m.getTitle().trim().toLowerCase());
-          })
+          .filter(m -> matchesTmdbOrTitle(tmdbId, normTitle, m.getTmdbId(), m.getTitle()))
           .findFirst()
+          .map(DataStore::copyMovie)
           .orElse(null);
     } finally {
       lock.readLock().unlock();
@@ -665,6 +731,34 @@ public class DataStore implements AppRepository {
       movie.setUpdatedAt(now);
       personalMoviesById.put(movie.getId(), movie);
       persist();
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
+  public PersonalMovie savePersonalMovieForOwner(PersonalMovie movie, boolean guestLimited, int limit) {
+    lock.writeLock().lock();
+    try {
+      if (guestLimited) {
+        long count = personalMoviesById.values().stream()
+            .filter(pm -> movie.getUserId().equals(pm.getUserId()))
+            .filter(pm -> movie.getId() == null || !movie.getId().equals(pm.getId()))
+            .count();
+        if (count >= limit) {
+          return null;
+        }
+      }
+      if (movie.getId() == null) {
+        movie.setId(UUID.randomUUID().toString());
+      }
+      Instant now = Instant.now();
+      if (movie.getCreatedAt() == null) {
+        movie.setCreatedAt(now);
+      }
+      movie.setUpdatedAt(now);
+      personalMoviesById.put(movie.getId(), movie);
+      persist();
+      return movie;
     } finally {
       lock.writeLock().unlock();
     }
@@ -701,33 +795,74 @@ public class DataStore implements AppRepository {
     }
   }
 
+  public Movie saveMovieForOwner(Movie movie, String ownerId, String groupId, boolean guestLimited, int limit) {
+    lock.writeLock().lock();
+    try {
+      if (guestLimited) {
+        long ownedCount = moviesById.values().stream()
+            .filter(m -> groupId.equals(m.getOwner().getUserGroup().getId()))
+            .filter(m -> ownerId.equals(m.getOwner().getId()))
+            .count();
+        if (ownedCount >= limit) {
+          return null;
+        }
+      }
+      if (movie.getId() == null) {
+        movie.setId(UUID.randomUUID().toString());
+      }
+      Instant now = Instant.now();
+      if (movie.getCreatedAt() == null) {
+        movie.setCreatedAt(now);
+      }
+      movie.setUpdatedAt(now);
+      moviesById.put(movie.getId(), movie);
+      persist();
+      return movie;
+    } finally {
+      lock.writeLock().unlock();
+    }
+  }
+
   public Movie rateMovie(String movieId, String groupId, String raterId, BigDecimal score) {
     lock.writeLock().lock();
     try {
-      Movie movie = moviesById.get(movieId);
-      if (movie == null || !groupId.equals(movie.getOwner().getUserGroup().getId())) {
+      Movie live = moviesById.get(movieId);
+      if (live == null || !groupId.equals(live.getOwner().getUserGroup().getId())) {
         return null;
       }
       AppUser rater = usersById.get(raterId);
       if (rater == null) {
         return null;
       }
-      Rating rating = movie.getRatings().stream()
+      Movie updated = copyMovie(live);
+      Rating rating = updated.getRatings().stream()
           .filter(r -> raterId.equals(r.getUser().getId()))
           .findFirst()
           .orElse(null);
       if (rating == null) {
         rating = new Rating();
         rating.setId(UUID.randomUUID().toString());
-        rating.setMovie(movie);
+        rating.setMovie(updated);
         rating.setUser(rater);
-        movie.getRatings().add(rating);
+        updated.getRatings().add(rating);
       }
       rating.setScore(score);
-      movie.setUpdatedAt(Instant.now());
-      markWatchedForRating(raterId, movie.getTmdbId(), movie.getTitle());
-      persist();
-      return movie;
+      updated.setUpdatedAt(Instant.now());
+
+      Map<String, Movie> previousMovies = moviesById;
+      Map<String, PersonalMovie> previousPersonal = personalMoviesById;
+      moviesById = new LinkedHashMap<>(moviesById);
+      moviesById.put(movieId, updated);
+      personalMoviesById = new LinkedHashMap<>(personalMoviesById);
+      markWatchedForRating(raterId, updated.getTmdbId(), updated.getTitle());
+      try {
+        persist();
+      } catch (RuntimeException e) {
+        moviesById = previousMovies;
+        personalMoviesById = previousPersonal;
+        throw e;
+      }
+      return updated;
     } finally {
       lock.writeLock().unlock();
     }

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as React from "react";
 
 type AsyncState<T> =
@@ -15,7 +15,7 @@ function toError(err: unknown): Error {
 export function useAsync<T>(
   fn: () => Promise<T>,
   deps: React.DependencyList,
-): AsyncState<T> {
+): AsyncState<T> & { refetch: () => void } {
   const fnRef = useRef(fn);
 
   useLayoutEffect(() => {
@@ -23,6 +23,8 @@ export function useAsync<T>(
   });
 
   const [state, setState] = useState<AsyncState<T>>({ status: "loading" });
+  const [reloadKey, setReloadKey] = useState(0);
+  const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +42,7 @@ export function useAsync<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, reloadKey]);
 
-  return state;
+  return { ...state, refetch };
 }

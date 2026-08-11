@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { RatingEditor } from "@/components/RatingEditor.tsx";
 import type { Movie } from "../types/Movie.ts";
-import { addMovie, editMovie, type MovieFormPayload } from "../api/movies.ts";
+import { addMovie, editMovie, fetchMovie, type MovieFormPayload } from "../api/movies.ts";
+import { ApiError } from "@/api/client.ts";
 import { useRatingForm, roundHalf, type DetailedScores, type RatingMode } from "@/hooks/useRatingForm.ts";
 import { useHideBottomBar } from "@/hooks/useSubPage.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
@@ -144,8 +145,9 @@ type AddMoviePageProps = {
   onBack: () => void;
 };
 
-const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onBack }: AddMoviePageProps) => {
-  const isEditMode = movie !== undefined;
+const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie: initialMovie, users, onBack }: AddMoviePageProps) => {
+  const isEditMode = initialMovie !== undefined;
+  const [movie, setMovie] = useState(initialMovie);
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
   const [tagline, setTagline] = useState(movie?.tagline ?? "");
@@ -178,6 +180,7 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
         ratings: buildRatings(),
         tmdbId,
         tmdbMediaType,
+        version: movie?.version,
       };
       if (movie) {
         await editMovie(movie.id, payload);
@@ -188,6 +191,17 @@ const AddMoviePage = ({ currentRound, maxRound, currentUserId, movie, users, onB
     } catch (e) {
       if (e instanceof Error && e.message === "GUEST_LIMIT_REACHED") {
         setShowGuestLimit(true);
+      } else if (e instanceof ApiError && e.status === 409 && movie) {
+        const fresh = await fetchMovie(movie.id);
+        setMovie(fresh);
+        setTitle(fresh.title);
+        setDescription(fresh.description);
+        setTagline(fresh.tagline);
+        setOwnerId(fresh.owner.id);
+        setRound(fresh.round);
+        setTmdbId(fresh.tmdbId);
+        setTmdbMediaType(fresh.tmdbMediaType);
+        setError(t('addMovie.errorVersionConflict'));
       } else {
         setError(e instanceof Error ? e.message : "Something went wrong");
       }

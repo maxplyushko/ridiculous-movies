@@ -8,11 +8,12 @@ export type Movie = {
   description: string;
   tagline: string;
   createdAt: string;
-  updateAt: string;
+  updatedAt: string;
   owner: User;
   round: number;
   averageRating: number;
   ratings: Rating[];
   tmdbId?: number;
   tmdbMediaType?: TmdbMediaType;
+  version: number;
 };

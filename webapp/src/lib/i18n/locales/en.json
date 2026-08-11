@@ -1,6 +1,7 @@
 {
   "errors": {
-    "title": "Something went wrong"
+    "title": "Something went wrong",
+    "signOutRetry": "Sign out and retry"
   },
   "guestLimit": {
     "message": "Like the app? Create your own group or ask your friends to invite you.",
@@ -41,7 +42,8 @@
     "ratingR1": "ridiculousity",
     "ratingR2": "script",
     "ratingR3": "special effects",
-    "roundLabel": "{{r}}"
+    "roundLabel": "{{r}}",
+    "errorVersionConflict": "This movie was updated elsewhere. Reloaded latest data — please redo your changes."
   },
   "addPersonal": {
     "headingEdit": "Edit",

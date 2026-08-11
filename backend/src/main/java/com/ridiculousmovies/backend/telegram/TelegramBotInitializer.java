@@ -24,6 +24,10 @@ public class TelegramBotInitializer implements ApplicationRunner {
 
   @Override
   public void run(ApplicationArguments args) {
+    if (properties.webhookSecret() == null || properties.webhookSecret().isBlank()) {
+      throw new IllegalStateException(
+          "telegram.bot.webhook-secret must be set when telegram.bot.token is configured");
+    }
     botClient.loadBotUsername();
 
     String webhookUrl = properties.webhookUrl();

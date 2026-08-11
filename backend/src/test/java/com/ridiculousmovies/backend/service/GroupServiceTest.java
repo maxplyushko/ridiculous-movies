@@ -53,8 +53,7 @@ class GroupServiceTest {
   @Test
   void createGroupAssignsCallerAndReturnsInviteCode() {
     when(dataStore.findUserById(USER_ID)).thenReturn(Optional.of(groupless()));
-    when(dataStore.countUsersByGroupId("My Club")).thenReturn(0L);
-    when(dataStore.getOrCreateInviteCode("My Club")).thenReturn("code123");
+    when(dataStore.createGroupAndAssign(USER_ID, "My Club")).thenReturn("code123");
 
     GroupResponse resp = groupService.createGroup(USER_ID, "My Club");
 
@@ -73,7 +72,7 @@ class GroupServiceTest {
   @Test
   void createGroupRejectsDuplicateName() {
     when(dataStore.findUserById(USER_ID)).thenReturn(Optional.of(groupless()));
-    when(dataStore.countUsersByGroupId("Taken")).thenReturn(1L);
+    when(dataStore.createGroupAndAssign(USER_ID, "Taken")).thenReturn(null);
 
     assertThrows(ResponseStatusException.class, () -> groupService.createGroup(USER_ID, "Taken"));
   }

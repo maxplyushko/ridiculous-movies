@@ -15,7 +15,8 @@ public record MovieResponse(
     Double averageRating,
     List<RatingEntryDto> ratings,
     Long tmdbId,
-    String tmdbMediaType
+    String tmdbMediaType,
+    long version
 ) {
 
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,17 @@ public class LocalFileStorageClient implements StorageClient {
 
   @Override
   public void upload(String fileId, String json) throws IOException {
-    Files.writeString(filePath, json, StandardCharsets.UTF_8);
+    Path tempFile = Files.createTempFile(filePath.getParent(), filePath.getFileName().toString(), ".tmp");
+    try {
+      Files.writeString(tempFile, json, StandardCharsets.UTF_8);
+      try {
+        Files.move(tempFile, filePath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+        Files.move(tempFile, filePath, StandardCopyOption.REPLACE_EXISTING);
+      }
+    } finally {
+      Files.deleteIfExists(tempFile);
+    }
     log.debug("Persisted to local file: {}", filePath);
   }
 }

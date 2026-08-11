@@ -45,7 +45,7 @@ public class PersonalListController {
       @RequestHeader("User-Id") String userId,
       @PathVariable String targetId
   ) {
-    AppUser caller = authService.requireUser(userId);
+    AppUser caller = authService.requireGroup(userId);
     authService.assertUserInGroup(targetId, caller.getUserGroup().getId());
     AppUser target = authService.requireUser(targetId);
     boolean isPublic = target.getPersonalListPublic() == null || target.getPersonalListPublic();
@@ -63,7 +63,7 @@ public class PersonalListController {
       @RequestHeader("User-Id") String userId,
       @RequestBody CreatePersonalMovieRequest req
   ) {
-    assertGuestLimit(userId);
+    AppUser user = authService.requireUser(userId);
     if (dataStore.findPersonalMovieForCaller(userId, req.tmdbId(), req.title()) != null) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "PERSONAL_MOVIE_DUPLICATE");
     }
@@ -77,8 +77,12 @@ public class PersonalListController {
     pm.setInList(true);
     pm.setTmdbId(req.tmdbId());
     pm.setTmdbMediaType(req.tmdbMediaType());
-    dataStore.savePersonalMovie(pm);
-    return PersonalMovieResponse.from(pm);
+    PersonalMovie saved = dataStore.savePersonalMovieForOwner(
+        pm, authService.isGuest(user), GUEST_PERSONAL_LIMIT);
+    if (saved == null) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
+    }
+    return PersonalMovieResponse.from(saved);
   }
 
   @GetMapping("/added-by")
@@ -106,9 +110,10 @@ public class PersonalListController {
       @RequestHeader("User-Id") String userId,
       @RequestBody PersonalMovieStateRequest req
   ) {
+    AppUser user = authService.requireUser(userId);
     PersonalMovie pm = dataStore.findPersonalMovieForCaller(userId, req.tmdbId(), req.title());
-    if (pm == null) {
-      assertGuestLimit(userId);
+    boolean isNew = pm == null;
+    if (isNew) {
       pm = new PersonalMovie();
       pm.setUserId(userId);
       pm.setTitle(req.title());
@@ -140,8 +145,12 @@ public class PersonalListController {
       }
       return ResponseEntity.noContent().build();
     }
-    dataStore.savePersonalMovie(pm);
-    return ResponseEntity.ok(PersonalMovieResponse.from(pm));
+    PersonalMovie saved = dataStore.savePersonalMovieForOwner(
+        pm, isNew && authService.isGuest(user), GUEST_PERSONAL_LIMIT);
+    if (saved == null) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
+    }
+    return ResponseEntity.ok(PersonalMovieResponse.from(saved));
   }
 
   @PutMapping("/{id}")
@@ -160,7 +169,7 @@ public class PersonalListController {
     pm.setDescription(req.description() != null ? req.description() : "");
     pm.setTagline(req.tagline() != null ? req.tagline() : "");
     pm.setRating(req.rating());
-    pm.setWatched(req.rating() != null || req.watched());
+    pm.setWatched(req.watched());
     if (req.inList() != null) {
       pm.setInList(req.inList());
     }
@@ -177,12 +186,4 @@ public class PersonalListController {
   }
 
   private static final int GUEST_PERSONAL_LIMIT = 4;
-
-  private void assertGuestLimit(String userId) {
-    AppUser user = authService.requireUser(userId);
-    if (authService.isGuest(user)
-        && dataStore.findPersonalMoviesForUser(userId).size() >= GUEST_PERSONAL_LIMIT) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
-    }
-  }
 }

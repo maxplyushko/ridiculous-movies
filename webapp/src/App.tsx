@@ -68,7 +68,7 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
         <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} currentUserId={session.userId} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
-        <div hidden={currentPage !== "misc"}><UserPage session={session} resetSignal={miscResetSignal} /></div>
+        <div hidden={currentPage !== "misc"}><UserPage session={session} active={currentPage === "misc"} resetSignal={miscResetSignal} onSessionUpdate={(patch) => setSession((prev) => ({ ...prev, ...patch }))} /></div>
         <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
       </main>
       <nav ref={navRef} className="bottom-bar">

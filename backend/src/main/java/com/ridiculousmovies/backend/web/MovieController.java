@@ -40,6 +40,14 @@ public class MovieController {
     return movieService.listMovies(userId, filter, sort, minRatings, requireAllUsers);
   }
 
+  @GetMapping("/{id}")
+  public MovieResponse get(
+      @RequestHeader("User-Id") String userId,
+      @PathVariable String id
+  ) {
+    return movieService.getMovie(userId, id);
+  }
+
   @GetMapping("/by-tmdb")
   public ResponseEntity<MovieResponse> findByTmdb(
       @RequestHeader("User-Id") String userId,

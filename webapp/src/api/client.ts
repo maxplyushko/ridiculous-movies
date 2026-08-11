@@ -29,6 +29,15 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 function parseErrorMessage(text: string, status: number): string {
   if (!text) return `Error: ${status}`;
   try {
@@ -56,7 +65,7 @@ export async function apiFetch<T>(path: string, {method, body, signal}: RequestO
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(parseErrorMessage(text, response.status));
+    throw new ApiError(parseErrorMessage(text, response.status), response.status);
   }
 
   if (response.status === 204) {

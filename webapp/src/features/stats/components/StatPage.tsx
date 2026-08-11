@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../stats.css";
 import { StatPageSkeleton } from "./StatPageSkeleton.tsx";
 import { fetchStats } from "../api/stats.ts";
@@ -22,6 +22,12 @@ const StatPage = ({ active, onBack }: StatPageProps) => {
   const state = useAsync(() => fetchStats("desc"), []);
   const [sectionEl, setSectionEl] = useState<HTMLElement | null>(null);
   const close = useAnimatedClose(sectionEl, "stat-page--closing", PAGE_EXIT_MS, onBack);
+
+  const wasActiveRef = useRef(active);
+  useEffect(() => {
+    if (active && !wasActiveRef.current) state.refetch();
+    wasActiveRef.current = active;
+  }, [active, state.refetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useSwipeBack(onBack, active ? sectionEl : null);
 

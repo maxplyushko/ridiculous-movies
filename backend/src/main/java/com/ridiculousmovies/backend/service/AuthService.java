@@ -25,6 +25,14 @@ public class AuthService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "User not registered"));
   }
 
+  public AppUser requireGroup(String userId) {
+    AppUser user = requireUser(userId);
+    if (user.getUserGroup() == null) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "User is not in a group");
+    }
+    return user;
+  }
+
   public void assertUserInGroup(String userId, String groupId) {
     AppUser user = dataStore.findUserById(userId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -42,8 +50,12 @@ public class AuthService {
   }
 
   public void requireAdmin(AppUser user) {
-    if (!"admin".equals(user.getRole().getName())) {
+    if (!isAdmin(user)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
     }
+  }
+
+  public boolean isAdmin(AppUser user) {
+    return "admin".equals(user.getRole().getName());
   }
 }

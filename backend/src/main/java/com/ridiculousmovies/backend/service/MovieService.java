@@ -47,7 +47,7 @@ public class MovieService {
 
   public List<MovieResponse> listMovies(
       String userId, String filter, String sort, int minRatings, boolean requireAllUsers) {
-    AppUser user = authService.requireUser(userId);
+    AppUser user = authService.requireGroup(userId);
     String groupId = user.getUserGroup().getId();
     if (minRatings < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minRatings must be >= 0");
@@ -69,7 +69,7 @@ public class MovieService {
   }
 
   public MovieGroupsResponse listGroupedMovies(String userId, String sort) {
-    AppUser user = authService.requireUser(userId);
+    AppUser user = authService.requireGroup(userId);
     String groupId = user.getUserGroup().getId();
     List<Movie> movies = dataStore.findMoviesForGroup(groupId, "asc".equals(normalizeSort(sort)));
 
@@ -90,16 +90,8 @@ public class MovieService {
   }
 
   public MovieResponse createMovie(String userId, CreateMovieRequest req) {
-    AppUser actor = authService.requireUser(userId);
+    AppUser actor = authService.requireGroup(userId);
     String groupId = actor.getUserGroup().getId();
-    if (authService.isGuest(actor)) {
-      long ownedCount = dataStore.findMoviesForGroup(groupId, true).stream()
-          .filter(m -> m.getOwner().getId().equals(actor.getId()))
-          .count();
-      if (ownedCount >= GUEST_MOVIE_LIMIT) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
-      }
-    }
     AppUser owner = resolveOwner(groupId, req.title(), req.ownerId());
 
     Movie movie = new Movie();
@@ -113,18 +105,38 @@ public class MovieService {
     movie.setRatings(new ArrayList<>());
     replaceRatings(groupId, movie, req.ratings());
 
-    dataStore.saveMovie(movie);
-    notifyGroupChat(groupId, "New movie was added \"" + movie.getTitle() + "\". Time to rate it!!");
-    return movieMapper.toResponse(movie, groupId);
+    Movie saved = dataStore.saveMovieForOwner(
+        movie, actor.getId(), groupId, authService.isGuest(actor), GUEST_MOVIE_LIMIT);
+    if (saved == null) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
+    }
+    notifyGroupChat(groupId, "New movie was added \"" + saved.getTitle() + "\". Time to rate it!!");
+    return movieMapper.toResponse(saved, groupId);
   }
 
   public MovieResponse updateMovie(String userId, String movieId, UpdateMovieRequest req) {
-    AppUser actor = authService.requireUser(userId);
+    AppUser actor = authService.requireGroup(userId);
     String groupId = actor.getUserGroup().getId();
     Movie movie = dataStore.findMoviesByIdsAndGroup(List.of(movieId), groupId).stream()
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
+    boolean isAdmin = authService.isAdmin(actor);
+    if (!isAdmin && !movie.getOwner().getId().equals(actor.getId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to edit this movie");
+    }
+    if (req.version() != null && req.version() != movie.getVersion()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "MOVIE_VERSION_CONFLICT");
+    }
+    if (!isAdmin && req.ratings() != null) {
+      for (RatingInputDto entry : req.ratings()) {
+        if (!actor.getId().equals(entry.userId())) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+              "Only admins can set other users' ratings");
+        }
+      }
+    }
     AppUser owner = resolveOwner(groupId, req.title(), req.ownerId());
+    replaceRatings(groupId, movie, req.ratings());
 
     movie.setTitle(req.title().trim());
     movie.setDescription(normalizeDescription(req.description()));
@@ -135,14 +147,23 @@ public class MovieService {
     }
     movie.setTmdbId(req.tmdbId());
     movie.setTmdbMediaType(req.tmdbMediaType());
-    replaceRatings(groupId, movie, req.ratings());
+    movie.setVersion(movie.getVersion() + 1);
 
     dataStore.saveMovie(movie);
     return movieMapper.toResponse(movie, groupId);
   }
 
+  public MovieResponse getMovie(String userId, String movieId) {
+    AppUser actor = authService.requireGroup(userId);
+    String groupId = actor.getUserGroup().getId();
+    Movie movie = dataStore.findMoviesByIdsAndGroup(List.of(movieId), groupId).stream()
+        .findFirst()
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
+    return movieMapper.toResponse(movie, groupId);
+  }
+
   public MovieResponse rateMovie(String userId, String movieId, RateMovieRequest req) {
-    AppUser actor = authService.requireUser(userId);
+    AppUser actor = authService.requireGroup(userId);
     String groupId = actor.getUserGroup().getId();
     BigDecimal score = req.score();
     if (score == null || score.compareTo(BigDecimal.ZERO) < 0 || score.compareTo(MAX_SCORE) > 0) {
@@ -156,14 +177,14 @@ public class MovieService {
   }
 
   public MovieResponse findByTmdb(String userId, Long tmdbId, String title) {
-    AppUser actor = authService.requireUser(userId);
+    AppUser actor = authService.requireGroup(userId);
     String groupId = actor.getUserGroup().getId();
     Movie movie = dataStore.findGroupMovieMatch(userId, tmdbId, title);
     return movie == null ? null : movieMapper.toResponse(movie, groupId);
   }
 
   public void deleteMovie(String userId, String movieId) {
-    AppUser actor = authService.requireUser(userId);
+    AppUser actor = authService.requireGroup(userId);
     authService.requireAdmin(actor);
     String groupId = actor.getUserGroup().getId();
     if (!dataStore.existsByIdAndGroup(movieId, groupId)) {

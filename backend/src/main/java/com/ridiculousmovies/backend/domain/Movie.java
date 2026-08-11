@@ -20,4 +20,5 @@ public class Movie {
   private Instant updatedAt;
   private Long tmdbId;
   private String tmdbMediaType;
+  private long version = 0;
 }

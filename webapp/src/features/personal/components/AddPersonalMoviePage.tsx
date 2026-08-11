@@ -23,7 +23,7 @@ const AddPersonalMoviePage = ({ movie, onBack }: AddPersonalMoviePageProps) => {
   const [title, setTitle] = useState(movie?.title ?? "");
   const [description, setDescription] = useState(movie?.description ?? "");
   const [tagline, setTagline] = useState(movie?.tagline ?? "");
-  const initRating = movie?.rating != null && movie.rating > 0 ? Math.round(movie.rating) : null;
+  const initRating = movie?.rating != null && movie.rating > 0 ? movie.rating : null;
   const [ratingMode, setRatingMode] = useState<RatingMode>("detailed");
   const [detailedRating, setDetailedRating] = useState<DetailedScores>(
     initRating ? { r1: initRating, r2: initRating, r3: initRating } : { r1: null, r2: null, r3: null }

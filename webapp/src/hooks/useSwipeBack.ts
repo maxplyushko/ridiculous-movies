@@ -25,11 +25,16 @@ export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
       el.style.transform = x > 0 ? `translateX(${x}px)` : "";
     };
 
+    const resetTracking = () => {
+      tracking = false;
+      directionLocked = false;
+    };
+
     const onTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      if (touch.clientX > EDGE_ZONE) return;
+      if (touch.clientX > EDGE_ZONE) { resetTracking(); return; }
       const target = touch.target as HTMLElement;
-      if (target.closest(".user-chip-row")) return;
+      if (target.closest(".user-chip-row")) { resetTracking(); return; }
       startX = touch.clientX;
       startY = touch.clientY;
       tracking = true;
@@ -76,14 +81,21 @@ export function useSwipeBack(onBack: () => void, element: HTMLElement | null) {
       }
     };
 
+    const onTouchCancel = () => {
+      if (tracking && directionLocked) applyTranslate(0, true);
+      resetTracking();
+    };
+
     el.addEventListener("touchstart", onTouchStart, { passive: true });
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchCancel, { passive: true });
 
     return () => {
       el.removeEventListener("touchstart", onTouchStart);
       el.removeEventListener("touchmove", onTouchMove);
       el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [element]);
 }

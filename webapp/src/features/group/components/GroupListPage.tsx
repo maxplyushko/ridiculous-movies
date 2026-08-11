@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "../group.css";
 import type { MovieGroup } from "../types/MovieGroup.ts";
@@ -85,17 +85,20 @@ const GroupListPage = ({ isAdmin, currentUserId, onShowStats, resetSignal }: { i
     setNpOpen(true);
   };
 
+  const loadSeqRef = useRef(0);
   const loadMovieGroups = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
     setError(null);
+    const seq = ++loadSeqRef.current;
     fetchMovieGroups({ sort: "desc" })
       .then((data) => {
+        if (loadSeqRef.current !== seq) return;
         setMovieGroups(data.groups);
         setCurrentRound(data.currentRound);
         setMaxRound(data.lastRound);
       })
-      .catch((err: Error) => setError(err))
-      .finally(() => setLoading(false));
+      .catch((err: Error) => { if (loadSeqRef.current === seq) setError(err); })
+      .finally(() => { if (loadSeqRef.current === seq) setLoading(false); });
   }, []);
 
   useEffect(() => {

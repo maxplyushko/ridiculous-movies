@@ -7,6 +7,7 @@ import com.ridiculousmovies.backend.web.dto.TmdbMovieResponse;
 import com.ridiculousmovies.backend.web.dto.TmdbPersonResponse;
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,7 @@ public class TmdbClient {
     private static final int MAX_KNOWN_FOR = 10;
     private static final int MAX_PERSON_KNOWN_FOR = 3;
     private static final int MAX_RESULTS = 10;
+    private static final int IMAGE_CACHE_MAX_ENTRIES = 200;
 
     private final RestClient restClient;
     private final RestClient imageClient;
@@ -47,7 +49,12 @@ public class TmdbClient {
     private final ConcurrentHashMap<String, Optional<TmdbMovieDetailsResponse>> detailsCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, List<TmdbPersonResponse>> personSearchCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Optional<TmdbActorResponse>> actorCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, CachedImage> imageCache = new ConcurrentHashMap<>();
+    private final Map<String, CachedImage> imageCache = new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, CachedImage> eldest) {
+            return size() > IMAGE_CACHE_MAX_ENTRIES;
+        }
+    };
 
     private record CachedImage(byte[] body, MediaType contentType) {}
 
@@ -73,8 +80,17 @@ public class TmdbClient {
         if (!ALLOWED_IMAGE_SIZES.contains(size)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid image size");
         }
-        CachedImage cached = imageCache.computeIfAbsent(size + "|" + filename,
-            key -> fetchImageFromTmdb(size, filename));
+        String key = size + "|" + filename;
+        CachedImage cached;
+        synchronized (imageCache) {
+            cached = imageCache.get(key);
+        }
+        if (cached == null) {
+            cached = fetchImageFromTmdb(size, filename);
+            synchronized (imageCache) {
+                imageCache.put(key, cached);
+            }
+        }
         return ResponseEntity.ok()
             .contentType(cached.contentType())
             .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
@@ -97,19 +113,40 @@ public class TmdbClient {
 
     public List<TmdbMovieResponse> search(String query, String lang, boolean includeTv) {
         String locale = LOCALES.getOrDefault(lang, LOCALES.get(DEFAULT_LANG));
-        return cache.computeIfAbsent(locale + "|" + includeTv + "|" + query,
-            key -> includeTv ? fetchMultiFromTmdb(query, locale) : fetchFromTmdb(query, locale));
+        String key = locale + "|" + includeTv + "|" + query;
+        List<TmdbMovieResponse> cached = cache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            List<TmdbMovieResponse> result = includeTv
+                ? fetchMultiFromTmdb(query, locale) : fetchFromTmdb(query, locale);
+            cache.put(key, result);
+            return result;
+        } catch (RestClientException e) {
+            return List.of();
+        }
     }
 
     public Optional<TmdbMovieDetailsResponse> getDetails(long tmdbId, String lang, String mediaType) {
         String locale = LOCALES.getOrDefault(lang, LOCALES.get(DEFAULT_LANG));
         boolean isTv = MEDIA_TYPE_TV.equals(mediaType);
-        return detailsCache.computeIfAbsent(locale + "|" + (isTv ? MEDIA_TYPE_TV : MEDIA_TYPE_MOVIE) + "|" + tmdbId,
-            key -> isTv ? fetchTvDetailsFromTmdb(tmdbId, locale) : fetchDetailsFromTmdb(tmdbId, locale));
+        String key = locale + "|" + (isTv ? MEDIA_TYPE_TV : MEDIA_TYPE_MOVIE) + "|" + tmdbId;
+        Optional<TmdbMovieDetailsResponse> cached = detailsCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            Optional<TmdbMovieDetailsResponse> result = isTv
+                ? fetchTvDetailsFromTmdb(tmdbId, locale) : fetchDetailsFromTmdb(tmdbId, locale);
+            detailsCache.put(key, result);
+            return result;
+        } catch (RestClientException e) {
+            return Optional.empty();
+        }
     }
 
     private Optional<TmdbMovieDetailsResponse> fetchDetailsFromTmdb(long tmdbId, String locale) {
-        try {
             TmdbMovieDetails result = restClient.get()
                 .uri("/movie/{id}?append_to_response=credits&language={locale}", tmdbId, locale)
                 .retrieve()
@@ -142,13 +179,9 @@ public class TmdbClient {
                 mapGenres(result.genres()),
                 cast
             ));
-        } catch (RestClientException e) {
-            return Optional.empty();
-        }
     }
 
     private Optional<TmdbMovieDetailsResponse> fetchTvDetailsFromTmdb(long tmdbId, String locale) {
-        try {
             TmdbTvDetails result = restClient.get()
                 .uri("/tv/{id}?append_to_response=credits&language={locale}", tmdbId, locale)
                 .retrieve()
@@ -177,9 +210,6 @@ public class TmdbClient {
                 mapGenres(result.genres()),
                 cast
             ));
-        } catch (RestClientException e) {
-            return Optional.empty();
-        }
     }
 
     private static Integer averageEpisodeRuntime(List<Integer> episodeRunTime) {
@@ -213,12 +243,21 @@ public class TmdbClient {
 
     public List<TmdbPersonResponse> searchPeople(String query, String lang) {
         String locale = LOCALES.getOrDefault(lang, LOCALES.get(DEFAULT_LANG));
-        return personSearchCache.computeIfAbsent(locale + "|" + query,
-            key -> fetchPeopleFromTmdb(query, locale));
+        String key = locale + "|" + query;
+        List<TmdbPersonResponse> cached = personSearchCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            List<TmdbPersonResponse> result = fetchPeopleFromTmdb(query, locale);
+            personSearchCache.put(key, result);
+            return result;
+        } catch (RestClientException e) {
+            return List.of();
+        }
     }
 
     private List<TmdbPersonResponse> fetchPeopleFromTmdb(String query, String locale) {
-        try {
             TmdbPersonSearchResult result = restClient.get()
                 .uri("/search/person?query={q}&language={locale}&page=1", query, locale)
                 .retrieve()
@@ -237,9 +276,6 @@ public class TmdbClient {
                     knownForTitles(p.knownFor())
                 ))
                 .toList();
-        } catch (RestClientException e) {
-            return List.of();
-        }
     }
 
     private static List<String> knownForTitles(List<TmdbMultiSearchItem> knownFor) {
@@ -255,12 +291,21 @@ public class TmdbClient {
 
     public Optional<TmdbActorResponse> getActor(long personId, String lang) {
         String locale = LOCALES.getOrDefault(lang, LOCALES.get(DEFAULT_LANG));
-        return actorCache.computeIfAbsent(locale + "|" + personId,
-            key -> fetchActorFromTmdb(personId, locale));
+        String key = locale + "|" + personId;
+        Optional<TmdbActorResponse> cached = actorCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            Optional<TmdbActorResponse> result = fetchActorFromTmdb(personId, locale);
+            actorCache.put(key, result);
+            return result;
+        } catch (RestClientException e) {
+            return Optional.empty();
+        }
     }
 
     private Optional<TmdbActorResponse> fetchActorFromTmdb(long personId, String locale) {
-        try {
             TmdbPerson result = restClient.get()
                 .uri("/person/{id}?append_to_response=movie_credits&language={locale}", personId, locale)
                 .retrieve()
@@ -295,13 +340,9 @@ public class TmdbClient {
                 result.profilePath() != null ? PERSON_IMAGE_BASE + result.profilePath() : null,
                 knownFor
             ));
-        } catch (RestClientException e) {
-            return Optional.empty();
-        }
     }
 
     private List<TmdbMovieResponse> fetchFromTmdb(String query, String locale) {
-        try {
             TmdbSearchResult result = restClient.get()
                 .uri("/search/movie?query={q}&language={locale}&page=1", query, locale)
                 .retrieve()
@@ -323,13 +364,9 @@ public class TmdbClient {
                     MEDIA_TYPE_MOVIE
                 ))
                 .toList();
-        } catch (RestClientException e) {
-            return List.of();
-        }
     }
 
     private List<TmdbMovieResponse> fetchMultiFromTmdb(String query, String locale) {
-        try {
             TmdbMultiSearchResult result = restClient.get()
                 .uri("/search/multi?query={q}&language={locale}&page=1", query, locale)
                 .retrieve()
@@ -355,9 +392,6 @@ public class TmdbClient {
                     );
                 })
                 .toList();
-        } catch (RestClientException e) {
-            return List.of();
-        }
     }
 
     private static String extractYear(String releaseDate) {

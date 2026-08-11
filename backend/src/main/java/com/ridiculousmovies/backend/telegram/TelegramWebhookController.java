@@ -31,8 +31,10 @@ public class TelegramWebhookController {
       @RequestHeader(value = "X-Telegram-Bot-Api-Secret-Token", required = false) String secretToken,
       @RequestBody TelegramUpdate update) {
     String expectedSecret = properties.webhookSecret();
-    if (expectedSecret != null && !expectedSecret.isBlank()
-        && !expectedSecret.equals(secretToken)) {
+    if (expectedSecret == null || expectedSecret.isBlank()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+    if (!expectedSecret.equals(secretToken)) {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 

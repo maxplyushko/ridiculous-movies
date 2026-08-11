@@ -10,7 +10,8 @@ public record UpdateMovieRequest(
     Integer round,
     List<RatingInputDto> ratings,
     Long tmdbId,
-    String tmdbMediaType
+    String tmdbMediaType,
+    Long version
 ) {
 
 }

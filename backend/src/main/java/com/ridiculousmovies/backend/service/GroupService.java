@@ -28,11 +28,10 @@ public class GroupService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Group name is required");
     }
     String groupId = name.trim();
-    if (dataStore.countUsersByGroupId(groupId) > 0) {
+    String inviteCode = dataStore.createGroupAndAssign(userId, groupId);
+    if (inviteCode == null) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Group name already taken");
     }
-    dataStore.assignUserToNewGroup(userId, groupId);
-    String inviteCode = dataStore.getOrCreateInviteCode(groupId);
     return new GroupResponse(groupId, groupId, inviteCode);
   }
 

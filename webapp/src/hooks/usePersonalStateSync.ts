@@ -23,6 +23,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
   const confirmedRef = useRef<Flags>({ inList: false, watched: false });
   const desiredRef = useRef<Flags>({ inList: false, watched: false });
   const inFlightRef = useRef(false);
+  const pendingRatingRef = useRef<number | null | undefined>(undefined);
 
   const identityRef = useRef({ tmdbId, title, description, tagline, tmdbMediaType });
   const onChangeRef = useRef(onChange);
@@ -56,9 +57,13 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
   const flush = () => {
     if (inFlightRef.current) return;
     const desired = desiredRef.current;
-    if (desired.inList === confirmedRef.current.inList && desired.watched === confirmedRef.current.watched) return;
+    const ratingPending = pendingRatingRef.current !== undefined;
+    const flagsChanged = desired.inList !== confirmedRef.current.inList || desired.watched !== confirmedRef.current.watched;
+    if (!flagsChanged && !ratingPending) return;
 
     inFlightRef.current = true;
+    const ratingToSend = pendingRatingRef.current;
+    if (ratingPending) pendingRatingRef.current = undefined;
     const { tmdbId, title, description, tagline, tmdbMediaType } = identityRef.current;
     setPersonalState({
       tmdbId,
@@ -68,6 +73,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
       tmdbMediaType,
       inList: desired.inList,
       watched: desired.watched,
+      ...(ratingPending ? { rating: ratingToSend } : {}),
     })
       .then((next) => {
         confirmedRef.current = { inList: next?.inList ?? false, watched: next?.watched ?? false };
@@ -78,6 +84,7 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
       })
       .catch((e) => {
         desiredRef.current = { ...confirmedRef.current };
+        if (ratingPending) pendingRatingRef.current = ratingToSend;
         setSelfStatus((prev) => (prev ? { ...prev, ...confirmedRef.current } : prev));
         inFlightRef.current = false;
         if (e instanceof Error) onErrorRef.current?.(e.message);
@@ -106,20 +113,10 @@ export function usePersonalStateSync({ tmdbId, title, description, tagline, tmdb
     flush();
   };
 
-  const setRating = async (score: number) => {
-    const { tmdbId, title, description, tagline, tmdbMediaType } = identityRef.current;
-    const next = await setPersonalState({
-      tmdbId,
-      title,
-      description: description ?? "",
-      tagline: tagline ?? "",
-      tmdbMediaType,
-      rating: score,
-    });
-    confirmedRef.current = { inList: next?.inList ?? false, watched: next?.watched ?? false };
-    desiredRef.current = { ...confirmedRef.current };
-    setSelfStatus(next);
-    onChangeRef.current?.();
+  const setRating = (score: number) => {
+    pendingRatingRef.current = score;
+    setSelfStatus((prev) => (prev ? { ...prev, rating: score } : prev));
+    flush();
   };
 
   return {

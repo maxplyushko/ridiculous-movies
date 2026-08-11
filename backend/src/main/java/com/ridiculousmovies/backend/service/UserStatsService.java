@@ -21,7 +21,7 @@ public class UserStatsService {
   }
 
   public List<UserStatsResponse> listUsers(String userId, String sort) {
-    AppUser user = authService.requireUser(userId);
+    AppUser user = authService.requireGroup(userId);
     String groupId = user.getUserGroup().getId();
     String s = sort == null || sort.isBlank() ? "desc" : sort.trim().toLowerCase();
     boolean ascending = switch (s) {

@@ -62,7 +62,7 @@ class PersonalListControllerAccessTest {
 
   @Test
   void publicMemberInGroupIsVisible() {
-    when(authService.requireUser(CALLER)).thenReturn(user(CALLER, "g", true));
+    when(authService.requireGroup(CALLER)).thenReturn(user(CALLER, "g", true));
     when(authService.requireUser(TARGET)).thenReturn(user(TARGET, "g", true));
     doNothing().when(authService).assertUserInGroup(eq(TARGET), eq("g"));
     stubMovies();
@@ -72,7 +72,7 @@ class PersonalListControllerAccessTest {
 
   @Test
   void privateMemberIsForbidden() {
-    when(authService.requireUser(CALLER)).thenReturn(user(CALLER, "g", true));
+    when(authService.requireGroup(CALLER)).thenReturn(user(CALLER, "g", true));
     when(authService.requireUser(TARGET)).thenReturn(user(TARGET, "g", false));
     doNothing().when(authService).assertUserInGroup(eq(TARGET), eq("g"));
 
@@ -83,7 +83,7 @@ class PersonalListControllerAccessTest {
 
   @Test
   void memberOutsideGroupIsRejected() {
-    when(authService.requireUser(CALLER)).thenReturn(user(CALLER, "g", true));
+    when(authService.requireGroup(CALLER)).thenReturn(user(CALLER, "g", true));
     lenient().when(authService.requireUser(TARGET)).thenReturn(user(TARGET, "other", true));
     doThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST))
         .when(authService).assertUserInGroup(eq(TARGET), eq("g"));
@@ -93,7 +93,9 @@ class PersonalListControllerAccessTest {
 
   @Test
   void selfSeesOwnPrivateList() {
-    when(authService.requireUser(CALLER)).thenReturn(user(CALLER, "g", false));
+    AppUser callerUser = user(CALLER, "g", false);
+    when(authService.requireGroup(CALLER)).thenReturn(callerUser);
+    when(authService.requireUser(CALLER)).thenReturn(callerUser);
     doNothing().when(authService).assertUserInGroup(eq(CALLER), eq("g"));
     PersonalMovie pm = new PersonalMovie();
     pm.setId("m1");

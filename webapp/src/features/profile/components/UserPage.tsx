@@ -26,7 +26,7 @@ import { ProfileHero } from "./ProfileHero.tsx";
 import { ProfileStatGrid } from "./ProfileStatGrid.tsx";
 import { MemberProfileView } from "./MemberProfileView.tsx";
 
-type Props = { session: AuthResponse; resetSignal?: number };
+type Props = { session: AuthResponse; active?: boolean; resetSignal?: number; onSessionUpdate?: (patch: Partial<AuthResponse>) => void };
 
 function InviteLinkDialog({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation();
@@ -141,11 +141,12 @@ function ProfileView({ session, stats, onSettings, onOpenMember }: Readonly<{
   );
 }
 
-function SettingsView({ session, onBack, dirtyRef, discardRef }: Readonly<{
+function SettingsView({ session, onBack, dirtyRef, discardRef, onSessionUpdate }: Readonly<{
   session: AuthResponse;
   onBack: () => void;
   dirtyRef: RefObject<boolean>;
   discardRef: RefObject<(() => void) | null>;
+  onSessionUpdate?: (patch: Partial<AuthResponse>) => void;
 }>) {
   const { t } = useTranslation();
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.colorScheme === "dark");
@@ -317,6 +318,13 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: Readonly<{
               setPersistedLang(selectedLang);
               setPersistedTmdbLang(selectedTmdbLang);
               setPersistedPublic(isPublic);
+              onSessionUpdate?.({
+                theme: isDark ? "dark" : "light",
+                defaultPage,
+                lang: selectedLang,
+                tmdbLang: selectedTmdbLang,
+                personalListPublic: isPublic,
+              });
             }}
           >
             {t('settings.btnSave')}
@@ -327,7 +335,7 @@ function SettingsView({ session, onBack, dirtyRef, discardRef }: Readonly<{
   );
 }
 
-const UserPage = ({ session, resetSignal }: Props) => {
+const UserPage = ({ session, active = true, resetSignal, onSessionUpdate }: Props) => {
   const { t } = useTranslation();
   const [view, setView] = useState<"profile" | "settings">("profile");
   const [overlayEl, setOverlayEl] = useState<HTMLDivElement | null>(null);
@@ -375,6 +383,14 @@ const UserPage = ({ session, resetSignal }: Props) => {
   useSwipeBack(closeMember, memberOverlayEl);
   useSwipeBack(closeList, listOverlayEl);
 
+  const wasActiveRef = useRef(active);
+  useEffect(() => {
+    if (active && !wasActiveRef.current) {
+      fetchStats().then(setStats).catch(() => setStats(null));
+    }
+    wasActiveRef.current = active;
+  }, [active]);
+
   useEffect(() => {
     fetchStats().then(setStats).catch(() => setStats(null));
   }, []);
@@ -401,6 +417,7 @@ const UserPage = ({ session, resetSignal }: Props) => {
               onBack={requestCloseSettings}
               dirtyRef={settingsDirtyRef}
               discardRef={settingsDiscardRef}
+              onSessionUpdate={onSessionUpdate}
             />
           </div>
         )}

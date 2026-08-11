@@ -72,13 +72,15 @@ const PersonalListPage = ({ active, currentUserId, onShowStats, resetSignal }: R
   }, []);
   useSwipeBack(closeSearch, searchEl);
 
+  const loadSeqRef = useRef(0);
   const loadMovies = useCallback((silent?: boolean) => {
     if (!silent) setLoading(true);
     setError(null);
+    const seq = ++loadSeqRef.current;
     fetchPersonalList()
-      .then(setMovies)
-      .catch((err: Error) => { if (!silent) setError(err); })
-      .finally(() => setLoading(false));
+      .then((data) => { if (loadSeqRef.current === seq) setMovies(data); })
+      .catch((err: Error) => { if (loadSeqRef.current === seq && !silent) setError(err); })
+      .finally(() => { if (loadSeqRef.current === seq) setLoading(false); });
   }, []);
 
   useEffect(() => {

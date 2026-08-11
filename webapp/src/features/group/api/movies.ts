@@ -14,6 +14,7 @@ export type MovieFormPayload = {
   ratings: { userId: string; score: number }[];
   tmdbId?: number | null;
   tmdbMediaType?: TmdbMediaType | null;
+  version?: number;
 };
 
 export type MovieListParams = {
@@ -42,6 +43,10 @@ export async function addMovie(data: MovieFormPayload): Promise<Movie> {
 
 export async function editMovie(movieId: string, data: MovieFormPayload): Promise<Movie> {
   return apiFetch<Movie>(`${BASE}/${movieId}`, {method: "PUT", body: data});
+}
+
+export async function fetchMovie(movieId: string): Promise<Movie> {
+  return apiFetch<Movie>(`${BASE}/${movieId}`);
 }
 
 export async function deleteMovie(movieId: string): Promise<void> {

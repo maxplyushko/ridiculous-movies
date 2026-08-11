@@ -2,6 +2,7 @@ package com.ridiculousmovies.backend.service;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +20,7 @@ public class TelegramAuthService {
   private static final Pattern FIRST_NAME_PATTERN = Pattern.compile("\"first_name\"\\s*:\\s*\"([^\"]*)\"");
   private static final Pattern LAST_NAME_PATTERN = Pattern.compile("\"last_name\"\\s*:\\s*\"([^\"]*)\"");
   private static final Pattern USERNAME_PATTERN = Pattern.compile("\"username\"\\s*:\\s*\"([^\"]*)\"");
+  private static final long MAX_INIT_DATA_AGE_SECONDS = 86_400;
 
   public record TelegramUser(String id, String name) {}
 
@@ -62,6 +64,15 @@ public class TelegramAuthService {
       }
       String computed = toHex(hmacSha256(secretKey, sb.toString().getBytes(StandardCharsets.UTF_8)));
       if (!computed.equals(hash)) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
+      }
+      String authDate = params.get("auth_date");
+      if (authDate == null) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
+      }
+      long authDateSeconds = Long.parseLong(authDate);
+      long ageSeconds = Instant.now().getEpochSecond() - authDateSeconds;
+      if (ageSeconds > MAX_INIT_DATA_AGE_SECONDS) {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
       }
       String userJson = params.get("user");

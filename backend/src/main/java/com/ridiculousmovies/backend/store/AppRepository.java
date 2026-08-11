@@ -40,6 +40,8 @@ public interface AppRepository {
 
   void assignUserToNewGroup(String userId, String groupName);
 
+  String createGroupAndAssign(String userId, String groupId);
+
   void assignUserToExistingGroup(String userId, String groupId);
 
   String getOrCreateInviteCode(String groupId);
@@ -51,6 +53,8 @@ public interface AppRepository {
 
   void saveMovie(Movie movie);
 
+  Movie saveMovieForOwner(Movie movie, String ownerId, String groupId, boolean guestLimited, int limit);
+
   Movie rateMovie(String movieId, String groupId, String raterId, java.math.BigDecimal score);
 
   void deleteMovieById(String id);
@@ -58,6 +62,8 @@ public interface AppRepository {
   List<PersonalMovie> findPersonalMoviesForUser(String userId);
 
   void savePersonalMovie(PersonalMovie movie);
+
+  PersonalMovie savePersonalMovieForOwner(PersonalMovie movie, boolean guestLimited, int limit);
 
   List<String> findGroupMembersWhoAdded(String callerId, Long tmdbId, String title);
 

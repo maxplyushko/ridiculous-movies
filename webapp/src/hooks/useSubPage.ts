@@ -29,14 +29,21 @@ export function useSubPageOpen() {
 }
 
 const BAR_HIDDEN_CLASS = "bottom-bar-hidden";
+let hideBarCount = 0;
 
 /**
  * Hides the app's bottom bar for as long as the calling component is mounted.
  * For full-screen pages that own the whole viewport and carry their own actions.
+ * Ref-counted so two simultaneously-open full-screen pages don't un-hide the
+ * bar for each other when one of them closes first.
  */
 export function useHideBottomBar() {
   useEffect(() => {
+    hideBarCount += 1;
     document.body.classList.add(BAR_HIDDEN_CLASS);
-    return () => document.body.classList.remove(BAR_HIDDEN_CLASS);
+    return () => {
+      hideBarCount -= 1;
+      if (hideBarCount <= 0) document.body.classList.remove(BAR_HIDDEN_CLASS);
+    };
   }, []);
 }

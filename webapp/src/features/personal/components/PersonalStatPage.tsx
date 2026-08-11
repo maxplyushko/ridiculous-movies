@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSwipeBack } from "@/hooks/useSwipeBack.ts";
 import { useAnimatedClose } from "@/hooks/useAnimatedClose.ts";
 import { PAGE_EXIT_MS } from "@/components/Presence.tsx";
@@ -19,6 +19,12 @@ const PersonalStatPage = ({ active, onBack }: PersonalStatPageProps) => {
   const [sectionEl, setSectionEl] = useState<HTMLElement | null>(null);
   const state = useAsync(() => fetchPersonalList(), []);
   const close = useAnimatedClose(sectionEl, "stat-page--closing", PAGE_EXIT_MS, onBack);
+
+  const wasActiveRef = useRef(active);
+  useEffect(() => {
+    if (active && !wasActiveRef.current) state.refetch();
+    wasActiveRef.current = active;
+  }, [active, state.refetch]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useSwipeBack(onBack, active ? sectionEl : null);
 
