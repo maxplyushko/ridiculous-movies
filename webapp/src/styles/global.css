@@ -43,7 +43,7 @@ input:focus-visible,
   --bottom-bar-item-size: 3.125rem;
   --bottom-bar-offset: calc(var(--bottom-bar-height) + 0.75rem + var(--bottom-bar-inset));
   --mlp-card-height: 2.75rem;
-  --tab-bar-glass: color-mix(in srgb, var(--tab-bar-bg) 72%, transparent);
+  --tab-bar-glass: color-mix(in srgb, var(--tab-bar-bg) 90%, transparent);
   --tab-bar-glass-border: color-mix(in srgb, var(--text-primary) 7%, transparent);
   --tab-bar-glass-highlight: color-mix(in srgb, white 28%, transparent);
 
