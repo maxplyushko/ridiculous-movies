@@ -2,11 +2,11 @@ package com.ridiculousmovies.backend.service;
 
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.store.AppRepository;
+import com.ridiculousmovies.backend.store.MovieHighlightProjection;
 import com.ridiculousmovies.backend.web.dto.MovieHighlightDto;
 import com.ridiculousmovies.backend.web.dto.StatsResponse;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,15 +40,11 @@ public class StatsService {
     );
   }
 
-  private static List<MovieHighlightDto> mapMovieHighlights(List<Object[]> rows) {
+  private static List<MovieHighlightDto> mapMovieHighlights(List<MovieHighlightProjection> rows) {
     List<MovieHighlightDto> result = new ArrayList<>(rows.size());
     int place = 1;
-    for (Object[] row : rows) {
-      String id = Objects.requireNonNull(row[0]).toString();
-      String title = (String) row[1];
-      String host = (String) row[2];
-      Double avg = ((Number) row[3]).doubleValue();
-      result.add(new MovieHighlightDto(id, title, host, avg, place));
+    for (MovieHighlightProjection row : rows) {
+      result.add(new MovieHighlightDto(row.movieId(), row.title(), row.host(), row.averageRating(), place));
       place++;
     }
     return result;

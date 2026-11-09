@@ -3,11 +3,12 @@ package com.ridiculousmovies.backend.web;
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.PersonalMovie;
 import com.ridiculousmovies.backend.service.AuthService;
+import com.ridiculousmovies.backend.service.PersonalMovieStateService;
 import com.ridiculousmovies.backend.store.AppRepository;
 import com.ridiculousmovies.backend.web.dto.CreatePersonalMovieRequest;
 import com.ridiculousmovies.backend.web.dto.UpdatePersonalMovieRequest;
-import com.ridiculousmovies.backend.web.dto.PersonalMovieStateRequest;
 import com.ridiculousmovies.backend.web.dto.PersonalMovieResponse;
+import com.ridiculousmovies.backend.web.dto.PersonalMovieStateRequest;
 import org.springframework.http.ResponseEntity;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class PersonalListController {
 
   private final AppRepository dataStore;
   private final AuthService authService;
+  private final PersonalMovieStateService personalMovieStateService;
 
   @GetMapping
   public List<PersonalMovieResponse> list(@RequestHeader("User-Id") String userId) {
@@ -78,7 +80,7 @@ public class PersonalListController {
     pm.setTmdbId(req.tmdbId());
     pm.setTmdbMediaType(req.tmdbMediaType());
     PersonalMovie saved = dataStore.savePersonalMovieForOwner(
-        pm, authService.isGuest(user), GUEST_PERSONAL_LIMIT);
+        pm, authService.isGuest(user), PersonalMovieStateService.GUEST_PERSONAL_LIMIT);
     if (saved == null) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
     }
@@ -110,47 +112,9 @@ public class PersonalListController {
       @RequestHeader("User-Id") String userId,
       @RequestBody PersonalMovieStateRequest req
   ) {
-    AppUser user = authService.requireUser(userId);
-    PersonalMovie pm = dataStore.findPersonalMovieForCaller(userId, req.tmdbId(), req.title());
-    boolean isNew = pm == null;
-    if (isNew) {
-      pm = new PersonalMovie();
-      pm.setUserId(userId);
-      pm.setTitle(req.title());
-      pm.setDescription(req.description() != null ? req.description() : "");
-      pm.setTagline(req.tagline() != null ? req.tagline() : "");
-      pm.setTmdbId(req.tmdbId());
-      pm.setTmdbMediaType(req.tmdbMediaType());
-      pm.setInList(false);
-      pm.setWatched(false);
-    }
-    if (req.tagline() != null && !req.tagline().isBlank()
-        && (pm.getTagline() == null || pm.getTagline().isBlank())) {
-      pm.setTagline(req.tagline());
-    }
-    if (req.inList() != null) {
-      pm.setInList(req.inList());
-    }
-    if (req.watched() != null) {
-      pm.setWatched(req.watched());
-    }
-    if (req.rating() != null) {
-      pm.setRating(req.rating());
-      pm.setWatched(true);
-    }
-    boolean listed = pm.getInList() != null && pm.getInList();
-    if (!listed && !pm.isWatched() && pm.getRating() == null) {
-      if (pm.getId() != null) {
-        dataStore.deletePersonalMovieById(pm.getId(), userId);
-      }
-      return ResponseEntity.noContent().build();
-    }
-    PersonalMovie saved = dataStore.savePersonalMovieForOwner(
-        pm, isNew && authService.isGuest(user), GUEST_PERSONAL_LIMIT);
-    if (saved == null) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "GUEST_LIMIT_REACHED");
-    }
-    return ResponseEntity.ok(PersonalMovieResponse.from(saved));
+    PersonalMovie saved = personalMovieStateService.update(userId, req);
+    return saved == null ? ResponseEntity.noContent().build()
+        : ResponseEntity.ok(PersonalMovieResponse.from(saved));
   }
 
   @PutMapping("/{id}")
@@ -185,5 +149,4 @@ public class PersonalListController {
     dataStore.deletePersonalMovieById(id, userId);
   }
 
-  private static final int GUEST_PERSONAL_LIMIT = 4;
 }
