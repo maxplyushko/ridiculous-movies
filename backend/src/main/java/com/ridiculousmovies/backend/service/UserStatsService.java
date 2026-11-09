@@ -2,9 +2,9 @@ package com.ridiculousmovies.backend.service;
 
 import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.store.AppRepository;
+import com.ridiculousmovies.backend.store.UserStatsProjection;
 import com.ridiculousmovies.backend.web.dto.UserStatsResponse;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,18 +30,13 @@ public class UserStatsService {
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sort must be asc or desc");
     };
     return dataStore.userStatsByGroup(groupId, ascending).stream()
-        .map(UserStatsService::mapRow)
+        .map(UserStatsService::mapProjection)
         .toList();
   }
 
-  private static UserStatsResponse mapRow(Object[] row) {
-    String id = Objects.requireNonNull(row[0]).toString();
-    String name = (String) row[1];
-    Double avg = row[2] == null ? null : ((Number) row[2]).doubleValue();
-    long count = ((Number) row[3]).longValue();
-    boolean personalListPublic = (Boolean) row[4];
-    Double hostAvg = row[5] == null ? null : ((Number) row[5]).doubleValue();
-    String role = (String) row[6];
-    return new UserStatsResponse(id, name, avg, count, personalListPublic, hostAvg, role);
+  private static UserStatsResponse mapProjection(UserStatsProjection projection) {
+    return new UserStatsResponse(projection.userId(), projection.name(), projection.averageRating(),
+        projection.ratingCount(), projection.personalListPublic(), projection.hostAverageRating(),
+        projection.role());
   }
 }

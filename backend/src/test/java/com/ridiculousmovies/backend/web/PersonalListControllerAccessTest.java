@@ -13,6 +13,7 @@ import com.ridiculousmovies.backend.domain.AppUser;
 import com.ridiculousmovies.backend.domain.PersonalMovie;
 import com.ridiculousmovies.backend.domain.UserGroup;
 import com.ridiculousmovies.backend.service.AuthService;
+import com.ridiculousmovies.backend.service.PersonalMovieStateService;
 import com.ridiculousmovies.backend.store.AppRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,8 @@ class PersonalListControllerAccessTest {
   AppRepository dataStore;
   @Mock
   AuthService authService;
+  @Mock
+  PersonalMovieStateService personalMovieStateService;
 
   PersonalListController controller;
 
@@ -38,7 +41,7 @@ class PersonalListControllerAccessTest {
 
   @BeforeEach
   void setUp() {
-    controller = new PersonalListController(dataStore, authService);
+    controller = new PersonalListController(dataStore, authService, personalMovieStateService);
   }
 
   private AppUser user(String id, String groupId, boolean personalListPublic) {

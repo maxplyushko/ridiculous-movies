@@ -201,10 +201,10 @@ public class DataStore implements AppRepository {
         || !m.getCreatedAt().isBefore(statsCutoffDate);
   }
 
-  public List<Object[]> userStatsByGroup(String groupId, boolean ascending) {
+  public List<UserStatsProjection> userStatsByGroup(String groupId, boolean ascending) {
     lock.readLock().lock();
     try {
-      List<Object[]> rows = usersById.values().stream()
+      List<UserStatsProjection> rows = usersById.values().stream()
           .filter(u -> u.getUserGroup() != null && groupId.equals(u.getUserGroup().getId()))
           .map(u -> {
             List<BigDecimal> scores = moviesById.values().stream()
@@ -225,13 +225,13 @@ public class DataStore implements AppRepository {
                 .toList();
             Double hostAvg = hostScores.isEmpty() ? null
                 : hostScores.stream().mapToDouble(BigDecimal::doubleValue).average().orElse(0);
-            return new Object[]{u.getId(), u.getName(), avg, (long) scores.size(),
-                u.getPersonalListPublic() == null ? Boolean.TRUE : u.getPersonalListPublic(), hostAvg,
-                u.getRole().getName()};
+            return new UserStatsProjection(u.getId(), u.getName(), avg, scores.size(),
+                u.getPersonalListPublic() == null || u.getPersonalListPublic(), hostAvg,
+                u.getRole().getName());
           })
           .collect(Collectors.toList());
-      Comparator<Object[]> cmp = Comparator.comparing(
-          (Object[] row) -> (Double) row[2],
+      Comparator<UserStatsProjection> cmp = Comparator.comparing(
+          UserStatsProjection::averageRating,
           ascending
               ? Comparator.nullsLast(Comparator.naturalOrder())
               : Comparator.nullsLast(Comparator.reverseOrder())
@@ -376,7 +376,7 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public List<Object[]> findTop3ForGroup(String groupId, boolean best) {
+  public List<MovieHighlightProjection> findTop3ForGroup(String groupId, boolean best) {
     lock.readLock().lock();
     try {
       Comparator<Movie> cmp = Comparator.comparingDouble(
@@ -399,7 +399,7 @@ public class DataStore implements AppRepository {
                 .filter(r -> groupId.equals(r.getUser().getUserGroup().getId()))
                 .filter(r -> !r.getUser().getId().equals(m.getOwner().getId()))
                 .mapToDouble(r -> r.getScore().doubleValue()).average().orElse(0);
-            return new Object[]{m.getId(), m.getTitle(), m.getOwner().getName(), avg};
+            return new MovieHighlightProjection(m.getId(), m.getTitle(), m.getOwner().getName(), avg);
           })
           .toList();
     } finally {
@@ -407,7 +407,7 @@ public class DataStore implements AppRepository {
     }
   }
 
-  public List<Object[]> userHostPreferencesByGroup(String groupId) {
+  public List<UserHostPreferenceProjection> userHostPreferencesByGroup(String groupId) {
     lock.readLock().lock();
     try {
       List<Movie> groupMovies = moviesById.values().stream()
@@ -447,7 +447,8 @@ public class DataStore implements AppRepository {
                 .min(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
             Double leastFavAvg = leastFavHost != null ? avgByHost.get(leastFavHost) : null;
 
-            return new Object[]{u.getId(), u.getName(), overall, mostFavHost, mostFavAvg, leastFavHost, leastFavAvg};
+            return new UserHostPreferenceProjection(u.getId(), u.getName(), overall,
+                mostFavHost, mostFavAvg, leastFavHost, leastFavAvg);
           })
           .filter(Objects::nonNull)
           .toList();

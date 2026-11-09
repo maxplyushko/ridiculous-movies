@@ -13,7 +13,7 @@ public interface AppRepository {
 
   long countUsersByGroupId(String groupId);
 
-  List<Object[]> userStatsByGroup(String groupId, boolean ascending);
+  List<UserStatsProjection> userStatsByGroup(String groupId, boolean ascending);
 
   List<Movie> findMoviesForGroup(String groupId, boolean ascending);
 
@@ -28,9 +28,9 @@ public interface AppRepository {
   List<String> findIdsWithExtremumAvgForGroup(
       String groupId, int minRatings, boolean requireAll, long memberCount, boolean highest);
 
-  List<Object[]> findTop3ForGroup(String groupId, boolean best);
+  List<MovieHighlightProjection> findTop3ForGroup(String groupId, boolean best);
 
-  List<Object[]> userHostPreferencesByGroup(String groupId);
+  List<UserHostPreferenceProjection> userHostPreferencesByGroup(String groupId);
 
   Optional<AppUser> findUserByOauthSub(String sub);
 
