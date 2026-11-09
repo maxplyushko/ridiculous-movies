@@ -29,19 +29,18 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   const [session, setSession] = useState(initialSession);
   const defaultTab: Tab = session.defaultPage === "watchlist" ? "personal" : "group";
   const [currentPage, setCurrentPage] = useState<Page>(defaultTab);
-  const [groupResetSignal, setGroupResetSignal] = useState(0);
-  const [personalResetSignal, setPersonalResetSignal] = useState(0);
-  const [miscResetSignal, setMiscResetSignal] = useState(0);
-  const [searchResetSignal, setSearchResetSignal] = useState(0);
+  const [resetSignals, setResetSignals] = useState<Record<Tab, number>>({
+    group: 0,
+    personal: 0,
+    misc: 0,
+    search: 0,
+  });
   const isAdmin = session.role === "admin";
 
   const selectTab = (tab: Tab) => {
     hapticTabTap();
     if (tab === currentPage) {
-      if (tab === "group") setGroupResetSignal((n) => n + 1);
-      if (tab === "personal") setPersonalResetSignal((n) => n + 1);
-      if (tab === "misc") setMiscResetSignal((n) => n + 1);
-      if (tab === "search") setSearchResetSignal((n) => n + 1);
+      setResetSignals((signals) => ({ ...signals, [tab]: signals[tab] + 1 }));
     }
     setCurrentPage(tab);
   };
@@ -64,12 +63,12 @@ function AppShell({ session: initialSession }: Readonly<{ session: AuthResponse 
   return (
     <div className="app-shell">
       <main className="app-main">
-        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} resetSignal={groupResetSignal} /></div>
+        <div hidden={currentPage !== "group" && currentPage !== "stat"}><GroupListPage isAdmin={isAdmin} currentUserId={session.userId} onShowStats={() => setCurrentPage("stat")} resetSignal={resetSignals.group} /></div>
         <div hidden={currentPage !== "stat"}><StatPage active={currentPage === "stat"} onBack={() => setCurrentPage("group")} /></div>
-        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} currentUserId={session.userId} onShowStats={() => setCurrentPage("personalStat")} resetSignal={personalResetSignal} /></div>
+        <div hidden={currentPage !== "personal" && currentPage !== "personalStat"}><PersonalListPage active={currentPage === "personal"} currentUserId={session.userId} onShowStats={() => setCurrentPage("personalStat")} resetSignal={resetSignals.personal} /></div>
         <div hidden={currentPage !== "personalStat"}><PersonalStatPage active={currentPage === "personalStat"} onBack={() => setCurrentPage("personal")} /></div>
-        <div hidden={currentPage !== "misc"}><UserPage session={session} active={currentPage === "misc"} resetSignal={miscResetSignal} onSessionUpdate={(patch) => setSession((prev) => ({ ...prev, ...patch }))} /></div>
-        <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={searchResetSignal} /></div>
+        <div hidden={currentPage !== "misc"}><UserPage session={session} active={currentPage === "misc"} resetSignal={resetSignals.misc} onSessionUpdate={(patch) => setSession((prev) => ({ ...prev, ...patch }))} /></div>
+        <div hidden={currentPage !== "search"}><SearchResults currentUserId={session.userId} resetSignal={resetSignals.search} /></div>
       </main>
       <nav ref={navRef} className="bottom-bar">
         <span ref={indicatorRef} className="bottom-bar__indicator" aria-hidden="true" />

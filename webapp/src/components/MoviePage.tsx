@@ -6,9 +6,8 @@ import type { Movie } from "@/features/group/types/Movie";
 import type { PersonalMovie } from "@/features/personal/types/PersonalMovie";
 import type { TmdbCastMember, TmdbMovie, TmdbMovieDetails } from "@/types/TmdbMovie";
 import { useTmdbMovieDetails } from "@/hooks/useTmdbMovieDetails.ts";
-import { fetchGroupMembersWhoAdded } from "@/features/personal/api/personalList.ts";
-import { fetchGroupMovieMatch } from "@/features/group/api/movies.ts";
 import { usePersonalStateSync } from "@/hooks/usePersonalStateSync.ts";
+import { useMovieGroupContext } from "@/hooks/useMovieGroupContext.ts";
 import { PageBackButton } from "@/components/PageBackButton.tsx";
 import { GuestLimitModal } from "@/components/GuestLimitModal.tsx";
 import { RatingModal } from "@/components/RatingModal.tsx";
@@ -506,8 +505,7 @@ export function MoviePage({ source, currentUserId, readOnly, onBack, onRate, onE
   const genres = details?.genres ?? [];
   const director = details?.director ?? null;
   const cast = details?.cast ?? [];
-  const [addedByMembers, setAddedByMembers] = useState<string[]>([]);
-  const [groupMatch, setGroupMatch] = useState<Movie | null>(null);
+  const { addedByMembers, groupMatch } = useMovieGroupContext(tmdbId, title, source.kind === "group");
   const [groupExpanded, setGroupExpanded] = useState(false);
   const [showGuestLimit, setShowGuestLimit] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -523,25 +521,6 @@ export function MoviePage({ source, currentUserId, readOnly, onBack, onRate, onE
     onChange: onPersonalStateChange,
     onError: (message) => { if (message === "GUEST_LIMIT_REACHED") setShowGuestLimit(true); },
   });
-
-  useEffect(() => {
-    if (tmdbId == null && !title) return;
-    let cancelled = false;
-    fetchGroupMembersWhoAdded(tmdbId, title)
-      .then((names) => { if (!cancelled) setAddedByMembers(names); })
-      .catch(() => { if (!cancelled) setAddedByMembers([]); });
-    return () => { cancelled = true; };
-  }, [tmdbId, title]);
-
-  useEffect(() => {
-    if (source.kind === "group") return;
-    if (tmdbId == null && !title) return;
-    let cancelled = false;
-    fetchGroupMovieMatch(tmdbId, title)
-      .then((match) => { if (!cancelled) setGroupMatch(match); })
-      .catch(() => { if (!cancelled) setGroupMatch(null); });
-    return () => { cancelled = true; };
-  }, [source.kind, tmdbId, title]);
 
   const inList = readOnly && source.kind === "personal" ? source.movie.inList : (selfStatus?.inList ?? false);
   const watched = readOnly && source.kind === "personal" ? source.movie.watched : (selfStatus?.watched ?? false);

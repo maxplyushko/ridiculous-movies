@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { TmdbMediaType, TmdbMovieDetails } from "@/types/TmdbMovie";
 import { fetchTmdbMovieDetails } from "@/features/group/api/tmdb";
 import { getTmdbLang } from "@/utils/tmdbLang.ts";
+import { useCachedRequest } from "@/hooks/useCachedRequest.ts";
 
 const detailsCache = new Map<string, TmdbMovieDetails>();
 
@@ -10,43 +11,11 @@ function cacheKey(tmdbId: number, mediaType: TmdbMediaType): string {
 }
 
 export function useTmdbMovieDetails(tmdbId: number | undefined | null, mediaType: TmdbMediaType = "movie") {
-  const cached = tmdbId != null ? detailsCache.get(cacheKey(tmdbId, mediaType)) : undefined;
-  const [details, setDetails] = useState<TmdbMovieDetails | null>(cached ?? null);
-  const [loading, setLoading] = useState(tmdbId != null && !cached);
-
-  useEffect(() => {
-    if (tmdbId == null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDetails(null);
-      setLoading(false);
-      return;
-    }
-
-    const key = cacheKey(tmdbId, mediaType);
-    const hit = detailsCache.get(key);
-    if (hit) {
-      setDetails(hit);
-      setLoading(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    setLoading(true);
-
-    fetchTmdbMovieDetails(tmdbId, mediaType, controller.signal)
-      .then((data) => {
-        detailsCache.set(key, data);
-        setDetails(data);
-        setLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === "AbortError") return;
-        setDetails(null);
-        setLoading(false);
-      });
-
-    return () => controller.abort();
+  const key = tmdbId == null ? null : cacheKey(tmdbId, mediaType);
+  const fetchData = useCallback((signal: AbortSignal) => {
+    if (tmdbId == null) throw new Error("Movie details require a TMDB id");
+    return fetchTmdbMovieDetails(tmdbId, mediaType, signal);
   }, [tmdbId, mediaType]);
-
+  const { data: details, loading } = useCachedRequest(key, detailsCache, fetchData);
   return { details, loading };
 }
